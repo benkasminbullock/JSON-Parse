@@ -1,0 +1,8 @@
+# Generated from Makefile.PL
+Makefile
+# Ignore distribution files.
+Json3-/
+*.tar.gz
+# Ignore outputs of XS compilation.
+Json3.c
+Json3.bs

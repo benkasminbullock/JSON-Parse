@@ -1,0 +1,11 @@
+build\.pl
+blib/.*
+.gitignore
+.git/.*
+Makefile$
+pm_to_blib
+MYMETA..*
+.*\.bak
+^Json3-[0-9.]/$
+^Json3-[0-9.]\.tar\.gz$
+^Json3.(?:c|o|bs)$
