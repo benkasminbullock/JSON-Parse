@@ -20,4 +20,6 @@ WriteMakefile (
         },
     },
     OBJECT => 'Json3.o',
+#    OPTIMIZE => '-Wall',
+#    OPTIMIZE => '-O3',
 );

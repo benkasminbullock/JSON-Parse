@@ -9,5 +9,15 @@ MODULE=Json3 PACKAGE=Json3
 PROTOTYPES: ENABLE
 
 BOOT:
-	Json3_error_handler = perl_error_handler;
+{
+	json_true = get_sv ("Json3::true", GV_ADD);
+	json_false = get_sv ("Json3::false", GV_ADD);
+	json_null = get_sv ("Json3::null", GV_ADD);
+}
 
+SV * parse_json (json)
+	SV * json;
+CODE:
+	RETVAL = parse (json);
+OUTPUT:
+	RETVAL
