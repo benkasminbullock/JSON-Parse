@@ -4,15 +4,15 @@
 
 #include "Json3-perl.c"
 
-MODULE=Json3 PACKAGE=Json3
+MODULE=JSON::Parse PACKAGE=JSON::Parse
 
 PROTOTYPES: ENABLE
 
 BOOT:
 {
-	json_true = get_sv ("Json3::true", GV_ADD);
-	json_false = get_sv ("Json3::false", GV_ADD);
-	json_null = get_sv ("Json3::null", GV_ADD);
+	json_true = get_sv ("JSON::Parse::true", GV_ADD);
+	json_false = get_sv ("JSON::Parse::false", GV_ADD);
+	json_null = get_sv ("JSON::Parse::null", GV_ADD);
 }
 
 SV * parse_json (json)

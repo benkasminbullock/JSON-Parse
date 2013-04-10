@@ -9,3 +9,9 @@ MYMETA..*
 ^Json3-[0-9.]/$
 ^Json3-[0-9.]\.tar\.gz$
 ^Json3.(?:c|o|bs)$
+^peek\.pl$
+^test-empty-string\.pl$
+^xt/.*
+^lib/JSON/Parse\.pod\.tmpl$
+^run\.pl$
+^Parse\.bs$

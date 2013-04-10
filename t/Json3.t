@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 use Test::More;
-use Json3 'parse_json';
+use JSON::Parse 'parse_json';
 
 # Empty array.
 

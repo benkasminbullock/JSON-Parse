@@ -2,13 +2,14 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
-my $pm = 'lib/Json3.pm';
-my $repo = 'https://github.com/benkasminbullock/Json3';
+my $pm = 'lib/JSON/Parse.pm';
+my $pod = 'lib/JSON/Parse.pod';
+my $repo = 'https://github.com/benkasminbullock/JSON-Parse';
 
 WriteMakefile (
-    NAME => 'Json3',
+    NAME => 'JSON::Parse',
     VERSION_FROM => $pm,
-    ABSTRACT_FROM => $pm,
+    ABSTRACT_FROM => $pod,
     AUTHOR => 'Ben Bullock <bkb@cpan.org>',
     LICENSE => 'perl',
     PREREQ_PM => {

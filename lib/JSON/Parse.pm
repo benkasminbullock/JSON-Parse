@@ -1,19 +1,4 @@
-=encoding UTF-8
-
-=head1 NAME
-
-Json3 - abstract here.
-
-=head1 SYNOPSIS
-
-    use Json3;
-
-=head1 DESCRIPTION
-
-=head1 FUNCTIONS
-
-=cut
-package Json3;
+package JSON::Parse;
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT_OK = qw/parse_json/;
@@ -23,9 +8,9 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = 0.01;
+our $VERSION = '0.19_02';
 require XSLoader;
-XSLoader::load ('Json3', $VERSION);
+XSLoader::load (__PACKAGE__, $VERSION);
 
 our $true = 1;
 our $false = 0;
