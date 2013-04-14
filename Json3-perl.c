@@ -22,6 +22,19 @@
  case '8':    \
  case '9'
 
+/* Match digits. */
+
+#define DIGIT19 \
+    '1':	\
+ case '2':	\
+ case '3':	\
+ case '4':	\
+ case '5':	\
+ case '6':	\
+ case '7':	\
+ case '8':	\
+ case '9'
+
 /* A "string_t" is a pointer into the input, which lives in
    "parser->input". The "string_t" structure is used for copying
    strings when the string does not contain any escapes. When a string
@@ -159,6 +172,7 @@ number (parser_t * parser)
     minus = 0;
     expminus = 0;
     guess = 0;
+    zero = 0;
 
     parser->end--;
     start = parser->end;
@@ -212,9 +226,24 @@ number (parser_t * parser)
 	exp = 1;
 	goto number_start;
 
-    case DIGIT:
+    case '0':
 
 	if (! dot && ! exp) {
+	    if (! guess) {
+		zero = 1;
+	    }
+	    else {
+		guess = 10 * guess;
+	    }
+	}
+	goto number_start;
+
+    case DIGIT19:
+
+	if (! dot && ! exp) {
+	    if (zero) {
+		failburger (parser, "leading 0 in number");
+	    }
 	    guess = 10 * guess + (c - '0');
 	}
 	goto number_start;
@@ -483,7 +512,7 @@ string (parser_t * parser)
  string_end:
 
     string = newSVpvn (start, len);
-    return string;
+    goto string_done;
 
  bad_boys:
 
@@ -492,6 +521,11 @@ string (parser_t * parser)
     len = get_string (parser);
 
     string = newSVpvn (parser->buffer, len);
+
+ string_done:
+    if (parser->unicode) {
+	SvUTF8_on (string);
+    }
 
     return string;
 }
@@ -735,11 +769,16 @@ parse (SV * json)
 
     /* Set up the object. */
 
-    parser_o.line = 1;
-
     parser_o.end = parser_o.input = SvPV (json, parser_o.length);
+
+    if (parser_o.length == 0) {
+	r = & PL_sv_undef;
+	return r;
+    }
+
+    parser_o.line = 1;
     parser_o.last_byte = parser_o.input + parser_o.length;
-    parser_o.unicode = SvUTF8 (json);
+    parser_o.unicode = SvUTF8 (json) ? 1 : 0;
 
  parse_start:
 
@@ -764,6 +803,13 @@ parse (SV * json)
     case '\t':
     case '\r':
 	goto parse_start;
+
+    case '0':
+
+	/* We have an empty string. */
+
+	r = & PL_sv_undef;
+	break;
 
     default:
 	failburger (& parser_o, "Bad character %c in initial state", c);

@@ -6,3 +6,7 @@ Json3-/
 # Ignore outputs of XS compilation.
 Json3.c
 Json3.bs
+
+lib/JSON/Parse.pod
+Parse.bs
+Parse.c

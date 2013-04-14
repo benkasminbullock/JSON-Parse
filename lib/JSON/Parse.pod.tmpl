@@ -8,9 +8,9 @@ JSON::Parse - Convert JSON into a Perl variable
 
 =head1 SYNOPSIS
 
-    use JSON::Parse 'json_to_perl';
+    use JSON::Parse 'parse_json';
     my $json = '["golden", "fleece"]';
-    my $perl = json_to_perl ($json);
+    my $perl = parse_json ($json);
     # Same effect as $perl = ['golden', 'fleece'];
 
 Convert JSON into Perl.
@@ -18,8 +18,8 @@ Convert JSON into Perl.
 =head1 DESCRIPTION
 
 JSON::Parse converts JSON into equivalent Perl. The function
-L</json_to_perl> takes one argument, a string containing JSON, and
-returns a Perl reference. The input to C<json_to_perl> must be a
+L</parse_json> takes one argument, a string containing JSON, and
+returns a Perl reference. The input to C<parse_json> must be a
 complete JSON structure.
 
 The module differs from the standard L<JSON> module by simplifying the
@@ -34,30 +34,30 @@ JSON means "JavaScript Object Notation" and it is specified in L</RFC
 
 =head1 FUNCTIONS
 
-=head2 json_to_perl
+=head2 parse_json
 
-    use JSON::Parse 'json_to_perl';
-    my $perl = json_to_perl ('{"x":1, "y":2}');
+    use JSON::Parse 'parse_json';
+    my $perl = parse_json ('{"x":1, "y":2}');
 
 This function converts JSON into a Perl structure, either an array
 reference or a hash reference.
 
 If the first argument does not contain a valid JSON text,
-C<json_to_perl> throws a fatal error. See L</DIAGNOSTICS> for the
+C<parse_json> throws a fatal error. See L</DIAGNOSTICS> for the
 possible error messages.
 
 If the argument contains valid JSON, the return value is either a hash
 or an array reference. If the input JSON text is a serialized object,
 a hash reference is returned:
 
-    my $perl = json_to_perl ('{"a":1, "b":2}');
+    my $perl = parse_json ('{"a":1, "b":2}');
     print ref $perl, "\n";
     # Prints "HASH".
 
 If the input JSON text is a serialized array, an array reference is
 returned:
 
-    my $perl = json_to_perl ('["a", "b", "c"]');
+    my $perl = parse_json ('["a", "b", "c"]');
     print ref $perl, "\n";
     # Prints "ARRAY".
 
@@ -66,7 +66,7 @@ returned:
     use JSON::Parse 'json_file_to_perl';
     my $p = json_file_to_perl ('filename');
 
-This is exactly the same as L</json_to_perl> except that it works on a
+This is exactly the same as L</parse_json> except that it works on a
 file name. The file must be in UTF-8.
 
 =head2 valid_json
@@ -79,7 +79,7 @@ file name. The file must be in UTF-8.
 C<Valid_json> returns I<1> if its argument is valid JSON and I<0> if not.
 
 Because C<valid_json> does not create any Perl data structures, it
-runs about two or three times faster than L</json_to_perl>.
+runs about two or three times faster than L</parse_json>.
 
 =head1 Mapping from JSON to Perl
 
@@ -90,7 +90,7 @@ JSON elements are mapped to Perl as follows:
 JSON numbers become Perl strings, rather than numbers. No conversion
 from the character string to a numerical value is done. For example
 
-    my $q = @{json_to_perl ('[0.12345]')}[0];
+    my $q = @{parse_json ('[0.12345]')}[0];
 
 has the same result as a Perl declaration of the form
 
@@ -120,7 +120,7 @@ in the JSON text.
 
 =head3 Handling of Unicode
 
-If the input to L</json_to_perl> is marked as Unicode characters, the
+If the input to L</parse_json> is marked as Unicode characters, the
 output strings will be marked as Unicode characters. If the input is
 not marked as Unicode characters, the output strings will not be
 marked as Unicode characters. Thus, 
@@ -128,7 +128,7 @@ marked as Unicode characters. Thus,
     # The scalar $sasori looks like Unicode to Perl
     use utf8;
     my $sasori = '["蠍"]';
-    my $p = json_to_perl ($sasori);
+    my $p = parse_json ($sasori);
     print utf8::is_utf8 ($p->[0]);
     # Prints 1.
 
@@ -137,7 +137,7 @@ but
     # The scalar $ebi does not look like Unicode to Perl
     no utf8;
     my $ebi = '["海老"]';
-    my $p = json_to_perl ($ebi);
+    my $p = parse_json ($ebi);
     print utf8::is_utf8 ($p->[0]);
     # Prints nothing.
 
@@ -148,7 +148,7 @@ array are in the same order as they appear in the JSON.
 
 Thus
 
-    my $p = json_to_perl ('["monday", "tuesday", "wednesday"]');
+    my $p = parse_json ('["monday", "tuesday", "wednesday"]');
 
 has the same result as a Perl declaration of the form
 
@@ -169,7 +169,7 @@ Thus
      "friday":"Gotta get down on Friday"}
     EOF
 
-    my $p = json_to_perl ($j);
+    my $p = parse_json ($j);
 
 has the same result as a Perl declaration of the form
 
@@ -220,7 +220,7 @@ module. For example, for the UTF-16 format,
 
     use Encode 'decode';
     my $input_utf8 = decode ('UTF-16', $input);
-    my $perl = json_to_perl ($input_utf8);
+    my $perl = parse_json ($input_utf8);
 
 or, for a file,
 
@@ -255,7 +255,7 @@ JSON format which Perl cannot understand.
 
 =head1 DIAGNOSTICS
 
-L</valid_json> does not produce error messages. L</json_to_perl> may
+L</valid_json> does not produce error messages. L</parse_json> may
 produce the following:
 
 Error messages have the line number and the byte number of the input
@@ -266,7 +266,7 @@ the parsing into an C<eval> block:
 
     my $p;                       
     eval {                       
-        $p = json_to_perl ($j);  
+        $p = parse_json ($j);  
     };                           
     if ($@) {                    
         # handle error           
@@ -284,7 +284,7 @@ JSON is specified in L<http://www.ietf.org/rfc/rfc4627.txt>.
 
 =head1 EXPORTS
 
-The module exports nothing by default. Functions L</json_to_perl> and
+The module exports nothing by default. Functions L</parse_json> and
 L</valid_json> can be exported on request.
 
 =head1 AUTHOR

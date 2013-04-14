@@ -1,0 +1,60 @@
+#!/home/ben/software/install/bin/perl
+use lib '/home/ben/projects/Json3/blib/lib';
+use lib '/home/ben/projects/Json3/blib/arch';
+
+my %tst = (
+   "JSON::XS"      => [
+       'decode_json $json',
+   ],
+   "JSON::Parse" => [
+       'JSON::Parse::parse_json ($json)',
+   ],
+);
+
+use JSON::XS qw(decode_json);
+use JSON::Parse;
+
+use Time::HiRes;
+use List::Util;
+
+use utf8;
+
+my $json; # the test string
+
+local $/;
+$json = <>;
+
+sub bench
+{
+    my ($code, $count) = @_;
+
+    my $cent = eval "sub { my \$t = Time::HiRes::time; " . (join ";", ($code) x $count) . "; Time::HiRes::time - \$t }";
+    $cent->();
+    my $t = $cent->();
+
+    return $t;
+}
+
+
+printf "--------------+------------+------------+\n";
+printf "%-13s | %10s | %10s |\n", "module", "1/min", "min";
+printf "--------------|------------|------------|\n";
+my %min;
+my $min = 1e99;
+my $count = 50;
+
+for my $module (sort keys %tst) {
+    $min{$module} = $min;
+
+    my $times = 100;
+    for (1..$times) {
+	my $t = bench ($tst{$module}[0], $count);
+	$min{$module} = $t if $t < $min{$module};
+    }
+}
+
+for my $module (sort keys %tst) {
+    printf "%-13s | %10.3f | %10.7f |\n", $module, $count/$min{$module}, $min{$module};
+}
+printf "--------------+------------+------------+\n";
+
