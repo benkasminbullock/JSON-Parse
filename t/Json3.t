@@ -78,10 +78,10 @@ my $af = parse_json ('[0.001, 2.5e4, 3e-12]');
 ok ($af);
 is (ref $af, 'ARRAY');
 is (scalar @$af, 3);
-my $eps = 1e-20;
-cmp_ok (abs ($af->[0] - 0.001), '<', $eps);
-cmp_ok (abs ($af->[1] - 2.5e4), '<', $eps);
-cmp_ok (abs ($af->[2] - 3e-12), '<', $eps);
+my $eps = 1e-3;
+cmp_ok (abs ($af->[0] - 0.001), '<', 0.001 * $eps);
+cmp_ok (abs ($af->[1] - 2.5e4), '<', 2.5e4 * $eps);
+cmp_ok (abs ($af->[2] - 3e-12), '<', 3e-12 * $eps);
 
 # Nested hash
 

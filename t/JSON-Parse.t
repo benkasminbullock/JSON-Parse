@@ -44,7 +44,7 @@ TODO: {
     my $m = '{"骪":"\u9aaa"}';
     my $ar = gub ($m);
     ok (defined $ar, "Unicode \\uXXXX parsed");
-    ok ($ar->{骪} eq '骪', "Unicode \\uXXXX parsed correctly");
+    is ($ar->{骪}, '骪', "Unicode \\uXXXX parsed correctly");
     ok (valid_json ($m), "Valid good JSON");
 };
 my $bad1 = '"bad":"city"}';
