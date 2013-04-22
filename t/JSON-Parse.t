@@ -10,7 +10,7 @@ my $jason = <<'EOF';
 EOF
 my $x = gub ($jason);
 note ($x->{guff}->{t}->[2]);
-is ($x->{guff}->{t}->[2], 2.3, "Two point three");
+cmp_ok (abs ($x->{guff}->{t}->[2] - 2.3), '<', 0.00001, "Two point three");
 
 my $fleece = '{"凄い":"技", "tickle":"baby"}';
 my $y = gub ($fleece);
