@@ -78,36 +78,14 @@ file name. The file must be in UTF-8.
 
 C<Valid_json> returns I<1> if its argument is valid JSON and I<0> if not.
 
-Because C<valid_json> does not create any Perl data structures, it
-runs about two or three times faster than L</parse_json>.
-
 =head1 Mapping from JSON to Perl
 
 JSON elements are mapped to Perl as follows:
 
 =head2 JSON numbers
 
-JSON numbers become Perl strings, rather than numbers. No conversion
-from the character string to a numerical value is done. For example
-
-    my $q = @{parse_json ('[0.12345]')}[0];
-
-has the same result as a Perl declaration of the form
-
-    my $q = '0.12345';
-
-The conversion is not done because Perl will do the conversion into a
-numerical value automatically when the scalar is used in a numerical
-context:
-
-    print '0.12345' * 5;
-    # prints 0.61725
-
-See also L</Numbers not checked>.
-
-The only exception is plus signs in exponentials, which are stripped
-out, thus C<1.9e+9> in the JSON will be returned to the user as the
-string C<"1.9e9">, without the meaningless C<+> of the original.
+JSON numbers become Perl numbers, either integers or double-precision
+floating point numbers.
 
 =head2 JSON strings
 
@@ -181,17 +159,18 @@ has the same result as a Perl declaration of the form
 
 =head2 null
 
-The JSON null literal is mapped to the undefined value.
-See L</False = null = undefined value>.
+The JSON null literal is mapped to a scalar C<$JSON::Parse::null>
+containing the undefined value.
 
 =head2 true
 
-The JSON true literal is mapped to a Perl string with the value 'true'.
+The JSON true literal is mapped to a scalar C<$JSON::Parse::true>
+containing the value 1.
 
 =head2 false
 
-The JSON false literal is mapped to the undefined value.
-See L</False = null = undefined value>.
+The JSON true literal is mapped to a scalar C<$JSON::Parse::false>
+containing the value 0.
 
 =head1 RESTRICTIONS
 
@@ -228,28 +207,6 @@ or, for a file,
 
 This module does not attempt to do the determination of the nature of
 the octet stream, as described in part 3 of L</RFC 4627>.
-
-=back
-
-=head1 BUGS
-
-This is a preliminary version. The following deficiencies are
-known. These may be resolved in a later version.
-
-=over
-
-=item False = null = undefined value
-
-At the moment, both of "false" and "null" in JSON are mapped to the
-undefined value. "true" is mapped to the string "true".
-
-=item Numbers not checked
-
-The author of this module does not know whether all possible JSON
-floating point numbers are understood by Perl (see L</JSON numbers>
-above). Most integer and floating point numbers encountered should be
-OK, but there is a chance that there are some numbers allowed in the
-JSON format which Perl cannot understand.
 
 =back
 
