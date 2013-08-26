@@ -99,9 +99,15 @@ static SV * json_false;
 static SV * json_null;
 static SV * empty_string;
 
+#ifdef __GNUC__
+#define INLINE inline
+#else
+#define INLINE
+#endif /* def __GNUC__ */
+
 /* Error fallthrough. This takes the error and sends it to "croak". */
 
-static inline void failburger (parser_t * parser, const char * format, ...)
+static INLINE void failburger (parser_t * parser, const char * format, ...)
 {
     char buffer[0x1000];
     va_list a;
@@ -118,7 +124,7 @@ static inline void failburger (parser_t * parser, const char * format, ...)
 
 /* Turn a number into an SV. */
 
-static inline SV *
+static INLINE SV *
 number (parser_t * parser)
 {
     /* Various parsing flags. */
@@ -406,7 +412,7 @@ resolve_string (parser_t * parser, string_t * s)
 /* Get an object key value and put it into "key". Check for
    escapes. */
 
-static inline void
+static INLINE void
 get_key_string (parser_t * parser, string_t * key)
 {
     char c;
@@ -438,7 +444,7 @@ get_key_string (parser_t * parser, string_t * key)
    "parser->buffer". The return value is the length of the
    string. This is only called if the string has \ escapes in it. */
 
-static inline int
+static INLINE int
 get_string (parser_t * parser)
 {
     char * b;

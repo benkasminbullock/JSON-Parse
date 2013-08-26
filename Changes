@@ -1,7 +1,12 @@
+0.22 2013-08-26
+
+* Typos and minor details in documentation.
+* Changes to compile on Microsoft C compiler
+
 0.21 
 
-Changes documented.
+* Changes documented.
 
 0.20
 
-From-scratch rewrite of module.
+* From-scratch rewrite of module.

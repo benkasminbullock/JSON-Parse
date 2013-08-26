@@ -212,8 +212,8 @@ the octet stream, as described in part 3 of L</RFC 4627>.
 
 =head1 DIAGNOSTICS
 
-L</valid_json> does not produce error messages. L</parse_json> may
-produce the following:
+L</valid_json> does not produce error messages. L</parse_json> dies on
+encountering invalid input.
 
 Error messages have the line number and the byte number of the input
 which caused the problem.
@@ -237,7 +237,15 @@ the parsing into an C<eval> block:
 
 JSON is specified in L<http://www.ietf.org/rfc/rfc4627.txt>.
 
+=item L<JSON>, L<JSON::XS>
+
+These modules allow both reading and writing of JSON.
+
 =back
+
+=head1 TEST RESULTS
+
+The ActiveState test results are at L<http://code.activestate.com/ppm/JSON-Parse/>.
 
 =head1 EXPORTS
 
