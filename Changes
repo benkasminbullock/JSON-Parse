@@ -1,12 +1,54 @@
+0.23 2013-11-27
+
+* Update "Changes" to conform to CPAN::Changes::Spec
+
 0.22 2013-08-26
 
 * Typos and minor details in documentation.
-* Changes to compile on Microsoft C compiler
+* Changes to compile on Microsoft C compiler.
 
-0.21 
+0.21 2013-08-07
 
 * Changes documented.
 
-0.20
+0.20 2013-08-06
 
 * From-scratch rewrite of module.
+
+0.19 2013-03-15
+
+0.18 2013-03-12
+
+0.17 2013-03-10
+
+0.16 2013-03-08
+
+0.15 2013-03-08
+
+0.14 2012-06-12
+
+0.13 2012-06-12
+
+0.12 2012-06-12
+
+0.11 2012-04-13
+
+0.10 2012-03-17
+
+0.09 2012-03-16
+
+0.07 2011-06-09
+
+0.06 2011-06-02
+
+0.05 2011-05-31
+
+* Changed name from JSON::Argo to JSON::Parse
+
+0.04 2011-05-29
+
+0.03 2011-05-25
+
+0.02 2011-05-25
+
+0.01 2011-05-23
