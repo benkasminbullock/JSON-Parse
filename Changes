@@ -1,10 +1,10 @@
-0.24_03 2013-12-10
+0.25 2013-12-10
 
 * Fix bug where missing commas were not detected.
 * Now parses \uXXXX constructions.
 * "valid_json" now back to being a fast validator.
 * Add new "validate_json", a fast, exception throwing validator.
-* Surrogate pairs
+* Surrogate pairs now handled (tentative)
 * Upgrade \uXXXX to character string.
 
 0.24 2013-11-27
