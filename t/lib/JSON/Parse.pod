@@ -100,21 +100,9 @@ L</validate_json> useful.
     }
 
 This is the underlying function for L</valid_json>. It runs at the
-same high speed, but throws an error if the JSON is wrong, rather than
+same speed, but throws an error if the JSON is wrong, rather than
 returning 1 or 0. This may be useful if you want the exact error
 message where your input started to fail.
-
-If you send it uninitialized input it will print a warning message:
-
-     use warnings;
-     my $undef = undef;
-     validate_json ($undef);
-     # "Use of uninitialized value in subroutine entry"
-
-If you call it with an empty argument you will get a compile-time error:
-
-     validate_json ();
-     # "Not enough arguments for JSON::Parse::validate_json"
 
 =head1 Mapping from JSON to Perl
 
@@ -403,9 +391,8 @@ The ActiveState test results are at L<http://code.activestate.com/ppm/JSON-Parse
 
 =head1 EXPORTS
 
-The module exports nothing by default. All of the functions,
-L</parse_json>, L</json_file_to_perl>, L</valid_json> and
-L</validate_json> can be exported on request.
+The module exports nothing by default. Functions L</parse_json> and
+L</valid_json> can be exported on request.
 
 =head1 AUTHOR
 

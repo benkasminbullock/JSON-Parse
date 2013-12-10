@@ -10,6 +10,7 @@ parse (SV * json)
     /* Our collection of bits and pieces. */
 
     parser_t parser_o = {0};
+    parser_t * parser = & parser_o;
 
     /* The returned object. */
 
@@ -38,19 +39,10 @@ parse (SV * json)
 	r = array (& parser_o);
 	break;
 
-	/* Whitespace. */
-
-    case '\n':
-	parser_o.line++;
-
-	/* Fallthrough. */
-
-    case ' ':
-    case '\t':
-    case '\r':
+    case WHITESPACE:
 	goto parse_start;
 
-    case '0':
+    case '\0':
 
 	/* We have an empty string. */
 
@@ -58,7 +50,7 @@ parse (SV * json)
 	break;
 
     default:
- 	failburger (& parser_o, "Bad character %c in initial state", c);
+	failburger (& parser_o, "Bad character '%c' in initial state", c);
     }
 
     parser_free (& parser_o);
@@ -78,10 +70,7 @@ validate (SV * json)
     /* Our collection of bits and pieces. */
 
     parser_t parser_o = {0};
-
-    /* Our return value. */
-
-    int r;
+    parser_t * parser = & parser_o;
 
     /* Set up the object. */
 
@@ -90,51 +79,36 @@ validate (SV * json)
     /* If the string is empty, throw an exception. */
 
     if (parser_o.length == 0) {
-	failburger (& parser_o, "empty input");
+	failburger (& parser_o, "Empty input");
     }
-
 
     parser_o.line = 1;
     parser_o.last_byte = parser_o.input + parser_o.length;
     parser_o.unicode = SvUTF8 (json) ? 1 : 0;
 
- parse_start:
+ validate_start:
 
     switch (c = *parser_o.end++) {
 
     case '{':
 	valid_object (& parser_o);
-	r = 1;
 	break;
 
     case '[':
 	valid_array (& parser_o);
-	r = 1;
 	break;
 
-	/* Whitespace. */
+    case WHITESPACE:
+	goto validate_start;
 
-    case '\n':
-	parser_o.line++;
-
-	/* Fallthrough. */
-
-    case ' ':
-    case '\t':
-    case '\r':
-	goto parse_start;
-
-    case '0':
-
-	/* We have an empty string. */
-
-	r = 0;
+    case '\0':
+	failburger (& parser_o, "Empty input");
 
     default:
-	failburger (& parser_o, "Bad character %c in initial state", c);
+	failburger (& parser_o, "Bad character '%c' in initial state", c);
     }
 
     parser_free (& parser_o);
 
-    return r;
+    return 1;
 }

@@ -22,6 +22,24 @@ eval {
 ok ($@, "validate_json dies");
 like ($@, qr/line 5/i, "line number OK");
 
+my $empty = '  ';
+ok (! valid_json ($empty));
+eval {
+    validate_json ($empty);
+};
+ok ($@, "empty input dies");
+like ($@, qr/empty input/i, "flagged as empty input");
+
+my $undef = undef;
+ok (! valid_json ($undef));
+eval {
+    no warnings 'uninitialized';
+    validate_json ($undef);
+    use warnings 'uninitialized';
+};
+ok ($@, "undef input dies");
+like ($@, qr/empty input/i, "flagged as empty input");
+
 TODO: {
     local $TODO = 'known bugs';
 };
