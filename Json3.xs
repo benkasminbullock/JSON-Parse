@@ -2,7 +2,12 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#include "Json3-perl-common.c"
+#define PERLING
 #include "Json3-perl.c"
+#undef PERLING
+#include "Json3-perl.c"
+#include "Json3-entry-points.c"
 
 MODULE=JSON::Parse PACKAGE=JSON::Parse
 
@@ -19,5 +24,12 @@ SV * parse_json (json)
 	SV * json;
 CODE:
 	RETVAL = parse (json);
+OUTPUT:
+	RETVAL
+
+int validate_json (json)
+	SV * json;
+CODE:
+	RETVAL = validate (json);
 OUTPUT:
 	RETVAL

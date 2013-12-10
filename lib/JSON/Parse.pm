@@ -8,7 +8,7 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 
@@ -27,10 +27,14 @@ sub valid_json
     if (! $json) {
 	return undef;
     }
+    my $r;
     eval {
-	parse_json (@_);
+	$r = validate_json (@_);
     };
-    return ! $@;
+    if ($@ or ! $r) {
+	return undef;
+    }
+    return 1;
 }
 
 sub json_file_to_perl
