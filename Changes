@@ -1,3 +1,7 @@
+0.26 2013-12-10
+
+* Remove core file from distribution.
+
 0.25 2013-12-10
 
 * Fix bug where missing commas were not detected.

@@ -37,6 +37,17 @@ eval {
 ok (! $@, "parsed surrogate pairs");
 is (ord ($spo->[0]), 0x1D11E, "g-clef surrogate pair");
 
+use utf8;
+my $scorpion = '["蠍"]';
+my $p1 = parse_json ($scorpion);
+ok (utf8::is_utf8 ($p1->[0]), "UTF-8 survives");
+
+no utf8;
+
+my $ebi = '["蠍"]';
+my $p2 = parse_json ($ebi);
+ok (! utf8::is_utf8 ($p2->[0]), "Not UTF-8 not marked as UTF-8");
+
 no utf8;
 # 蟹
 my $kani = '["\u87f9", "蟹", "\u87f9猿"]';

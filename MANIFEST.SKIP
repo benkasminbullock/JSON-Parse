@@ -19,3 +19,5 @@ MYMETA..*
 benchmarks
 # Spurious build guff
 ^makeitfile$
+# Corefile!
+^.*\.core$

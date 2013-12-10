@@ -1,7 +1,7 @@
 use warnings;
 use strict;
 use Test::More;
-use JSON::Parse qw/json_to_perl valid_json/;
+use JSON::Parse qw/parse_json valid_json/;
 use utf8;
 
 binmode STDOUT, ":utf8";
@@ -14,50 +14,50 @@ binmode $builder->todo_output,    ":utf8";
 my $jason = <<'EOF';
 {"bog":"log","frog":[1,2,3],"guff":{"x":"y","z":"monkey","t":[0,1,2.3,4,59999]}}
 EOF
-my $x = gub ($jason);
+my $x = parse_json ($jason);
 note ($x->{guff}->{t}->[2]);
 cmp_ok (abs ($x->{guff}->{t}->[2] - 2.3), '<', 0.00001, "Two point three");
 
 my $fleece = '{"凄い":"技", "tickle":"baby"}';
-my $y = gub ($fleece);
-ok ($y->{tickle} eq 'baby', "Don't tickle baby");
+my $y = parse_json ($fleece);
+ok ($y->{tickle} eq 'baby', "Parse hash");
+
 ok (valid_json ($fleece), "Valid OK JSON");
 
 my $argonauts = '{"medea":{"magic":true,"nice":false}}';
-my $z = gub ($argonauts);
-ok ($z->{medea}->{magic}, "Magic, magic, you can do magic");
-ok (! ($z->{medea}->{nice}), "Now that's not very nice.");
+my $z = parse_json ($argonauts);
+ok ($z->{medea}->{magic}, "Parse true literal.");
+ok (! ($z->{medea}->{nice}), "Parse false literal.");
+
 ok (valid_json ($argonauts), "Valid OK JSON");
 
 # Test that empty inputs result in an undefined return value, and no
 # error message.
 
-#my $p = json_to_perl (undef);
-#ok (! defined $p, "Undef returns undef");
-my $Q = json_to_perl ('');
+my $Q = parse_json ('');
 ok (! defined $Q, "Empty string returns undef");
 ok (! valid_json (''), "! Valid empty string");
 my $n;
 eval {
     $n = '{"骪":"\u9aaa"';
-    my $nar = json_to_perl ($n);
+    my $nar = parse_json ($n);
 };
 ok ($@, "found error");
-#like ($@, qr/end of the file was reached/, "Error message OK");
+
 ok (! valid_json ($n), "! Not valid missing end }");
 
 
 my $bad1 = '"bad":"city"}';
 $@ = undef;
 eval {
-    json_to_perl ($bad1);
+    parse_json ($bad1);
 };
 ok ($@, "found error in '$bad1'");
 #like ($@, qr/stray characters/, "Error message as expected");
 my $notjson = 'this is not lexable';
 $@ = undef;
 eval {
-    json_to_perl ($notjson);
+    parse_json ($notjson);
 };
 ok ($@, "Got error message");
 #like ($@, qr/stray characters/i, "unlexable message $@ OK");
@@ -88,79 +88,16 @@ my $wi =<<EOF;
      ]
  }
 EOF
-my $xi = gub ($wi);
+my $xi = parse_json ($wi);
 ok ($xi->{address}->{postalCode} eq '10021', "Test a value $xi->{address}->{postalCode}");
 ok (valid_json ($wi), "Validate");
 
-my $perl_a = json_to_perl ('["a", "b", "c"]');
+my $perl_a = parse_json ('["a", "b", "c"]');
 ok (ref $perl_a eq 'ARRAY', "json array to perl array");
-my $perl_b = json_to_perl ('{"a":1, "b":2}');
+my $perl_b = parse_json ('{"a":1, "b":2}');
 ok (ref $perl_b eq 'HASH', "json object to perl hash");
 
-# The following tests use utf8::is_utf8, which is not available for
-# Perl versions less than 5.006.
-
-SKIP: {
-    skip "Skip utf8 tests due to perl version number", 2 unless $] >= 5.008;
-    use utf8;
-    my $scorpion = '["蠍"]';
-    my $p1 = json_to_perl ($scorpion);
-    ok (utf8::is_utf8 ($p1->[0]), "UTF-8 survives");
-    no utf8;
-    my $ebi = '["蠍"]';
-    my $p2 = json_to_perl ($ebi);
-    ok (! utf8::is_utf8 ($p2->[0]), "Not UTF-8 not marked as UTF-8");
-};
-
-
-# See https://rt.cpan.org/Ticket/Display.html?id=73743
 done_testing ();
+
 exit;
 
-sub gub
-{
-    my ($json) = @_;
-#    print "Processing $json\n";
-    my $p = json_to_perl ($json);
-#    print "$p\n";
-# Uncommend this to bugger things up
-#    blub ($p);
-    return $p;
-}
-
-sub blub
-{
-    my ($w, $indent) = @_;
-    if (! defined $indent) {
-        $indent = 0;
-    }
-    if (ref $w eq 'ARRAY') {
-        indent ($indent, "[");
-        for my $e (@$w) {
-            blub ($e, $indent+1);
-        }
-        indent ($indent, "]");
-    }
-    elsif (ref $w eq 'HASH') {
-        indent ($indent, "{");
-        for my $k (keys %$w) {
-            indent ($indent, "$k:");
-            blub ($w->{$k}, $indent+1);
-        }
-        indent ($indent, "}");
-    }
-    else {
-        indent ($indent, $w);
-    }
-}
-
-sub indent
-{
-    my ($indent, $w) = @_;
-    print "  " x $indent;
-    print "$w\n";
-}
-
-# Local variables:
-# mode: perl
-# End:
