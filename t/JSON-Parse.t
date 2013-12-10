@@ -46,16 +46,6 @@ ok ($@, "found error");
 #like ($@, qr/end of the file was reached/, "Error message OK");
 ok (! valid_json ($n), "! Not valid missing end }");
 
-my $m = '{"骪":"\u9aaa"}';
-my $ar = gub ($m);
-ok (defined $ar, "Unicode \\uXXXX parsed");
-ok (valid_json ($m), "Valid good JSON");
-
-TODO: {
-    local $TODO = '\u not implemented';
-    is ($ar->{骪}, '骪', "Unicode \\uXXXX parsed correctly");
-    note ("keys = ", keys %$ar);
-};
 
 my $bad1 = '"bad":"city"}';
 $@ = undef;

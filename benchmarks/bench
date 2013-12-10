@@ -9,10 +9,13 @@ my %tst = (
    "JSON::Parse" => [
        'JSON::Parse::parse_json ($json)',
    ],
+   "JP::valid" => [
+       'JSON::Parse::valid_json ($json)',
+   ],
 );
 
 use JSON::XS qw(decode_json);
-use JSON::Parse;
+use JSON::Parse qw/parse_json valid_json/;
 
 use Time::HiRes;
 use List::Util;
@@ -36,17 +39,20 @@ sub bench
 }
 
 
-printf "--------------+------------+------------+\n";
-printf "%-13s | %10s | %10s |\n", "module", "1/min", "min";
-printf "--------------|------------|------------|\n";
 my %min;
 my $min = 1e99;
 my $count = 50;
+my $times = 100;
+
+print "Repetitions: $count x $times = ", $count * $times, "\n";
+
+printf "--------------+------------+------------+\n";
+printf "%-13s | %10s | %10s |\n", "module", "1/min", "min";
+printf "--------------|------------|------------|\n";
 
 for my $module (sort keys %tst) {
     $min{$module} = $min;
 
-    my $times = 100;
     for (1..$times) {
 	my $t = bench ($tst{$module}[0], $count);
 	$min{$module} = $t if $t < $min{$module};

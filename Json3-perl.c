@@ -1,13 +1,28 @@
+/* There are two routes through the code, the PERLING route and the
+   non-PERLING route. If we go via the non-PERLING route, we never
+   create or alter any Perl-related stuff, we just parse each byte and
+   possibly throw an error. This is for validation, to make the
+   validation ultra-fast. */
+
 #ifdef PERLING
+
+/* We are creating Perl structures from the JSON. */
+
 #define PREFIX(x) x
 #define SVPTR SV *
 #define RETURNAGAIN(x) return x
 #define SETVALUE value = 
+
 #else /* def PERLING */
+
+/* Turn off everything to do with creating Perl things. We don't want
+   any Perl memory leaks. */
+
 #define PREFIX(x) valid_ ## x
 #define SVPTR void
 #define RETURNAGAIN(x) return;
 #define SETVALUE 
+
 #endif /* def PERLING */
 
 /*#define INT_MAX_DIGITS ((int) (log (INT_MAX) / log (10)) - 1)*/
@@ -181,6 +196,11 @@ PREFIX(number) (parser_t * parser)
 	}
     }
     else {
+	/* If the number has less than INT_MAX_DIGITS, we guess that
+	   it will fit inside a Perl integer, so we don't bother doing
+	   any more parsing. This is a trick to increase the speed of
+	   parsing integer numbers with a small number of digits. */
+
 	if (parser->end - start < INT_MAX_DIGITS + minus) {
 	    if (minus) {
 		guess = -guess;
@@ -197,7 +217,8 @@ PREFIX(number) (parser_t * parser)
 	}
     }
 
-    /* Convert to a string. */
+    /* We could not convert this number using a number conversion
+       routine, so we are going to convert it to a string. */
 
     RETURNAGAIN (newSVpv (start, parser->end - start));
 }
@@ -206,7 +227,9 @@ static SVPTR
 PREFIX(string) (parser_t * parser)
 {
     char c;
+#ifdef PERLING
     SV * string;
+#endif
     int len;
     char * start;
 
@@ -218,7 +241,8 @@ PREFIX(string) (parser_t * parser)
        and go back and do all the hard work of converting the escapes
        into the right things. If we don't find any escapes, we just
        use "start" and "len" and copy the string from inside
-       "input". */
+       "input". This is a trick to increase the speed of
+       processing. */
 
     while ((c = *parser->end++)) {
 	switch (c) {
@@ -234,7 +258,9 @@ PREFIX(string) (parser_t * parser)
 
  string_end:
 
+#ifdef PERLING
     string = newSVpvn (start, len);
+#endif
     goto string_done;
 
  bad_boys:
@@ -242,13 +268,18 @@ PREFIX(string) (parser_t * parser)
     parser->end = start;
 
     len = get_string (parser);
-
+#ifdef PERLING
     string = newSVpvn (parser->buffer, len);
+#endif
 
  string_done:
-    if (parser->unicode) {
+
+#ifdef PERLING
+    if (parser->unicode || parser->force_unicode) {
 	SvUTF8_on (string);
+	parser->force_unicode = 0;
     }
+#endif
 
     RETURNAGAIN (string);
 }
@@ -266,7 +297,9 @@ PREFIX(literal) (parser_t * parser, char c)
 	    * parser->end++ == 'u'
 	    &&
 	    * parser->end++ == 'e') {
+#ifdef PERLING
 	    SvREFCNT_inc (json_true);
+#endif
 	    RETURNAGAIN (json_true);
 	}
 	break;
@@ -277,7 +310,9 @@ PREFIX(literal) (parser_t * parser, char c)
 	    * parser->end++ == 'l'
 	    &&
 	    * parser->end++ == 'l') {
+#ifdef PERLING
 	    SvREFCNT_inc (json_null);
+#endif
 	    RETURNAGAIN (json_null);
 	}
 	break;
@@ -290,12 +325,18 @@ PREFIX(literal) (parser_t * parser, char c)
 	    * parser->end++ == 's'
 	    &&
 	    * parser->end++ == 'e') {
+#ifdef PERLING
 	    SvREFCNT_inc (json_false);
+#endif
 	    RETURNAGAIN (json_false);
 	}
 	break;
 
     default:
+	/* This indicates a code failure rather than the input being
+	   wrong, we should not arrive here unless the code is sending
+	   wrong-looking stuff to this routine. */
+
 	failburger (parser, "Whacko attempt to make a literal starting with %c",
 		    c); 
     }
@@ -309,8 +350,8 @@ PREFIX(literal) (parser_t * parser, char c)
 
 static SVPTR PREFIX(object) (parser_t * parser);
 
-/* This goes in the switch statement in both "object ()" and "array
-   ()". */
+/* Given one character, decide what to do next. This goes in the
+   switch statement in both "object ()" and "array ()". */
 
 #define PARSE(start)				\
 						\
@@ -318,26 +359,26 @@ static SVPTR PREFIX(object) (parser_t * parser);
  goto start;					\
 						\
  case '"':					\
- SETVALUE string (parser);			\
+ SETVALUE PREFIX(string) (parser);		\
  break;						\
 						\
  case '-':					\
  case DIGIT:					\
- SETVALUE number (parser);			\
+ SETVALUE PREFIX(number) (parser);		\
  break;						\
 						\
  case '{':					\
- SETVALUE object (parser);			\
+ SETVALUE PREFIX(object) (parser);		\
  break;						\
 						\
  case '[':					\
- SETVALUE array (parser);			\
+ SETVALUE PREFIX(array) (parser);		\
  break;						\
 						\
  case 'f':					\
  case 'n':					\
  case 't':					\
- SETVALUE literal (parser, c);			\
+ SETVALUE PREFIX(literal) (parser, c);	        \
  break
 
 
@@ -405,6 +446,9 @@ PREFIX(object) (parser_t * parser)
 #endif
     string_t key;
     int middle;
+    /* This is set to -1 if we want a Unicode key. See "perldoc
+       perlapi" under "hv_store". */
+    int uniflag = 1;
 
     middle = 0;
 #ifdef PERLING
@@ -464,17 +508,19 @@ PREFIX(object) (parser_t * parser)
     default:
 	failburger (parser, "Unknown character '%c' in object value", c);
     }
+    if (parser->unicode) {
+	uniflag = -1;
+    }
     if (key.bad_boys) {
 	int klen;
-
 	klen = resolve_string (parser, & key);
 #ifdef PERLING
-	(void) hv_store (hv, parser->buffer, klen, value, 0);
+	(void) hv_store (hv, parser->buffer, klen * uniflag, value, 0);
 #endif
     }
     else {
 #ifdef PERLING
-	(void) hv_store (hv, key.start, key.length, value, 0);
+	(void) hv_store (hv, key.start, key.length * uniflag, value, 0);
 #endif
     }
 

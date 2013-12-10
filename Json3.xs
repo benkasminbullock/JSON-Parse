@@ -2,6 +2,8 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#include "unicode.h"
+#include "unicode.c"
 #include "Json3-perl-common.c"
 #define PERLING
 #include "Json3-perl.c"

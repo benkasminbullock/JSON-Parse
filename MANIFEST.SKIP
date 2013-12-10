@@ -15,3 +15,7 @@ MYMETA..*
 ^lib/JSON/Parse\.pod\.tmpl$
 ^run\.pl$
 ^Parse\.bs$
+# Can download from github if needed.
+benchmarks
+# Spurious build guff
+^makeitfile$

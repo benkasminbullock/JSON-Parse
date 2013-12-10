@@ -110,7 +110,7 @@ my $aesc = parse_json ($escjson);
 
 is ($aesc->[0], "\t");
 is ($aesc->[1], "boobles\n");
-is ($aesc->[2], "\\u1234", "Unicode escape is copied for non-UTF-8 marked");
+ok (utf8::is_utf8 ($aesc->[2]), "Unicode switched on for character escapes");
 
 my $ao = parse_json ('[{"baby":"chops"}, {"starsky":"hutch"}]');
 ok ($ao, "Got JSON");

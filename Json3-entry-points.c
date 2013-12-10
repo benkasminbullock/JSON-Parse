@@ -19,13 +19,9 @@ parse (SV * json)
 
     parser_o.end = parser_o.input = SvPV (json, parser_o.length);
 
-    /* If the string is empty, just return nothing. */
-
     if (parser_o.length == 0) {
-	r = & PL_sv_undef;
-	return r;
+	return & PL_sv_undef;
     }
-
     parser_o.line = 1;
     parser_o.last_byte = parser_o.input + parser_o.length;
     parser_o.unicode = SvUTF8 (json) ? 1 : 0;
@@ -62,7 +58,7 @@ parse (SV * json)
 	break;
 
     default:
-	failburger (& parser_o, "Bad character %c in initial state", c);
+ 	failburger (& parser_o, "Bad character %c in initial state", c);
     }
 
     parser_free (& parser_o);
@@ -91,9 +87,12 @@ validate (SV * json)
 
     parser_o.end = parser_o.input = SvPV (json, parser_o.length);
 
+    /* If the string is empty, throw an exception. */
+
     if (parser_o.length == 0) {
-	return 0;
+	failburger (& parser_o, "empty input");
     }
+
 
     parser_o.line = 1;
     parser_o.last_byte = parser_o.input + parser_o.length;

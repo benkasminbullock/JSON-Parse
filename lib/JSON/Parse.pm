@@ -1,14 +1,18 @@
 package JSON::Parse;
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT_OK = qw/parse_json json_to_perl valid_json json_file_to_perl/;
+@EXPORT_OK = qw/parse_json
+		json_to_perl
+		valid_json
+		validate_json
+		json_file_to_perl/;
 %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 );
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.25';
+our $VERSION = '0.24_02';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 
@@ -25,14 +29,13 @@ sub valid_json
 {
     my ($json) = @_;
     if (! $json) {
-	return undef;
+	return 0;
     }
-    my $r;
     eval {
-	$r = validate_json (@_);
+	validate_json (@_);
     };
-    if ($@ or ! $r) {
-	return undef;
+    if ($@) {
+	return 0;
     }
     return 1;
 }

@@ -43,8 +43,7 @@ This function converts JSON into a Perl structure, either an array
 reference or a hash reference.
 
 If the first argument does not contain a valid JSON text,
-C<parse_json> throws a fatal error. See L</DIAGNOSTICS> for the
-possible error messages.
+C<parse_json> throws a fatal error ("dies").
 
 If the argument contains valid JSON, the return value is either a hash
 or an array reference. If the input JSON text is a serialized object,
@@ -76,7 +75,30 @@ file name. The file must be in UTF-8.
         # do something
     }
 
-C<Valid_json> returns I<1> if its argument is valid JSON and I<0> if not.
+C<Valid_json> returns I<1> if its argument is valid JSON and I<0> if
+not. It also returns I<0> if the input is undefined or the empty
+string.
+
+This is a high-speed validator which runs between three and ten times
+faster than L</parse_json>.
+
+If you want the error messages where the JSON is invalid, you may find
+L</validate_json> useful.
+
+=head2 validate_json
+
+    use JSON::Parse 'validate_json';
+    eval {
+        validate_json ('["xyz"]');
+    };
+    if ($@) {
+        print "Your JSON was invalid: $@\n";
+    }
+
+This is the underlying function for L</valid_json>. It runs at the
+same speed, but throws an error if the JSON is wrong, rather than
+returning 1 or 0. This may be useful if you want the exact error
+message where your input started to fail.
 
 =head1 Mapping from JSON to Perl
 
@@ -85,16 +107,21 @@ JSON elements are mapped to Perl as follows:
 =head2 JSON numbers
 
 JSON numbers become Perl numbers, either integers or double-precision
-floating point numbers.
+floating point numbers, or possibly strings containing the number if
+parsing of a number by the usual methods fails somehow.
+
+JSON does not allow leading zeros, or leading plus signs, so numbers
+like I<+100> or I<0123> will cause an error.
 
 =head2 JSON strings
 
 JSON strings become Perl strings. The JSON escape characters such as
 \t for the tab character (see section 2.5 of L</RFC 4627>) are mapped
-to the equivalent ASCII character. Unicode escape characters of the
-form \uXXXX (see page three of L</RFC 4627>) are mapped to UTF-8
-octets. This is done regardless of what input encoding might be used
-in the JSON text.
+to the equivalent ASCII character. 
+
+If the input string is marked as Unicode, Unicode escape characters of
+the form \uXXXX (see page three of L</RFC 4627>) are mapped to
+UTF-8. It also handles surrogate pairs.
 
 =head3 Handling of Unicode
 
@@ -118,6 +145,18 @@ but
     my $p = parse_json ($ebi);
     print utf8::is_utf8 ($p->[0]);
     # Prints nothing.
+
+Regardless of whether Perl thinks the input string is Unicode, escapes
+like \u87f9 are converted into the equivalent UTF-8 bytes and the
+particular string in which they occur is marked as a character string:
+
+    no utf8;
+    # 蟹
+    my $kani = '["\u87f9"]';
+    my $p = parse_json ($kani);
+    print utf8::is_utf8 ($p->[0]);
+    # Prints 1, because it's upgraded regardless of the input string's
+    # flags.
 
 =head2 JSON arrays
 
@@ -212,11 +251,12 @@ the octet stream, as described in part 3 of L</RFC 4627>.
 
 =head1 DIAGNOSTICS
 
-L</valid_json> does not produce error messages. L</parse_json> dies on
-encountering invalid input.
+L</valid_json> does not produce error messages. L</parse_json> and
+L</validate_json> die on encountering invalid input.
 
 Error messages have the line number and the byte number of the input
-which caused the problem.
+which caused the problem. If you find the error message unclear,
+please report that as a bug.
 
 Parsing errors are fatal, so to continue after an error occurs, put
 the parsing into an C<eval> block:
@@ -228,6 +268,95 @@ the parsing into an C<eval> block:
     if ($@) {                    
         # handle error           
     }
+
+At the moment the exact content of the diagnostics is not documented
+so please review the source code if you need more details on potential
+outputs. The name of the exception throwing function is currently
+"failburger", so search through the C files in the top directory of
+the distribution for "failburger":
+
+    cd JSON-Parse
+    grep "failburger" Json3-*.c
+
+=head1 SPEED
+
+On the author's computer, the module's speed of parsing is
+approximately the same or slightly faster than L<JSON::XS>, with small
+variations depending on the type of input. Some special types of
+input, such as floating point numbers containing an exponential part,
+like "1e09", are about two or three times faster to parse with this
+module than with L<JSON::XS>. The parsing of exponentials is done by
+the system's C<strtod> function in in JSON::Parse, but JSON::XS
+contains its own exponential parser.
+
+For validation, L</valid_json> is faster than any other module known
+to the author. 
+
+There is some benchmarking code in the github repository under the
+directory "benchmarks" for those wishing to test these claims. The
+script F<benchmarks/bench> is an adaptation of the similar script in
+the L<JSON::XS> distribution.
+
+Here is an example with "benchmarks/long.json", originally downloaded
+from L<http://dist.schmorp.de/misc/json/long.json>:
+
+    Repetitions: 50 x 100 = 5000
+    --------------+------------+------------+
+    module        |      1/min |        min |
+    --------------|------------|------------|
+    JP::valid     |   9691.538 |  0.0051591 |
+    JSON::Parse   |   3313.665 |  0.0150890 |
+    JSON::XS      |   3318.751 |  0.0150659 |
+    --------------+------------+------------+
+
+Here JP::valid is the running time of JSON::Parse's L</valid_json>. A
+higher number in the second column, or a smaller number in the third
+column, is faster.
+
+Here is an example with "benchmarks/words-array.json":
+
+    Repetitions: 50 x 100 = 5000		 
+    --------------+------------+------------+
+    module        |      1/min |        min |
+    --------------|------------|------------|
+    JP::valid     | 169535.327 |  0.0002949 |
+    JSON::Parse   |  22533.061 |  0.0022190 |
+    JSON::XS      |  21185.493 |  0.0023601 |
+    --------------+------------+------------+
+
+Here is an example with "benchmarks/exp.json", containing floating
+point numbers:
+
+    Repetitions: 50 x 100 = 5000
+    --------------+------------+------------+
+    module        |      1/min |        min |
+    --------------|------------|------------|
+    JP::valid     |  83352.623 |  0.0005999 |
+    JSON::Parse   |  30826.870 |  0.0016220 |
+    JSON::XS      |  13545.743 |  0.0036912 |
+    --------------+------------+------------+
+
+Here is an example with "benchmarks/literals.json", containing JSON literals:
+
+    Repetitions: 50 x 100 = 5000
+    --------------+------------+------------+
+    module        |      1/min |        min |
+    --------------|------------|------------|
+    JP::valid     | 182519.756 |  0.0002739 |
+    JSON::Parse   |  31564.600 |  0.0015841 |
+    JSON::XS      |  17939.709 |  0.0027871 |
+    --------------+------------+------------+
+
+Here is an example with "benchmarks/cpantesters.json", a 250K file:
+
+    Repetitions: 5 x 10 = 50
+    --------------+------------+------------+
+    module        |      1/min |        min |
+    --------------|------------|------------|
+    JP::valid     |    876.736 |  0.0057030 |
+    JSON::Parse   |    140.631 |  0.0355539 |
+    JSON::XS      |    131.866 |  0.0379171 |
+    --------------+------------+------------+
 
 =head1 SEE ALSO
 

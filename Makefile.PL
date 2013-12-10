@@ -21,6 +21,10 @@ WriteMakefile (
         },
     },
     OBJECT => 'Json3.o',
+    # Currently the oldest version to pass at CPAN testers.
+    # http://matrix.cpantesters.org/?dist=JSON-Parse+0.24
+    MIN_PERL_VERSION => '5.008009',
+
 #    OPTIMIZE => '-Wall',
 #    OPTIMIZE => '-O3',
 );
