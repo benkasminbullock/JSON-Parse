@@ -10,13 +10,6 @@
 #define SETVALUE 
 #endif /* def PERLING */
 
-/* JSON literals are all pointed to these bananas. */
-
-static SV * json_true;
-static SV * json_false;
-static SV * json_null;
-static SV * empty_string;
-
 /*#define INT_MAX_DIGITS ((int) (log (INT_MAX) / log (10)) - 1)*/
 
 /* The maximum digits we allow an integer before throwing in the
@@ -356,12 +349,16 @@ static SVPTR
 PREFIX(array) (parser_t * parser)
 {
     char c;
+#ifdef PERLING
     AV * av;
-    int middle;
     SV * value;
+#endif
+    int middle;
 
     middle = 0;
+#ifdef PERLING
     av = newAV ();
+#endif
 
  array_start:
 
@@ -384,7 +381,9 @@ PREFIX(array) (parser_t * parser)
     }
 
     middle = 1;
+#ifdef PERLING
     av_push (av, value);
+#endif
     goto array_start;
 
  array_end:

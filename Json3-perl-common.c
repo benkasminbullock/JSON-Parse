@@ -95,6 +95,13 @@ typedef struct parser {
 }
 parser_t;
 
+/* All instances of JSON literals are pointed to the following. */
+
+static SV * json_true;
+static SV * json_false;
+static SV * json_null;
+static SV * empty_string;
+
 /* Get more memory for "parser->buffer". */
 
 static void
