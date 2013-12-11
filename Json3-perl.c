@@ -381,6 +381,13 @@ static SVPTR PREFIX(object) (parser_t * parser);
  SETVALUE PREFIX(literal) (parser, c);	        \
  break
 
+#define CHECKCOMMA \
+	if (comma) {\
+	    failburger (parser, "Illegal trailing comma");\
+	}\
+
+
+#define NEXTBYTE c = *parser->end++
 
 /* We have seen "[", so now deal with the contents of an array. At the
    end of this routine, "parser->end" is pointing one beyond the final
@@ -394,38 +401,61 @@ PREFIX(array) (parser_t * parser)
     AV * av;
     SV * value;
 #endif
-    int middle;
+    /* Have we seen at least one value in the array, so that commas
+       are legal? */
+    int comma;
 
-    middle = 0;
+    comma = 0;
 #ifdef PERLING
     av = newAV ();
 #endif
 
+    /* We are either at the start of the array, just after "[", or we
+       have seen at least one value, so just after ",". */
+
  array_start:
 
-    switch (c = *parser->end++) {
+    switch (NEXTBYTE) {
 
 	PARSE(array_start);
 
     case ']':
-
+	CHECKCOMMA;
+	/* In legal JSON, this should only be reached for an empty
+	   array. */
 	goto array_end;
 
     case ',':
-
-	if (middle) {
-	    goto array_start;
-	}
+	failburger (parser, "Stray comma");
 
     default:
-	failburger (parser, "unknown character in array '%c'", c);
+	failburger (parser, "unknown character '%c' in array", c);
     }
 
-    middle = 1;
+    comma = 1;
 #ifdef PERLING
     av_push (av, value);
 #endif
-    goto array_start;
+
+    /* Accept either a comma or whitespace or the end of the array. */
+
+ array_middle:
+
+    switch (NEXTBYTE) {
+
+    case WHITESPACE:
+	goto array_middle;
+
+    case ',':
+	goto array_start;
+
+    case ']':
+	/* Array with at least one element. */
+	goto array_end;
+
+    default:
+	failburger (parser, "Unknown character '%c' after object key", c);
+    }
 
  array_end:
 
@@ -445,40 +475,70 @@ PREFIX(object) (parser_t * parser)
     SV * value;
 #endif
     string_t key;
+    /* "middle" is true if we have seen ":", until the next comma. */
     int middle;
+    /* "comma" is true if we have seen ",", until the next key. */
+    int comma;
     /* This is set to -1 if we want a Unicode key. See "perldoc
        perlapi" under "hv_store". */
-    int uniflag = 1;
+    int uniflag;
 
+    if (parser->unicode) {
+	/* Keys are unicode. */
+	uniflag = -1;
+    }
+    else {
+	/* Keys are not unicode. */
+	uniflag = 1;
+    }
+    
+    /* We have not seen a ":" yet. */
     middle = 0;
+    /* We have not seen a "," yet. */
+    comma = 0;
+
 #ifdef PERLING
     hv = newHV ();
 #endif
 
  hash_start:
 
-    switch (c = *parser->end++) {
+    switch (NEXTBYTE) {
 
     case WHITESPACE:
 	goto hash_start;
 
+	/* Unreachable */
+
     case '}':
+	CHECKCOMMA;
 	goto hash_end;
+
+	/* Unreachable */
 
     case '"':
 	if (middle) {
 	    failburger (parser, "Missing comma (,) after object value");
 	}
 	else {
+	    comma = 0;
 	    get_key_string (parser, & key);
 	    goto hash_next;
 	}
 
+	/* Unreachable */
+
     case ',':
 	if (middle) {
 	    middle = 0;
+	    comma = 1;
 	    goto hash_start;
 	}
+	else {
+	    failburger (parser, "Stray comma while parsing object");
+	}
+
+	/* Unreachable */
 
     default:
 	failburger (parser, "Unknown character '%c' in object key", c);
@@ -486,7 +546,7 @@ PREFIX(object) (parser_t * parser)
 
  hash_next:
 
-    switch (*parser->end++) {
+    switch (NEXTBYTE) {
 
     case WHITESPACE:
 	goto hash_next;
@@ -501,15 +561,12 @@ PREFIX(object) (parser_t * parser)
 
  hash_value:
 
-    switch (c = * parser->end++) {
+    switch (NEXTBYTE) {
 
 	PARSE(hash_value);
 
     default:
 	failburger (parser, "Unknown character '%c' in object value", c);
-    }
-    if (parser->unicode) {
-	uniflag = -1;
     }
     if (key.bad_boys) {
 	int klen;
@@ -531,6 +588,7 @@ PREFIX(object) (parser_t * parser)
     RETURNAGAIN (newRV_noinc ((SV *) hv));
 }
 
+#undef NEXTBYTE
 
 #undef PREFIX
 #undef SVPTR
