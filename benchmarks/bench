@@ -1,4 +1,14 @@
 #!/home/ben/software/install/bin/perl
+use warnings;
+use strict;
+use JSON::XS qw(decode_json);
+use JSON::Parse qw/parse_json valid_json/;
+
+use Time::HiRes;
+use List::Util;
+
+use utf8;
+
 use lib '/home/ben/projects/Json3/blib/lib';
 use lib '/home/ben/projects/Json3/blib/arch';
 
@@ -14,13 +24,6 @@ my %tst = (
    ],
 );
 
-use JSON::XS qw(decode_json);
-use JSON::Parse qw/parse_json valid_json/;
-
-use Time::HiRes;
-use List::Util;
-
-use utf8;
 
 my $json; # the test string
 

@@ -1,6 +1,21 @@
 /* These things are common between the validation and the parsing
    routines. This is #included into "Json3.xs". */
 
+/* "All Unicode characters may be placed within the quotation marks
+   except for the characters that must be escaped: quotation mark,
+   reverse solidus, and the control characters (U+0000 through
+   U+001F)." - from section 2.5 of RFC 4627 */
+
+#define BADBYTES				\
+      '\0':case 0x01:case 0x02:case 0x03:	\
+ case 0x04:case 0x05:case 0x06:case 0x07:	\
+ case 0x08:case 0x09:case 0x0A:case 0x0B:	\
+ case 0x0C:case 0x0D:case 0x0E:case 0x0F:	\
+ case 0x10:case 0x11:case 0x12:case 0x13:	\
+ case 0x14:case 0x15:case 0x16:case 0x17:	\
+ case 0x18:case 0x19:case 0x1A:case 0x1B:	\
+ case 0x1C:case 0x1D:case 0x1E:case 0x1F
+
 /* Match whitespace. Whitespace is as defined by the JSON standard,
    not by Perl. */
 
@@ -186,7 +201,7 @@ do_unicode_escape (parser_t * parser, char * p, char ** b_ptr)
 	    }
 	    p += 6;
 	    * b_ptr += plus2;
-	    return p;
+	    goto end;
 	}
 	else {
 	    failburger (parser, "second half of surrogate pair not found");
@@ -196,6 +211,10 @@ do_unicode_escape (parser_t * parser, char * p, char ** b_ptr)
 	failburger (parser, "error decoding \\u%s\n", unibuf);
     }
     * b_ptr += plus;
+ end:
+    if (unicode >= 0x80 && ! parser->unicode) {
+	parser->force_unicode = 1;
+    }
     return p;
 }
 
@@ -232,9 +251,6 @@ do_unicode_escape (parser_t * parser, char * p, char ** b_ptr)
 							\
     case 'u':						\
 	p = do_unicode_escape (parser, p, & b);		\
-	if (! parser->unicode) {			\
-	    parser->force_unicode = 1;			\
-	}						\
 	break;						\
 							\
     default:						\
@@ -292,6 +308,8 @@ resolve_string (parser_t * parser, string_t * s)
     return b - parser->buffer;
 }
 
+#define NEXTBYTE c = *parser->end++
+
 /* Get an object key value and put it into "key". Check for
    escapes. */
 
@@ -301,7 +319,7 @@ get_key_string (parser_t * parser, string_t * key)
     char c;
     key->start = parser->end;
     key->bad_boys = 0;
-    while ((c = *parser->end++)) {
+    while ((NEXTBYTE)) {
 
 	/* Go on eating bytes until we find a ". */
 
@@ -323,6 +341,10 @@ get_key_string (parser_t * parser, string_t * key)
     key->length = parser->end - key->start - 1;
 }
 
+#define ILLEGALBYTE  \
+    failburger (parser, "Illegal byte value '0x%02X' in string", c)
+
+
 /* Resolve the string pointed to by "parser->end" into
    "parser->buffer". The return value is the length of the
    string. This is only called if the string has \ escapes in it. */
@@ -337,17 +359,21 @@ get_string (parser_t * parser)
 	expand_buffer (parser, 0x1000);
     }
     b = parser->buffer;
-    while ((c = *parser->end++)) {
+    while ((NEXTBYTE)) {
 	switch (c) {
+
 	case '"':
 	    goto string_end;
 	    break;
+
 	case '\\':
 	    HANDLE_ESCAPES(parser->end);
 	    break;
-	case '\0':
-	    failburger (parser, "Null byte in string");
+
+	case BADBYTES:
+	    ILLEGALBYTE;
 	    break;
+
 	default:
 	    * b++ = c;
 	    break;
@@ -376,5 +402,4 @@ parser_free (parser_t * parser)
     }
 }
 
-#define NEXTBYTE c = *parser->end++
 

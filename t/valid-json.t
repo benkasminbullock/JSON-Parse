@@ -66,6 +66,34 @@ run_fail_like ($too_many_end_braces, qr/stray character/i);
 my $too_many_end_brackets = '{"bad":"bad"]]';
 run_fail_like ($too_many_end_braces, qr/stray character/i);
 
+run_fail_like ('{"bad":"forgot the end quotes}', qr/end of input/i);
+
+# See what happens when we send a string with a null byte.
+
+my $contains_null = '["' . "pupparoon\0\0 baba". '"]';
+run_fail_like ($contains_null, qr/illegal.*0x00/i);
+
+# See what happens when we send a string with a disallowed byte.
+
+my $contains_junk = '["' . chr (07) . '"]';
+run_fail_like ($contains_junk, qr/illegal.*0x07/i);
+
+my $contains_escaped_null = '["\u0000"]';
+run_ok ($contains_escaped_null);
+
+my $contains_escaped_junk = '["\u0007"]';
+run_ok ($contains_escaped_junk);
+
+my $contains_silly_whitespace = <<EOF;
+
+{
+\r\n"why"   
+:
+\t"do"\t
+}
+EOF
+run_ok ($contains_silly_whitespace);
+
 TODO: {
     local $TODO = 'known bugs';
 };

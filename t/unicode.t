@@ -38,6 +38,15 @@ ok (! $@, "parsed surrogate pairs");
 is (ord ($spo->[0]), 0x1D11E, "g-clef surrogate pair");
 
 use utf8;
+my $surpair_force_utf8 = '["\uD834\uDD1E麻婆茄子"]';
+my $spo_force_utf8;
+eval {
+    $spo_force_utf8 = parse_json ($surpair);
+};
+ok (! $@, "parsed surrogate pairs");
+is (ord ($spo_force_utf8->[0]), 0x1D11E, "g-clef surrogate pair");
+
+use utf8;
 my $scorpion = '["蠍"]';
 my $p1 = parse_json ($scorpion);
 ok (utf8::is_utf8 ($p1->[0]), "UTF-8 survives");

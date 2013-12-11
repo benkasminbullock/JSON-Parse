@@ -86,8 +86,9 @@ string.
 This is a high-speed validator which runs between three and ten times
 faster than L</parse_json>.
 
-If you want the error messages where the JSON is invalid, you may find
-L</validate_json> useful.
+C<Valid_json> does not supply the actual errors which caused
+invalidity. Use L</validate_json> to get error messages when the JSON
+is invalid.
 
 =head2 validate_json
 
@@ -101,8 +102,8 @@ L</validate_json> useful.
 
 This is the underlying function for L</valid_json>. It runs at the
 same high speed, but throws an error if the JSON is wrong, rather than
-returning 1 or 0. This may be useful if you want the exact error
-message where your input started to fail.
+returning 1 or 0. See L</DIAGNOSTICS> for the error format, which is
+identical to L</parse_json>.
 
 If you send it uninitialized input it will print a warning message:
 
@@ -135,13 +136,6 @@ JSON strings become Perl strings. The JSON escape characters such as
 C<\t> for the tab character (see section 2.5 of L</RFC 4627>) are
 mapped to the equivalent ASCII character.
 
-Unicode escape characters of the form \uXXXX (see page three of L</RFC
-4627>) are mapped to UTF-8. Strings containing \uXXXX escapes are
-upgraded to character strings regardless of whether the input is a
-character string (utf8::is_utf8 returns a true value) or a byte string
-(utf8::is_utf8 returns a false value). It also handles surrogate pairs
-in the form C<\uD834\uDD1E>.
-
 =head3 Handling of Unicode
 
 If the input to L</parse_json> is marked as Unicode characters, the
@@ -165,9 +159,16 @@ but
     print utf8::is_utf8 ($p->[0]);
     # Prints nothing.
 
-Regardless of whether Perl thinks the input string is Unicode, escapes
-like \u87f9 are converted into the equivalent UTF-8 bytes and the
-particular string in which they occur is marked as a character string:
+Escapes of the form \uXXXX (see page three of L</RFC 4627>) are mapped
+to ASCII if XXXX is less than 0x80, or to UTF-8 if XXXX is greater
+than or equal to 0x80.
+
+Strings containing \uXXXX escapes greater than 0x80 are also upgraded
+to character strings, regardless of whether the input is a character
+string or a byte string, thus regardless of whether Perl thinks the
+input string is Unicode, escapes like \u87f9 are converted into the
+equivalent UTF-8 bytes and the particular string in which they occur
+is marked as a character string:
 
     no utf8;
     # 蟹
@@ -176,6 +177,8 @@ particular string in which they occur is marked as a character string:
     print utf8::is_utf8 ($p->[0]);
     # Prints 1, because it's upgraded regardless of the input string's
     # flags.
+
+Surrogate pairs in the form C<\uD834\uDD1E> are also handled.
 
 =head2 JSON arrays
 
@@ -241,7 +244,9 @@ This module imposes the following restrictions on its input.
 JSON::Parse is a strict parser. It only parses JSON which exactly
 meets the criteria of L</RFC 4627>. That means, for example,
 JSON::Parse does not accept single quotes (') instead of double quotes
-("), or numbers with leading zeros, like 0123.
+("), or numbers with leading zeros, like 0123. JSON::Parse does not
+accept control characters in the input, missing commas between array
+or hash elements, or trailing commas.
 
 =item No incremental parsing
 
@@ -278,8 +283,10 @@ L</valid_json> does not produce error messages. L</parse_json> and
 L</validate_json> die on encountering invalid input.
 
 Error messages have the line number and the byte number of the input
-which caused the problem. If you find the error message unclear,
-please report that as a bug.
+which caused the problem. The line number is formed simply by counting
+the number of "\n" (linefeed, ASCII 0x0A) characters in the whitespace
+part of the JSON. If you find the error message unclear, please report
+that as a bug.
 
 Parsing errors are fatal, so to continue after an error occurs, put
 the parsing into an C<eval> block:

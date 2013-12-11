@@ -244,18 +244,29 @@ PREFIX(string) (parser_t * parser)
        "input". This is a trick to increase the speed of
        processing. */
 
-    while ((c = *parser->end++)) {
+    while (NEXTBYTE) {
 	switch (c) {
 	case '"':
 	    goto string_end;
 	case '\\':
 	    goto bad_boys;
+	case BADBYTES:
+	    ILLEGALBYTE;
 	default:
 	    len++;
 	}
     }
-    failburger (parser, "Null byte while reading string");
-
+    if (parser->end - parser->input >= parser->length) {
+	failburger (parser,
+		    "End of input reading string starting at byte %d/%d",
+		    start - parser->input, parser->length);
+    }
+    else {
+	/* Parsing of the string ended due to a \0 byte flipping the
+	   "while" switch and we dropped into this section before
+	   reaching the string's end. */
+	ILLEGALBYTE;
+    }
  string_end:
 
 #ifdef PERLING
@@ -381,10 +392,12 @@ static SVPTR PREFIX(object) (parser_t * parser);
  SETVALUE PREFIX(literal) (parser, c);	        \
  break
 
-#define CHECKCOMMA \
-	if (comma) {\
-	    failburger (parser, "Illegal trailing comma");\
-	}\
+/* Check for illegal comma at the end of a hash/array. */
+
+#define CHECKCOMMA						\
+    if (comma) {						\
+	failburger (parser, "Illegal trailing comma");		\
+    }								\
 
 
 /* We have seen "[", so now deal with the contents of an array. At the
@@ -556,6 +569,8 @@ PREFIX(object) (parser_t * parser)
     default:
 	failburger (parser, "Unknown character '%c' after object key", c);
     }
+
+    /* Unreachable */
 
  hash_value:
 
