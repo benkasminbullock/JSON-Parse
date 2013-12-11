@@ -387,8 +387,6 @@ static SVPTR PREFIX(object) (parser_t * parser);
 	}\
 
 
-#define NEXTBYTE c = *parser->end++
-
 /* We have seen "[", so now deal with the contents of an array. At the
    end of this routine, "parser->end" is pointing one beyond the final
    "]" of the array. */
@@ -587,8 +585,6 @@ PREFIX(object) (parser_t * parser)
 
     RETURNAGAIN (newRV_noinc ((SV *) hv));
 }
-
-#undef NEXTBYTE
 
 #undef PREFIX
 #undef SVPTR

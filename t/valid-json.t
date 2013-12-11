@@ -58,6 +58,13 @@ run_fail_like ($no_comma_array, $unknown_character);
 run_ok ('["bad"]');
 # Empty array OK
 run_ok ('[]');
+# Empty object OK
+run_ok ('{}');
+# Check the checking of final junk
+my $too_many_end_braces = '{"bad":"bad"}}';
+run_fail_like ($too_many_end_braces, qr/stray character/i);
+my $too_many_end_brackets = '{"bad":"bad"]]';
+run_fail_like ($too_many_end_braces, qr/stray character/i);
 
 TODO: {
     local $TODO = 'known bugs';

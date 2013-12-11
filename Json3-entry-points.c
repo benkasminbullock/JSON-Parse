@@ -1,3 +1,24 @@
+/* Check for stray non-whitespace after the end and free memory. */
+
+static void check_end (parser_t * parser)
+{
+    int c;
+ end:
+    switch (NEXTBYTE) {
+
+    case WHITESPACE:
+	goto end;
+
+    case '\0':
+	return;
+
+    default:
+	failburger (parser,
+		    "Stray character '%c' after end of object/array", c);
+    }
+    parser_free (parser);
+}
+
 /* This is the entry point for parsing. */
 
 static SV *
@@ -53,7 +74,7 @@ parse (SV * json)
 	failburger (& parser_o, "Bad character '%c' in initial state", c);
     }
 
-    parser_free (& parser_o);
+    check_end (parser);
 
     return r;
 }
@@ -108,7 +129,7 @@ validate (SV * json)
 	failburger (& parser_o, "Bad character '%c' in initial state", c);
     }
 
-    parser_free (& parser_o);
+    check_end (parser);
 
     return 1;
 }

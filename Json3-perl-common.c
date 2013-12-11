@@ -376,3 +376,5 @@ parser_free (parser_t * parser)
     }
 }
 
+#define NEXTBYTE c = *parser->end++
+
