@@ -244,7 +244,7 @@ PREFIX(string) (parser_t * parser)
        "input". This is a trick to increase the speed of
        processing. */
 
-    while (NEXTBYTE) {
+    while ((NEXTBYTE)) {
 	switch (c) {
 	case '"':
 	    goto string_end;
@@ -256,7 +256,7 @@ PREFIX(string) (parser_t * parser)
 	    len++;
 	}
     }
-    if (parser->end - parser->input >= parser->length) {
+    if (STRINGEND) {
 	failburger (parser,
 		    "End of input reading string starting at byte %d/%d",
 		    start - parser->input, parser->length);
@@ -280,7 +280,7 @@ PREFIX(string) (parser_t * parser)
 
     len = get_string (parser);
 #ifdef PERLING
-    string = newSVpvn (parser->buffer, len);
+    string = newSVpvn ((char *) parser->buffer, len);
 #endif
 
  string_done:
@@ -348,11 +348,11 @@ PREFIX(literal) (parser_t * parser, char c)
 	   wrong, we should not arrive here unless the code is sending
 	   wrong-looking stuff to this routine. */
 
-	failburger (parser, "Whacko attempt to make a literal starting with %c",
+	failburger (parser, "Whacko attempt to make a literal starting with '%c'",
 		    c); 
     }
-    failburger (parser, "Unparseable character %c in literal",
-		parser->end - 1); 
+    failburger (parser, "Unparseable character '%c' in literal",
+		* (parser->end - 1)); 
 
     /* Unreached, shut up compiler warnings. */
 
@@ -439,6 +439,13 @@ PREFIX(array) (parser_t * parser)
     case ',':
 	failburger (parser, "Stray comma");
 
+    case '\0':
+	if (STRINGEND) {
+	    failburger (parser, "Unexpected end of input parsing array");
+	}
+
+	/* Fallthrough */
+
     default:
 	failburger (parser, "unknown character '%c' in array", c);
     }
@@ -463,6 +470,13 @@ PREFIX(array) (parser_t * parser)
     case ']':
 	/* Array with at least one element. */
 	goto array_end;
+
+    case '\0':
+	if (STRINGEND) {
+	    failburger (parser, "Unexpected end of input parsing array");
+	}
+
+	/* Fallthrough */
 
     default:
 	failburger (parser, "Unknown character '%c' after object key", c);
@@ -551,6 +565,13 @@ PREFIX(object) (parser_t * parser)
 
 	/* Unreachable */
 
+    case '\0':
+	if (STRINGEND) {
+	    failburger (parser, "Unexpected end of input parsing object");
+	}
+
+	/* Fallthrough */
+
     default:
 	failburger (parser, "Unknown character '%c' in object key", c);
     }
@@ -566,6 +587,13 @@ PREFIX(object) (parser_t * parser)
 	middle = 1;
 	goto hash_value;
 
+    case '\0':
+	if (STRINGEND) {
+	    failburger (parser, "Unexpected end of input parsing object");
+	}
+
+	/* Fallthrough */
+
     default:
 	failburger (parser, "Unknown character '%c' after object key", c);
     }
@@ -578,6 +606,13 @@ PREFIX(object) (parser_t * parser)
 
 	PARSE(hash_value);
 
+    case '\0':
+	if (STRINGEND) {
+	    failburger (parser, "Unexpected end of input parsing object value");
+	}
+
+	/* Fallthrough */
+
     default:
 	failburger (parser, "Unknown character '%c' in object value", c);
     }
@@ -585,7 +620,7 @@ PREFIX(object) (parser_t * parser)
 	int klen;
 	klen = resolve_string (parser, & key);
 #ifdef PERLING
-	(void) hv_store (hv, parser->buffer, klen * uniflag, value, 0);
+	(void) hv_store (hv, (char *) parser->buffer, klen * uniflag, value, 0);
 #endif
     }
     else {

@@ -19,38 +19,50 @@ static void check_end (parser_t * parser)
     parser_free (parser);
 }
 
+#define ENTRYDECL				\
+    /* The currently-parsed character. */	\
+						\
+    char c;					\
+						\
+    /* Our collection of bits and pieces. */	\
+						\
+    parser_t parser_o = {0};			\
+    parser_t * parser = & parser_o
+
+/* Set up the parser. */
+
+#define SETUPPARSER(fail)						\
+    parser_o.end = parser_o.input = SvPV (json, parser_o.length);	\
+    if (parser_o.length == 0) {						\
+	fail;								\
+    }									\
+    parser_o.line = 1;							\
+    parser_o.last_byte = parser_o.input + parser_o.length;		\
+    parser_o.unicode = SvUTF8 (json) ? 1 : 0;
+
+/* Error to throw if there is a character other than whitespace, "["
+   or "{" at the start of the JSON. */
+
+#define BADCHAR \
+    failburger (& parser_o, "Bad character '%c' in initial state", c)
+
+
 /* This is the entry point for parsing. */
 
 static SV *
 parse (SV * json)
 {
-    /* The currently-parsed character. */
-
-    char c;
-
-    /* Our collection of bits and pieces. */
-
-    parser_t parser_o = {0};
-    parser_t * parser = & parser_o;
+    ENTRYDECL;
 
     /* The returned object. */
 
     SV * r;
 
-    /* Set up the object. */
-
-    parser_o.end = parser_o.input = SvPV (json, parser_o.length);
-
-    if (parser_o.length == 0) {
-	return & PL_sv_undef;
-    }
-    parser_o.line = 1;
-    parser_o.last_byte = parser_o.input + parser_o.length;
-    parser_o.unicode = SvUTF8 (json) ? 1 : 0;
+    SETUPPARSER (return & PL_sv_undef);
 
  parse_start:
 
-    switch (c = *parser_o.end++) {
+    switch (NEXTBYTE) {
 
     case '{':
 	r = object (& parser_o);
@@ -68,48 +80,37 @@ parse (SV * json)
 	/* We have an empty string. */
 
 	r = & PL_sv_undef;
-	break;
+
+	/* So there is no point checking that the string doesn't
+	   contain junk characters after its end. */
+
+	goto noendcheck;
 
     default:
-	failburger (& parser_o, "Bad character '%c' in initial state", c);
+	BADCHAR;
     }
 
     check_end (parser);
+
+ noendcheck:
 
     return r;
 }
 
 /* This is the entry point for validation. */
 
-static int
+static void
 validate (SV * json)
 {
-    /* The currently-parsed character. */
-
-    char c;
-
-    /* Our collection of bits and pieces. */
-
-    parser_t parser_o = {0};
-    parser_t * parser = & parser_o;
-
-    /* Set up the object. */
-
-    parser_o.end = parser_o.input = SvPV (json, parser_o.length);
+    ENTRYDECL;
 
     /* If the string is empty, throw an exception. */
 
-    if (parser_o.length == 0) {
-	failburger (& parser_o, "Empty input");
-    }
-
-    parser_o.line = 1;
-    parser_o.last_byte = parser_o.input + parser_o.length;
-    parser_o.unicode = SvUTF8 (json) ? 1 : 0;
+    SETUPPARSER (failburger (& parser_o, "Empty input"));
 
  validate_start:
 
-    switch (c = *parser_o.end++) {
+    switch (NEXTBYTE) {
 
     case '{':
 	valid_object (& parser_o);
@@ -119,17 +120,15 @@ validate (SV * json)
 	valid_array (& parser_o);
 	break;
 
-    case WHITESPACE:
-	goto validate_start;
-
     case '\0':
 	failburger (& parser_o, "Empty input");
 
+    case WHITESPACE:
+	goto validate_start;
+
     default:
-	failburger (& parser_o, "Bad character '%c' in initial state", c);
+	BADCHAR;
     }
 
     check_end (parser);
-
-    return 1;
 }

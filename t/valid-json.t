@@ -1,3 +1,7 @@
+# This test is meant to exercise all the possible ways that parsing
+# can fail, and also check that correct, yet weird or stupid inputs
+# are not marked as invalid.
+
 use warnings;
 use strict;
 use Test::More;
@@ -35,6 +39,20 @@ eval {
 ok ($@, "undef input dies");
 like ($@, qr/empty input/i, "flagged as empty input");
 
+#   ____                                                      _ 
+#  / ___|___  _ __ ___  _ __ ___   __ _ ___    __ _ _ __   __| |
+# | |   / _ \| '_ ` _ \| '_ ` _ \ / _` / __|  / _` | '_ \ / _` |
+# | |__| (_) | | | | | | | | | | | (_| \__ \ | (_| | | | | (_| |
+#  \____\___/|_| |_| |_|_| |_| |_|\__,_|___/  \__,_|_| |_|\__,_|
+#                                                              
+#            _                 
+#   ___ ___ | | ___  _ __  ___ 
+#  / __/ _ \| |/ _ \| '_ \/ __|
+# | (_| (_) | | (_) | | | \__ \
+#  \___\___/|_|\___/|_| |_|___/
+#                             
+
+
 # Test comma and colon parsing.
 
 my $stray_comma = qr/stray comma/i;
@@ -63,8 +81,8 @@ run_ok ('{}');
 # Check the checking of final junk
 my $too_many_end_braces = '{"bad":"bad"}}';
 run_fail_like ($too_many_end_braces, qr/stray character/i);
-my $too_many_end_brackets = '{"bad":"bad"]]';
-run_fail_like ($too_many_end_braces, qr/stray character/i);
+my $too_many_end_brackets = '["bad","bad"]]';
+run_fail_like ($too_many_end_brackets, qr/stray character/i);
 
 run_fail_like ('{"bad":"forgot the end quotes}', qr/end of input/i);
 
@@ -84,6 +102,8 @@ run_ok ($contains_escaped_null);
 my $contains_escaped_junk = '["\u0007"]';
 run_ok ($contains_escaped_junk);
 
+# Don't fail on pointless whitespace.
+
 my $contains_silly_whitespace = <<EOF;
 
 {
@@ -94,10 +114,76 @@ my $contains_silly_whitespace = <<EOF;
 EOF
 run_ok ($contains_silly_whitespace);
 
+# Throw an error with an unknown escape.
+
+my $unknown_escape_1 = '["\a"]';
+run_fail_like ($unknown_escape_1, qr/unknown escape/i);
+
+# Test all the JSON escapes at once. Note here that \\\\ turns into \\
+# after Perl has finished with it.
+
+run_ok ('["\t\f\b\r\n\\\\\"\/"]');
+
+my $bad_literal = '[truk]';
+run_fail_like ($bad_literal, qr/unparseable character 'k' in literal/i);
+
+#  _   _                 _                     
+# | \ | |_   _ _ __ ___ | |__   ___ _ __ ___   
+# |  \| | | | | '_ ` _ \| '_ \ / _ \ '__/ __|  
+# | |\  | |_| | | | | | | |_) |  __/ |  \__ \_ 
+# |_| \_|\__,_|_| |_| |_|_.__/ \___|_|  |___(_)
+#                                             
+
+# Bad numbers.
+
+my $double_minus = '[--1]';
+run_fail_like ($double_minus, qr/double minus/i);
+
+my $leading_zero = '[01]';
+run_fail_like ($leading_zero, qr/leading 0 in number/i);
+
+my $leading_plus = '[+1]';
+run_fail_like ($leading_plus, qr/unknown character/i);
+
+my $double_exp_plus = '[0.1e++3]';
+run_fail_like ($double_exp_plus, qr/double plus/i);
+
+my $double_exp_minus = '[0.1e--3]';
+run_fail_like ($double_exp_minus, qr/double minus in exponent/i);
+
+my $bad_double = '[1.0e1.0]';
+run_fail_like ($bad_double, qr/too many decimal points/i);
+
+# Numbers we accept.
+
+run_ok ('[1.0e4]');
+run_ok ('[1.0e+4]');
+run_ok ('[1.0e-4]');
+run_ok ('[0.0001e-4]');
+
+run_fail_like ('["a":1]', qr/unknown character.*':'/i);
+run_fail_like ('{1,2,3}', qr/unknown character '1' in object/i);
+run_fail_like ('[1,2,3}', qr/unknown character.*'}'/i);
+run_fail_like ('["\z"]', qr/unknown escape '\\z'/i);
+run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input parsing object value/i);
+run_fail_like ('{"gobuggs}', qr/unexpected end of input parsing object key string/i);
+
+run_fail_like ('["\uNOTHEX"]', qr/non-hexadecimal character 'N' parsing \\u escape/i);
+
+run_fail_like ('["\uABC', qr/unexpected end of input/i);
+
+run_fail_like ('["\uD834monkey\uDD1E"]', qr/second half of surrogate pair not found/i);
+
+
 TODO: {
     local $TODO = 'known bugs';
+    # Bad \u escapes 
 };
 done_testing ();
+exit;
+
+# Run the validator on $json with the expectation of getting an error
+# which looks like $expected.
 
 sub run_fail_like
 {
@@ -106,6 +192,8 @@ sub run_fail_like
     like ($error, $expected,
 	  "Got expected error '$expected' parsing '$json'");
 }
+
+# Run the test on $json with the expectation of it being invalid.
 
 sub run_fail
 {
@@ -118,6 +206,9 @@ sub run_fail
     return $@;
 }
 
+# Run the test on $json with the expectation of it being valid. This
+# is for testing that kooky inputs don't cause failures.
+
 sub run_ok
 {
     my ($json) = @_;
@@ -126,4 +217,5 @@ sub run_ok
 	validate_json ($json);
     };
     ok (! $@, "Parsing of '$json' with 'validate_json' succeeded");
+    note ($@);
 }

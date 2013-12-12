@@ -1,9 +1,10 @@
 /* These things are common between the validation and the parsing
    routines. This is #included into "Json3.xs". */
 
-/* "All Unicode characters may be placed within the quotation marks
-   except for the characters that must be escaped: quotation mark,
-   reverse solidus, and the control characters (U+0000 through
+/* The following matches bytes which are not allowed in JSON
+   strings. "All Unicode characters may be placed within the quotation
+   marks except for the characters that must be escaped: quotation
+   mark, reverse solidus, and the control characters (U+0000 through
    U+001F)." - from section 2.5 of RFC 4627 */
 
 #define BADBYTES				\
@@ -54,6 +55,9 @@
  case '8':	\
  case '9'
 
+/* This is a test for whether the string has ended, which we use when
+   we catch a zero byte in an unexpected part of the input. */
+
 /* A "string_t" is a pointer into the input, which lives in
    "parser->input". The "string_t" structure is used for copying
    strings when the string does not contain any escapes. When a string
@@ -99,7 +103,7 @@ typedef struct parser {
 
     /* Buffer to stick strings into temporarily. */
 
-    char * buffer;
+    unsigned char * buffer;
 
     /* Line number. */
 
@@ -126,7 +130,6 @@ parser_t;
 static SV * json_true;
 static SV * json_false;
 static SV * json_null;
-static SV * empty_string;
 
 /* The size of the buffer for printing errors. */
 
@@ -167,39 +170,86 @@ expand_buffer (parser_t * parser, int length)
     }
 }
 
-static INLINE char *
-do_unicode_escape (parser_t * parser, char * p, char ** b_ptr)
+/* The following are used in parsing \u escapes only. */
+
+#define LHEXBYTE						     \
+      'a': case 'b': case 'c': case 'd': case 'e': case 'f'
+
+#define UHEXBYTE						     \
+      'A': case 'B': case 'C': case 'D': case 'E': case 'F' 
+
+/* Parse the hex bit of a \uXYZA escape. */
+
+static INLINE int
+parse_hex_bytes (parser_t * parser, char * p)
 {
     int k;
-    char unibuf[5];
     int unicode;
-    int plus;
+
+    unicode = 0;
+
     for (k = 0; k < strlen ("ABCD"); k++) {
-	unibuf[k] = *((p)++);
+
+	unsigned char c;
+
+	c = p[k];
+
+	switch (c) {
+
+	case DIGIT:
+	    unicode = unicode * 16 + c - '0';
+	    break;
+
+	case UHEXBYTE:
+	    unicode = unicode * 16 + c - 'A' + 10;
+	    break;
+
+	case LHEXBYTE:
+	    unicode = unicode * 16 + c - 'a' + 10;
+	    break;
+
+	case '\0':
+	    if (p + k - parser->input >= parser->length) {
+		failburger (parser, "Unexpected end of input parsing unicode escape");
+	    }
+
+	    /* Fallthrough */
+
+	default:
+	    failburger (parser,
+			"Non-hexadecimal character '%c' parsing \\u escape",
+			c);
+	}
     }
-    unibuf[4] = '\0';
-    unicode = strtol (unibuf, 0, 16);
+    return unicode;
+}
+
+#undef LHEXBYTE
+#undef UHEXBYTE
+
+static INLINE char *
+do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
+{
+    int unicode;
+    unsigned int plus;
+    unicode = parse_hex_bytes (parser, p);
+    p += 4;
     plus = ucs2_to_utf8 (unicode, *b_ptr);
     if (plus == UNICODE_BAD_INPUT) {
 	failburger (parser,
-		    "bad unicode escape "
-		    "'\\u%s'",
-		    unibuf);
+		    "bad unicode escape");
     }
     else if (plus == UNICODE_SURROGATE_PAIR) {
 	int unicode2;
 	int plus2;
-	if (p[0] == '\\' && p[1] == 'u') {
-	    for (k = 0; k < strlen ("ABCD"); k++) {
-		unibuf[k] = p[k + 2];
-	    }
-	    unibuf[4] = '\0';
-	    unicode2 = strtol (unibuf, 0, 16);
+	unsigned char c;
+	if (*p++ == '\\' && *p++ == 'u') {
+	    unicode2 = parse_hex_bytes (parser, p);
+	    p += 4;
 	    plus2 = surrogate_to_utf8 (unicode, unicode2, * b_ptr);
 	    if (plus2 <= 0) {
 		failburger (parser, "surrogate pair unreadable");
 	    }
-	    p += 6;
 	    * b_ptr += plus2;
 	    goto end;
 	}
@@ -208,7 +258,7 @@ do_unicode_escape (parser_t * parser, char * p, char ** b_ptr)
 	}
     }
     else if (plus <= 0) {
-	failburger (parser, "error decoding \\u%s\n", unibuf);
+	failburger (parser, "error decoding unicode escape");
     }
     * b_ptr += plus;
  end:
@@ -254,7 +304,8 @@ do_unicode_escape (parser_t * parser, char * p, char ** b_ptr)
 	break;						\
 							\
     default:						\
-	failburger (parser, "Unknown escape \\%c", c);	\
+	failburger (parser,				\
+		    "Unknown escape '\\%c'", c);	\
     }
 
 /* Resolve "s" by converting escapes into the appropriate things. Put
@@ -264,15 +315,15 @@ do_unicode_escape (parser_t * parser, char * p, char ** b_ptr)
 static INLINE int
 resolve_string (parser_t * parser, string_t * s)
 {
-    /* The pointer where we copy the string. This points into into
+    /* The pointer where we copy the string. This points into
        "parser->buffer". */
 
-    char * b;
+    unsigned char * b;
 
-    /* The pointer into "parser->input", using "s->start" to get the
-       start point. We don't use "parser->end" for this job because
-       "resolve_string" is called only after the value of the object
-       is resolved. E.g. if the object goes like
+    /* "p" is the pointer into "parser->input", using "s->start" to
+       get the start point. We don't use "parser->end" for this job
+       because "resolve_string" is called only after the value of the
+       object is resolved. E.g. if the object goes like
 
        {"hot":{"potatoes":"tomatoes"}}
 
@@ -327,7 +378,7 @@ get_key_string (parser_t * parser, string_t * key)
 	    break;
 	}
 	if (parser->end >= parser->last_byte) {
-	    failburger (parser, "Object key string went past end");
+	    failburger (parser, "Unexpected end of input parsing object key string");
 	}
 
 	/* Skip over \x, where x is anything at all. This includes \"
@@ -352,8 +403,8 @@ get_key_string (parser_t * parser, string_t * key)
 static INLINE int
 get_string (parser_t * parser)
 {
-    char * b;
-    char c;
+    unsigned char * b;
+    unsigned char c;
 
     if (! parser->buffer) {
 	expand_buffer (parser, 0x1000);
@@ -402,4 +453,5 @@ parser_free (parser_t * parser)
     }
 }
 
+#define STRINGEND (parser->end - parser->input >= parser->length)
 

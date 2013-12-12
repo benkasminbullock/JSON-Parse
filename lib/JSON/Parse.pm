@@ -1,11 +1,14 @@
 package JSON::Parse;
 require Exporter;
 @ISA = qw(Exporter);
+
 @EXPORT_OK = qw/parse_json
 		json_to_perl
 		valid_json
+		assert_valid_json
 		validate_json
 		json_file_to_perl/;
+
 %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 );
@@ -23,6 +26,11 @@ our $null;
 sub json_to_perl
 {
     goto &parse_json;
+}
+
+sub validate_json
+{
+    goto &assert_valid_json;
 }
 
 sub valid_json

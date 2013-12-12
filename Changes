@@ -1,3 +1,11 @@
+0.28 2013-12-12
+
+* Change function name from "validate_json" to "assert_valid_json"
+  (old name is still accepted).
+* More tests
+* Style of error messages changed for "end of input" errors.
+* More error checking for invalid \u escapes.
+
 0.27 2013-12-11
 
 * More thorough checking of input for format errors (missing commas etc.)

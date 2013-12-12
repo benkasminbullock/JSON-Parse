@@ -20,11 +20,15 @@ WriteMakefile (
             bugtracker => "$repo/issues",
         },
     },
+    # All the C files are actually #included into Json3.xs so there is
+    # only one object file.
     OBJECT => 'Json3.o',
     # Currently the oldest version to pass at CPAN testers.
     # http://matrix.cpantesters.org/?dist=JSON-Parse+0.24
     MIN_PERL_VERSION => '5.008009',
 
+# Uncomment the following to get "author tests"
 #    OPTIMIZE => '-Wall',
+# This achieves only small speedups with GCC.
 #    OPTIMIZE => '-O3',
 );

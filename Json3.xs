@@ -29,9 +29,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-int validate_json (json)
+void assert_valid_json (json)
 	SV * json;
 CODE:
-	RETVAL = validate (json);
-OUTPUT:
-	RETVAL
+	validate (json);
