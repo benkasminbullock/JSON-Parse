@@ -13,8 +13,8 @@ static void check_end (parser_t * parser)
 	return;
 
     default:
-	failburger (parser,
-		    "Stray character '%c' after end of object/array", c);
+	failbadinput (parser,
+		      "Stray character '%c' after end of object/array", c);
     }
     parser_free (parser);
 }
@@ -44,7 +44,7 @@ static void check_end (parser_t * parser)
    or "{" at the start of the JSON. */
 
 #define BADCHAR \
-    failburger (& parser_o, "Bad character '%c' in initial state", c)
+    failbadinput (& parser_o, "Bad character '%c' in initial state", c)
 
 
 /* This is the entry point for parsing. */
@@ -106,7 +106,7 @@ validate (SV * json)
 
     /* If the string is empty, throw an exception. */
 
-    SETUPPARSER (failburger (& parser_o, "Empty input"));
+    SETUPPARSER (failbadinput (& parser_o, "Empty input"));
 
  validate_start:
 
@@ -121,7 +121,7 @@ validate (SV * json)
 	break;
 
     case '\0':
-	failburger (& parser_o, "Empty input");
+	failbadinput (& parser_o, "Empty input");
 
     case WHITESPACE:
 	goto validate_start;

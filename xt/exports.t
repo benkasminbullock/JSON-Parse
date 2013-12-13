@@ -25,15 +25,12 @@ die "no $pod found" if ! -f $pod;
 
 my $exports_pod;
 
-# Deal with stupid pod select interface by opening string as file handle.
+# Deal with pod select restriction to file handles by opening string
+# as file handle.
 
 open my $out, ">", \$exports_pod or die $!;
 
-# Stupid pod select interface follows. Remember kids: never use
-# something simple like a hash/key argument list when you can use
-# something complicated like a hash reference with minus signs and
-# array references, blah, blah, followed by the input file
-# itself. Yikes!
+# See "perldoc Pod::Select".
 
 podselect ({
     -output => $out,

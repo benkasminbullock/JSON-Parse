@@ -95,12 +95,12 @@ PREFIX(number) (parser_t * parser)
 
  number_start:
 
-    switch (c = *parser->end++) {
+    switch (NEXTBYTE) {
 
     case '.':
 
 	if (dot) {
-	    failburger (parser, "Too many decimal points");
+	    failbadinput (parser, "Too many decimal points");
 	}
 	dot = 1;
 	goto number_start;
@@ -116,13 +116,13 @@ PREFIX(number) (parser_t * parser)
 	   of RFC 4627, the JSON standard.) */
 
 	if (! exp) {
-	    failburger (parser, "Plus outside exponential");
+	    failbadinput (parser, "Plus outside exponential");
 	}
 
 	/* Two pluses in a row, "++". */
 
 	if (plus) {
-	    failburger (parser, "Double plus");
+	    failbadinput (parser, "Double plus");
 	}
 	plus = 1;
 	goto number_start;
@@ -131,14 +131,14 @@ PREFIX(number) (parser_t * parser)
 
 	if (exp) {
 	    if (expminus) {
-		failburger (parser, "Double minus in exponent");
+		failbadinput (parser, "Double minus in exponent");
 	    }
 	    expminus = 1;
 	    goto number_start;
 	}
 	else {
 	    if (minus) {
-		failburger (parser, "Double minus");
+		failbadinput (parser, "Double minus");
 	    }
 	    minus = 1;
 	    goto number_start;
@@ -148,7 +148,7 @@ PREFIX(number) (parser_t * parser)
     case 'E':
 
 	if (exp) {
-	    failburger (parser, "Doubled exponential");
+	    failbadinput (parser, "Doubled exponential");
 	}
 	exp = 1;
 	goto number_start;
@@ -171,13 +171,26 @@ PREFIX(number) (parser_t * parser)
 	    if (zero) {
 		/* "Leading zeros are not allowed." (from section 2.4
 		   of JSON standard.) */
-		failburger (parser, "leading 0 in number");
+		failbadinput (parser, "leading 0 in number");
 	    }
 	    guess = 10 * guess + (c - '0');
 	}
 	goto number_start;
 
+    case '\0':
+	if (STRINGEND) {
+	    failbadinput (parser,
+			  "Unexpected end of input while parsing a "
+			  "number starting at byte %d", start - parser->input);
+	}
+
+	/* Fallthrough. */
+
     default:
+
+	/* We read a byte which wasn't part of a number, so push it
+	   back on the byte stack for the next thing to work out what
+	   to do with it. */
 
 	parser->end--;
 	break;
@@ -218,7 +231,10 @@ PREFIX(number) (parser_t * parser)
     }
 
     /* We could not convert this number using a number conversion
-       routine, so we are going to convert it to a string. */
+       routine, so we are going to convert it to a string.  This might
+       happen with ridiculously long numbers or something. The JSON
+       standard doesn't explicitly disallow integers with a million
+       digits. */
 
     RETURNAGAIN (newSVpv (start, parser->end - start));
 }
@@ -257,7 +273,7 @@ PREFIX(string) (parser_t * parser)
 	}
     }
     if (STRINGEND) {
-	failburger (parser,
+	failbadinput (parser,
 		    "End of input reading string starting at byte %d/%d",
 		    start - parser->input, parser->length);
     }
@@ -295,8 +311,7 @@ PREFIX(string) (parser_t * parser)
     RETURNAGAIN (string);
 }
 
-/* JSON literals, a complete nuisance for people writing JSON
-   parsers. */
+/* JSON literals. */
 
 static SVPTR
 PREFIX(literal) (parser_t * parser, char c)
@@ -344,15 +359,20 @@ PREFIX(literal) (parser_t * parser, char c)
 	break;
 
     default:
-	/* This indicates a code failure rather than the input being
-	   wrong, we should not arrive here unless the code is sending
-	   wrong-looking stuff to this routine. */
 
-	failburger (parser, "Whacko attempt to make a literal starting with '%c'",
-		    c); 
+	/* Because we have already checked that the input starts with
+	   either "t", "n" or "f", arriving here indicates a code
+	   failure rather than the input being wrong. */
+
+	failbug (__FILE__, __LINE__, parser,
+		 "Attempt to make a literal starting with '%c'", c); 
     }
-    failburger (parser, "Unparseable character '%c' in literal",
-		* (parser->end - 1)); 
+
+    /* The bad character causing the failure is at "parser->end - 1"
+       because we didn't update "c" in the above switches. */
+
+    failbadinput (parser, "Unparseable character '%c' in literal",
+		  * (parser->end - 1)); 
 
     /* Unreached, shut up compiler warnings. */
 
@@ -396,7 +416,7 @@ static SVPTR PREFIX(object) (parser_t * parser);
 
 #define CHECKCOMMA						\
     if (comma) {						\
-	failburger (parser, "Illegal trailing comma");		\
+	failbadinput (parser, "Illegal trailing comma");		\
     }								\
 
 
@@ -437,17 +457,17 @@ PREFIX(array) (parser_t * parser)
 	goto array_end;
 
     case ',':
-	failburger (parser, "Stray comma");
+	failbadinput (parser, "Stray comma");
 
     case '\0':
 	if (STRINGEND) {
-	    failburger (parser, "Unexpected end of input parsing array");
+	    failbadinput (parser, "Unexpected end of input parsing array");
 	}
 
 	/* Fallthrough */
 
     default:
-	failburger (parser, "unknown character '%c' in array", c);
+	failbadinput (parser, "Unknown character '%c' in array", c);
     }
 
     comma = 1;
@@ -473,13 +493,16 @@ PREFIX(array) (parser_t * parser)
 
     case '\0':
 	if (STRINGEND) {
-	    failburger (parser, "Unexpected end of input parsing array");
+	    failbadinput (parser, "Unexpected end of input parsing array");
 	}
 
 	/* Fallthrough */
 
     default:
-	failburger (parser, "Unknown character '%c' after object key", c);
+
+	/* There should be a way to render unprintable characters. */
+
+	failbadinput (parser, "Unknown character '%c' after object key", c);
     }
 
  array_end:
@@ -543,7 +566,7 @@ PREFIX(object) (parser_t * parser)
 
     case '"':
 	if (middle) {
-	    failburger (parser, "Missing comma (,) after object value");
+	    failbadinput (parser, "Missing comma (,) after object value");
 	}
 	else {
 	    comma = 0;
@@ -560,20 +583,20 @@ PREFIX(object) (parser_t * parser)
 	    goto hash_start;
 	}
 	else {
-	    failburger (parser, "Stray comma while parsing object");
+	    failbadinput (parser, "Stray comma while parsing object");
 	}
 
 	/* Unreachable */
 
     case '\0':
 	if (STRINGEND) {
-	    failburger (parser, "Unexpected end of input parsing object");
+	    failbadinput (parser, "Unexpected end of input parsing object");
 	}
 
 	/* Fallthrough */
 
     default:
-	failburger (parser, "Unknown character '%c' in object key", c);
+	failbadinput (parser, "Unknown character '%c' in object key", c);
     }
 
  hash_next:
@@ -589,13 +612,13 @@ PREFIX(object) (parser_t * parser)
 
     case '\0':
 	if (STRINGEND) {
-	    failburger (parser, "Unexpected end of input parsing object");
+	    failbadinput (parser, "Unexpected end of input after object key");
 	}
 
 	/* Fallthrough */
 
     default:
-	failburger (parser, "Unknown character '%c' after object key", c);
+	failbadinput (parser, "Unknown character '%c' after object key", c);
     }
 
     /* Unreachable */
@@ -608,13 +631,13 @@ PREFIX(object) (parser_t * parser)
 
     case '\0':
 	if (STRINGEND) {
-	    failburger (parser, "Unexpected end of input parsing object value");
+	    failbadinput (parser, "Unexpected end of input while looking for object value");
 	}
 
 	/* Fallthrough */
 
     default:
-	failburger (parser, "Unknown character '%c' in object value", c);
+	failbadinput (parser, "Unknown character '%c' in object value", c);
     }
     if (key.bad_boys) {
 	int klen;

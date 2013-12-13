@@ -45,7 +45,7 @@
 /* Match digits. */
 
 #define DIGIT19 \
-    '1':	\
+      '1':	\
  case '2':	\
  case '3':	\
  case '4':	\
@@ -133,23 +133,67 @@ static SV * json_null;
 
 /* The size of the buffer for printing errors. */
 
-#define BURGERSIZE 0x1000
+#define ERRORMSGBUFFERSIZE 0x1000
 
 /* Error fallthrough. This takes the error and sends it to "croak". */
 
-static INLINE void failburger (parser_t * parser, const char * format, ...)
+static INLINE void failbadinput (parser_t * parser, const char * format, ...)
 {
-    char buffer[BURGERSIZE];
+    char buffer[ERRORMSGBUFFERSIZE];
     va_list a;
     va_start (a, format);
-    vsnprintf (buffer, BURGERSIZE, format, a);
+    vsnprintf (buffer, ERRORMSGBUFFERSIZE, format, a);
     va_end (a);
-    croak ("Line %d, byte %d/%d: %s", parser->line,
+    if (parser->length > 0) {
+	if (parser->end - parser->input > parser->length) {
+	    croak ("JSON error at line %d: %s", parser->line,
+		   buffer);
+	}
+	else {
+	    croak ("JSON error at line %d, byte %d/%d: %s", parser->line,
+		   parser->end - parser->input,
+		   parser->length, buffer);
+	}
+    }
+    else {
+	croak ("JSON error: %s", buffer);
+    }
+}
+
+/* This is for failures not due to errors in the input or to bugs but
+   to exhaustion of resources, i.e. out of memory. */
+
+static INLINE void failresources (parser_t * parser, const char * format, ...)
+{
+    char buffer[ERRORMSGBUFFERSIZE];
+    va_list a;
+    va_start (a, format);
+    vsnprintf (buffer, ERRORMSGBUFFERSIZE, format, a);
+    va_end (a);
+    croak ("Parsing failed at line %d, byte %d/%d: %s", parser->line,
 	   parser->end - parser->input,
 	   parser->length, buffer);
 }
 
-#undef BURGERSIZE
+/* Assert failure handler. This takes the error and sends it to
+   "croak". Coming here means there is a bug in the code rather than
+   in the JSON input. */
+
+static INLINE void
+failbug (char * file, int line, parser_t * parser, const char * format, ...)
+{
+    char buffer[ERRORMSGBUFFERSIZE];
+    va_list a;
+    va_start (a, format);
+    vsnprintf (buffer, ERRORMSGBUFFERSIZE, format, a);
+    va_end (a);
+    croak ("JSON::Parse: %s:%d: Internal error at line %d, byte %d/%d: %s",
+	   parser->line,
+	   parser->end - parser->input,
+	   parser->length, buffer);
+}
+
+#undef ERRORMSGBUFFERSIZE
 
 /* Get more memory for "parser->buffer". */
 
@@ -165,7 +209,7 @@ expand_buffer (parser_t * parser, int length)
 	    parser->buffer = malloc (parser->buffer_size);
 	}
 	if (! parser->buffer) {
-	    failburger (parser, "out of memory");
+	    failresources (parser, "out of memory");
 	}
     }
 }
@@ -210,15 +254,16 @@ parse_hex_bytes (parser_t * parser, char * p)
 
 	case '\0':
 	    if (p + k - parser->input >= parser->length) {
-		failburger (parser, "Unexpected end of input parsing unicode escape");
+		failbadinput (parser, "Unexpected end of input parsing unicode escape");
 	    }
 
 	    /* Fallthrough */
 
 	default:
-	    failburger (parser,
-			"Non-hexadecimal character '%c' parsing \\u escape",
-			c);
+	    failbadinput (parser,
+			  "Non-hexadecimal character '%c' at byte %d "
+			  "of \\u escape",
+			  c, k + 1);
 	}
     }
     return unicode;
@@ -236,29 +281,30 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
     p += 4;
     plus = ucs2_to_utf8 (unicode, *b_ptr);
     if (plus == UNICODE_BAD_INPUT) {
-	failburger (parser,
+	failbadinput (parser,
 		    "bad unicode escape");
     }
     else if (plus == UNICODE_SURROGATE_PAIR) {
 	int unicode2;
 	int plus2;
-	unsigned char c;
 	if (*p++ == '\\' && *p++ == 'u') {
 	    unicode2 = parse_hex_bytes (parser, p);
 	    p += 4;
 	    plus2 = surrogate_to_utf8 (unicode, unicode2, * b_ptr);
 	    if (plus2 <= 0) {
-		failburger (parser, "surrogate pair unreadable");
+		failbadinput (parser, "surrogate pair unreadable");
 	    }
 	    * b_ptr += plus2;
 	    goto end;
 	}
 	else {
-	    failburger (parser, "second half of surrogate pair not found");
+	    failbadinput (parser, "second half of surrogate pair not found");
 	}
     }
     else if (plus <= 0) {
-	failburger (parser, "error decoding unicode escape");
+	failbug (__FILE__, __LINE__, parser, 
+		 "unhandled error code %d while decoding unicode escape",
+		 plus);
     }
     * b_ptr += plus;
  end:
@@ -268,7 +314,8 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
     return p;
 }
 
-/* Handle backslash escapes. */
+/* Handle backslash escapes. We can't use the NEXTBYTE macro here for
+   the reasons outlined below. */
 
 #define HANDLE_ESCAPES(p)				\
     switch (c = * ((p)++)) {				\
@@ -304,7 +351,7 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
 	break;						\
 							\
     default:						\
-	failburger (parser,				\
+	failbadinput (parser,				\
 		    "Unknown escape '\\%c'", c);	\
     }
 
@@ -378,7 +425,8 @@ get_key_string (parser_t * parser, string_t * key)
 	    break;
 	}
 	if (parser->end >= parser->last_byte) {
-	    failburger (parser, "Unexpected end of input parsing object key string");
+	    failbadinput (parser,
+			  "Unexpected end of input parsing object key string");
 	}
 
 	/* Skip over \x, where x is anything at all. This includes \"
@@ -393,7 +441,7 @@ get_key_string (parser_t * parser, string_t * key)
 }
 
 #define ILLEGALBYTE  \
-    failburger (parser, "Illegal byte value '0x%02X' in string", c)
+    failbadinput (parser, "Illegal byte value '0x%02X' in string", c)
 
 
 /* Resolve the string pointed to by "parser->end" into
@@ -438,7 +486,7 @@ get_string (parser_t * parser)
 	    b = parser->buffer + size;
 	}
 	if (parser->end >= parser->last_byte) {
-	    failburger (parser, "Object key string went past end");
+	    failbadinput (parser, "Object key string went past end");
 	}
     }
  string_end:

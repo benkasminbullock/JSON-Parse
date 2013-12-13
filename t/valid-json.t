@@ -154,6 +154,9 @@ run_fail_like ($double_exp_minus, qr/double minus in exponent/i);
 my $bad_double = '[1.0e1.0]';
 run_fail_like ($bad_double, qr/too many decimal points/i);
 
+my $ending = '[1234567';
+run_fail_like ($ending, qr/unexpected end of input/i);
+
 # Numbers we accept.
 
 run_ok ('[1.0e4]');
@@ -165,14 +168,15 @@ run_fail_like ('["a":1]', qr/unknown character.*':'/i);
 run_fail_like ('{1,2,3}', qr/unknown character '1' in object/i);
 run_fail_like ('[1,2,3}', qr/unknown character.*'}'/i);
 run_fail_like ('["\z"]', qr/unknown escape '\\z'/i);
-run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input parsing object value/i);
+run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input while looking for object value/i);
 run_fail_like ('{"gobuggs}', qr/unexpected end of input parsing object key string/i);
 
-run_fail_like ('["\uNOTHEX"]', qr/non-hexadecimal character 'N' parsing \\u escape/i);
+run_fail_like ('["\uNOTHEX"]', qr/non-hexadecimal character 'N' at byte 1 of \\u escape/i);
 
 run_fail_like ('["\uABC', qr/unexpected end of input/i);
 
 run_fail_like ('["\uD834monkey\uDD1E"]', qr/second half of surrogate pair not found/i);
+
 
 
 TODO: {
