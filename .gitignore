@@ -13,3 +13,5 @@ Parse.c
 
 MANIFEST
 README
+makeitfile
+unicode.[ch]
