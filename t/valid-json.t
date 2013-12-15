@@ -56,8 +56,8 @@ like ($@, qr/empty input/i, "flagged as empty input");
 # Test comma and colon parsing.
 
 my $stray_comma = qr/stray comma/i;
-my $unknown_character = qr/unknown character/i;
-my $illegal_trailing_comma = qr/illegal trailing comma/i;
+my $unknown_character = qr/unexpected character/i;
+my $illegal_trailing_comma = qr/trailing comma/i;
 my $bad_comma_1 = '{,"bad":"bad"}';
 run_fail_like ($bad_comma_1, $stray_comma);
 my $bad_comma_array = '[,"bad","bad"]';
@@ -80,9 +80,10 @@ run_ok ('[]');
 run_ok ('{}');
 # Check the checking of final junk
 my $too_many_end_braces = '{"bad":"bad"}}';
-run_fail_like ($too_many_end_braces, qr/stray character/i);
+my $stray_char = qr/stray final character/i;
+run_fail_like ($too_many_end_braces, $stray_char);
 my $too_many_end_brackets = '["bad","bad"]]';
-run_fail_like ($too_many_end_brackets, qr/stray character/i);
+run_fail_like ($too_many_end_brackets, $stray_char);
 
 run_fail_like ('{"bad":"forgot the end quotes}', qr/end of input/i);
 
@@ -125,7 +126,7 @@ run_fail_like ($unknown_escape_1, qr/unknown escape/i);
 run_ok ('["\t\f\b\r\n\\\\\"\/"]');
 
 my $bad_literal = '[truk]';
-run_fail_like ($bad_literal, qr/unparseable character 'k' in literal/i);
+run_fail_like ($bad_literal, qr/unexpected character 'k' in literal/i);
 
 #  _   _                 _                     
 # | \ | |_   _ _ __ ___ | |__   ___ _ __ ___   
@@ -143,7 +144,7 @@ my $leading_zero = '[01]';
 run_fail_like ($leading_zero, qr/leading 0 in number/i);
 
 my $leading_plus = '[+1]';
-run_fail_like ($leading_plus, qr/unknown character/i);
+run_fail_like ($leading_plus, qr/unexpected character/i);
 
 my $double_exp_plus = '[0.1e++3]';
 run_fail_like ($double_exp_plus, qr/double plus/i);
@@ -164,9 +165,9 @@ run_ok ('[1.0e+4]');
 run_ok ('[1.0e-4]');
 run_ok ('[0.0001e-4]');
 
-run_fail_like ('["a":1]', qr/unknown character.*':'/i);
-run_fail_like ('{1,2,3}', qr/unknown character '1' in object/i);
-run_fail_like ('[1,2,3}', qr/unknown character.*'}'/i);
+run_fail_like ('["a":1]', qr/unexpected character.*':'/i);
+run_fail_like ('{1,2,3}', qr/unexpected character '1' parsing object/i);
+run_fail_like ('[1,2,3}', qr/unexpected character.*'}'/i);
 run_fail_like ('["\z"]', qr/unknown escape '\\z'/i);
 run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input/i);
 run_fail_like ('{"gobuggs}', qr/unexpected end of input parsing/i);

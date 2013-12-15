@@ -287,6 +287,7 @@ PREFIX(string) (parser_t * parser)
 	    len++;
 	}
     }
+#if 0
     if (STRINGEND) {
 	parser->bad_type = json_string;
 	parser->error = json_error_unexpected_end_of_input;
@@ -296,13 +297,14 @@ PREFIX(string) (parser_t * parser)
 		    start - parser->input, parser->length);
     }
     else {
+#endif
 	/* Parsing of the string ended due to a \0 byte flipping the
 	   "while" switch and we dropped into this section before
 	   reaching the string's end. */
 	parser->bad_type = json_string;
 	parser->error = json_error_illegal_byte;
 	ILLEGALBYTE;
-    }
+	//    }
  string_end:
 
 #ifdef PERLING
@@ -510,6 +512,7 @@ PREFIX(array) (parser_t * parser)
 	parser->bad_type = json_array;
 	parser->expected = ARRAY_END | VALUE_START;
 	parser->bad_beginning = start;
+	parser->error = json_error_unexpected_character;
 	failbadinput (parser, "Unknown character '%c'", c);
     }
 
@@ -618,7 +621,8 @@ PREFIX(object) (parser_t * parser)
     case '"':
 	if (middle) {
 	    parser->bad_byte = parser->end - 1;
-	    failbadinput (parser, "Missing comma (,) after object value");
+	    parser->error = json_error_missing_comma;
+	    failbadinput (parser, "Missing comma (,)");
 	}
 	else {
 	    comma = 0;
@@ -685,7 +689,7 @@ PREFIX(object) (parser_t * parser)
 	parser->bad_type = json_object;
 	parser->bad_beginning = start;
 	if (STRINGEND) {
-	    failbadinput (parser, "Unexpected end of input after object key");
+	    failbadinput (parser, "Unexpected end of input");
 	}
 
 	/* Fallthrough */
@@ -696,7 +700,7 @@ PREFIX(object) (parser_t * parser)
 	parser->expected = XWHITESPACE | VALUE_SEPARATOR | OBJECT_END;
 	parser->bad_type = json_object;
 	parser->bad_beginning = start;
-	failbadinput (parser, "Unknown character '%c' after object key", c);
+	failbadinput (parser, "Unknown character '%c'", c);
     }
 
     /* Unreachable */

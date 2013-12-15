@@ -113,13 +113,13 @@ json_error_t;
 
 const char * json_errors[json_error_overflow] = {
     "invalid",
-    "Unexpected character",
+    "Unexpected character '%c'",
     "Unexpected end of input",
-    "Non-hexadecimal character",
+    "Non-hexadecimal character '%c'",
     "Stray comma",
     "Missing comma",
-    "Illegal byte in string",
-    "Bad literal",
+    "Illegal byte in string 0x%02x",
+    "Unexpected character '%c' in literal",
     "Stray final character",
     "Trailing comma",
 };
@@ -261,6 +261,13 @@ failbug (char * file, int line, parser_t * parser, const char * format, ...)
 	   parser->length, buffer);
 }
 
+/* This is a test for whether the string has ended, which we use when
+   we catch a zero byte in an unexpected part of the input. Here we
+   use ">" rather than ">=" because "parser->end" is incremented by
+   one after each access. */
+
+#define STRINGEND (parser->end > parser->last_byte)
+
 static INLINE void
 failbadinput (parser_t * parser, const char * format, ...)
 {
@@ -269,6 +276,21 @@ failbadinput (parser_t * parser, const char * format, ...)
     int string_end;
     int i;
     int l;
+    if (
+	(
+	 parser->error == json_error_unexpected_character
+	 ||
+	 parser->error == json_error_illegal_byte
+	 )
+	&&
+	STRINGEND) {
+	parser->error = json_error_unexpected_end_of_input;
+	parser->bad_byte = 0;
+    }
+    if (parser->error != json_error_invalid &&
+	parser->error < json_error_overflow) {
+	format = json_errors[parser->error];
+    }
     l = strlen (format);
     if (l > ERRORMSGBUFFERSIZE - XLENGTH) {
 	l = ERRORMSGBUFFERSIZE - XLENGTH;
@@ -277,6 +299,9 @@ failbadinput (parser_t * parser, const char * format, ...)
 	formatbuffer[i] = format[i];
     }
     formatbuffer[l] = '\0';
+    /* If the error is unexpected character or illegal byte, and the
+       actual unexpected character is the end of the string character
+       \0, change to unexpected end of input error. */
     if (parser->bad_byte) {
 	if (! isprint (* (parser->bad_byte))) {
 	    int percent;
@@ -651,11 +676,6 @@ get_key_string (parser_t * parser, string_t * key)
     parser->error = json_error_illegal_byte;				\
     failbadinput (parser, "Illegal byte value '0x%02X' in string", c)
 
-
-/* This is a test for whether the string has ended, which we use when
-   we catch a zero byte in an unexpected part of the input. */
-
-#define STRINGEND (parser->end >= parser->last_byte)
 
 /* Resolve the string pointed to by "parser->end" into
    "parser->buffer". The return value is the length of the
