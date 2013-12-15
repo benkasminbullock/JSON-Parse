@@ -15,12 +15,12 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.28';
+our $VERSION = '0.28_01';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 
-our $true = 1;
-our $false = 0;
+our $true;
+our $false;
 our $null;
 
 sub json_to_perl

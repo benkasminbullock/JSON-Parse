@@ -1,0 +1,72 @@
+error: Stray character '%c' after end of object/array
+type: badinput
+error: out of memory
+type: resources
+error: Unexpected end of input parsing unicode escape
+type: badinput
+error: Non-hexadecimal character '%c' at byte %d of \\u escape
+type: badinput
+error: bad unicode escape
+type: badinput
+error: surrogate pair unreadable
+type: badinput
+error: second half of surrogate pair not found
+type: badinput
+error: unhandled error code %d while decoding unicode escape
+type: bug
+error: Unexpected end of input parsing object key string
+type: badinput
+error: Illegal byte value '0x%02X' in string
+type: badinput
+error: Object key string went past end
+type: badinput
+error: Too many decimal points
+type: badinput
+error: Plus outside exponential
+type: badinput
+error: Double plus
+type: badinput
+error: Double minus in exponent
+type: badinput
+error: Double minus
+type: badinput
+error: Doubled exponential
+type: badinput
+error: leading 0 in number
+type: badinput
+error: Unexpected end of input while parsing a number starting at byte %d
+type: badinput
+error: End of input reading string starting at byte %d/%d
+type: badinput
+error: Attempt to make a literal starting with '%c'
+type: bug
+error: Unparseable character '%c' in literal
+type: badinput
+error: Illegal trailing comma
+type: badinput
+error: Stray comma
+type: badinput
+error: Unexpected end of input parsing array
+type: badinput
+error: Unknown character '%c' in array
+type: badinput
+error: Unexpected end of input parsing array
+type: badinput
+error: Unknown character '%c' after object key
+type: badinput
+error: Missing comma (,) after object value
+type: badinput
+error: Stray comma while parsing object
+type: badinput
+error: Unexpected end of input parsing object
+type: badinput
+error: Unknown character '%c' in object key
+type: badinput
+error: Unexpected end of input after object key
+type: badinput
+error: Unknown character '%c' after object key
+type: badinput
+error: Unexpected end of input while looking for object value
+type: badinput
+error: Unknown character '%c' in object value
+type: badinput

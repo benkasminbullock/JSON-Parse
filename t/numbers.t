@@ -1,7 +1,7 @@
 use warnings;
 use strict;
 use JSON::Parse 'json_to_perl';
-use Test::More tests => 11;
+use Test::More;
 
 my $p;
 
@@ -53,8 +53,7 @@ eval {
 like ($@, qr/leading 0/, "Error for leading zero");
 
 
-# See https://rt.cpan.org/Ticket/Display.html?id=73743
-#done_testing;
+done_testing;
 exit;
 
 sub compare

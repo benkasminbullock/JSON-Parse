@@ -13,8 +13,10 @@ static void check_end (parser_t * parser)
 	return;
 
     default:
+	parser->bad_byte = parser->end - 1;
+	parser->error = json_error_stray_final_character;
 	failbadinput (parser,
-		      "Stray character '%c' after end of object/array", c);
+		      "Stray character '%c' after end of JSON", c);
     }
     parser_free (parser);
 }

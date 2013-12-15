@@ -18,8 +18,13 @@ PROTOTYPES: ENABLE
 BOOT:
 {
 	json_true = get_sv ("JSON::Parse::true", GV_ADD);
+	sv_setiv (json_true, 1);
+	SvREADONLY_on (json_true);
 	json_false = get_sv ("JSON::Parse::false", GV_ADD);
+	sv_setiv (json_false, 0);
+	SvREADONLY_on (json_false);
 	json_null = get_sv ("JSON::Parse::null", GV_ADD);
+	SvREADONLY_on (json_null);
 }
 
 SV * parse_json (json)

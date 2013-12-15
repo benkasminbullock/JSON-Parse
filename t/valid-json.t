@@ -168,8 +168,8 @@ run_fail_like ('["a":1]', qr/unknown character.*':'/i);
 run_fail_like ('{1,2,3}', qr/unknown character '1' in object/i);
 run_fail_like ('[1,2,3}', qr/unknown character.*'}'/i);
 run_fail_like ('["\z"]', qr/unknown escape '\\z'/i);
-run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input while looking for object value/i);
-run_fail_like ('{"gobuggs}', qr/unexpected end of input parsing object key string/i);
+run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input/i);
+run_fail_like ('{"gobuggs}', qr/unexpected end of input parsing/i);
 
 run_fail_like ('["\uNOTHEX"]', qr/non-hexadecimal character 'N' at byte 1 of \\u escape/i);
 

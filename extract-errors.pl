@@ -1,7 +1,8 @@
 #!/home/ben/software/install/bin/perl
 use warnings;
 use strict;
-use C::Tokenize qw/$string_re remove_quotes/;
+use C::Utility qw/remove_quotes/;
+use C::Tokenize qw/$string_re/;
 my @files = <Json3-*.c>;
 for my $file (@files) {
     local $/ = ';';
