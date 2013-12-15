@@ -50,7 +50,7 @@ ok ($@);
 eval {
     json_to_perl ('[0111]');
 };
-like ($@, qr/leading 0/, "Error for leading zero");
+like ($@, qr/leading zero/i, "Error for leading zero");
 
 
 done_testing;

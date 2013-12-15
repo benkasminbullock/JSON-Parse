@@ -15,8 +15,7 @@ static void check_end (parser_t * parser)
     default:
 	parser->bad_byte = parser->end - 1;
 	parser->error = json_error_stray_final_character;
-	failbadinput (parser,
-		      "Stray character '%c' after end of JSON", c);
+	failbadinput (parser);
     }
     parser_free (parser);
 }
@@ -33,21 +32,20 @@ static void check_end (parser_t * parser)
 
 /* Set up the parser. */
 
-#define SETUPPARSER(fail)						\
-    parser_o.end = parser_o.input = SvPV (json, parser_o.length);	\
-    if (parser_o.length == 0) {						\
-	fail;								\
-    }									\
+#define GETSTRING							\
+    parser_o.end = parser_o.input = SvPV (json, parser_o.length)
+
+#define SETUPPARSER							\
     parser_o.line = 1;							\
     parser_o.last_byte = parser_o.input + parser_o.length;		\
-    parser_o.unicode = SvUTF8 (json) ? 1 : 0;
+    parser_o.unicode = SvUTF8 (json) ? 1 : 0
 
 /* Error to throw if there is a character other than whitespace, "["
    or "{" at the start of the JSON. */
 
-#define BADCHAR \
-    failbadinput (& parser_o, "Bad character '%c' in initial state", c)
-
+#define BADCHAR								\
+    parser->error = json_error_unexpected_character;			\
+    failbadinput (parser)
 
 /* This is the entry point for parsing. */
 
@@ -60,7 +58,13 @@ parse (SV * json)
 
     SV * r;
 
-    SETUPPARSER (return & PL_sv_undef);
+    GETSTRING;
+
+    if (parser_o.length == 0) {		
+	return & PL_sv_undef;
+    }						
+
+    SETUPPARSER;
 
  parse_start:
 
@@ -106,9 +110,16 @@ validate (SV * json)
 {
     ENTRYDECL;
 
-    /* If the string is empty, throw an exception. */
+    GETSTRING;
 
-    SETUPPARSER (failbadinput (& parser_o, "Empty input"));
+    /* If the string is empty, throw an exception. */
+    
+    if (parser_o.length == 0) {		
+	parser->error = json_error_empty_input;
+	failbadinput (& parser_o);
+    }						
+
+    SETUPPARSER;
 
  validate_start:
 
@@ -123,7 +134,8 @@ validate (SV * json)
 	break;
 
     case '\0':
-	failbadinput (& parser_o, "Empty input");
+	parser->error = json_error_empty_input;
+	failbadinput (& parser_o);
 
     case WHITESPACE:
 	goto validate_start;

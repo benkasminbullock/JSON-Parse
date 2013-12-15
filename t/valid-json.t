@@ -138,19 +138,19 @@ run_fail_like ($bad_literal, qr/unexpected character 'k' in literal/i);
 # Bad numbers.
 
 my $double_minus = '[--1]';
-run_fail_like ($double_minus, qr/double minus/i);
+run_fail_like ($double_minus, qr/unexpected character/i);
 
 my $leading_zero = '[01]';
-run_fail_like ($leading_zero, qr/leading 0 in number/i);
+run_fail_like ($leading_zero, qr/leading zero parsing number/i);
 
 my $leading_plus = '[+1]';
 run_fail_like ($leading_plus, qr/unexpected character/i);
 
 my $double_exp_plus = '[0.1e++3]';
-run_fail_like ($double_exp_plus, qr/double plus/i);
+run_fail_like ($double_exp_plus, qr/unexpected character/i);
 
 my $double_exp_minus = '[0.1e--3]';
-run_fail_like ($double_exp_minus, qr/double minus in exponent/i);
+run_fail_like ($double_exp_minus, qr/unexpected character/i);
 
 my $bad_double = '[1.0e1.0]';
 run_fail_like ($bad_double, qr/too many decimal points/i);
@@ -172,13 +172,14 @@ run_fail_like ('["\z"]', qr/unknown escape '\\z'/i);
 run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input/i);
 run_fail_like ('{"gobuggs}', qr/unexpected end of input parsing/i);
 
-run_fail_like ('["\uNOTHEX"]', qr/non-hexadecimal character 'N' at byte 1 of \\u escape/i);
+run_fail_like ('["\uNOTHEX"]', qr/non-hexadecimal character 'N'/i);
 
 run_fail_like ('["\uABC', qr/unexpected end of input/i);
 
-run_fail_like ('["\uD834monkey\uDD1E"]', qr/second half of surrogate pair not found/i);
+run_fail_like ('["\uD834monkey\uDD1E"]', qr/second half of surrogate pair missing/i);
 
-
+my $bad_plus = '[1.0e1+0]';
+run_fail_like ($bad_plus, qr/unexpected character/i);
 
 TODO: {
     local $TODO = 'known bugs';
