@@ -218,7 +218,6 @@ PREFIX(number) (parser_t * parser)
 	   "strtod". */
 
 	double d;
-
 	d = strtod (start, & end);
 	if (end == parser->end) {
 	    RETURNAGAIN (newSVnv (d));

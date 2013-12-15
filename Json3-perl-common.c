@@ -600,7 +600,6 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
     case 'u':						\
 	p = do_unicode_escape (parser, p, & b);		\
 	break;						\
-							\
     case BADBYTES:					\
 	parser->bad_beginning = p - 2;			\
 	parser->bad_byte = p - 1;			\
