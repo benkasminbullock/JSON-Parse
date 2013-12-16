@@ -115,7 +115,7 @@ run_ok ($contains_silly_whitespace);
 # Throw an error with an unknown escape.
 
 my $unknown_escape_1 = '["\a"]';
-run_fail_like ($unknown_escape_1, qr/unknown escape/i);
+run_fail_like ($unknown_escape_1, $unknown_character);
 
 # Test all the JSON escapes at once. Note here that \\\\ turns into \\
 # after Perl has finished with it.
@@ -165,7 +165,7 @@ run_ok ('[0.0001e-4]');
 run_fail_like ('["a":1]', qr/unexpected character.*':'/i);
 run_fail_like ('{1,2,3}', qr/unexpected character '1' parsing object/i);
 run_fail_like ('[1,2,3}', qr/unexpected character.*'}'/i);
-run_fail_like ('["\z"]', qr/unknown escape '\\z'/i);
+run_fail_like ('["\z"]', $unknown_character);
 run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input/i);
 run_fail_like ('{"gobuggs}', qr/unexpected end of input parsing/i);
 

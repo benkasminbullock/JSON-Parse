@@ -105,7 +105,6 @@ typedef enum {
     json_error_leading_zero,
     json_error_second_half_of_surrogate_pair_missing,
     json_error_not_surrogate_pair,
-    json_error_unknown_escape,
     json_error_empty_input,
     json_error_overflow
 }
@@ -118,7 +117,6 @@ const char * json_errors[json_error_overflow] = {
     "Leading zero",
     "Second half of surrogate pair missing",
     "Not surrogate pair",
-    "Unknown escape '\\%c'",
     "Empty input",
 };
 
@@ -138,6 +136,7 @@ enum expectation {
     arrayobjectstart,
     xstringchar,
     xliteral,
+    xescape,
     n_expectations
 };
 
@@ -156,6 +155,7 @@ enum expectation {
 #define ARRAYOBJECTSTART (1<<arrayobjectstart)
 #define XSTRINGCHAR (1<<xstringchar)
 #define XLITERAL (1<<xliteral)
+#define XESCAPE (1<<xescape)
 
 #define VALUE_START (ARRAYOBJECTSTART | STRING_START | XDIGIT | XMINUS)
 
@@ -175,6 +175,7 @@ char * input_expectation[n_expectations] = {
     "start of an array, '[', or object, '{'",
     "an ASCII or UTF-8 character excluding '\"'",
     "'true', 'false', or 'null'",
+    "'\\', '/', '\"', 'b', 'f', 'n', 'r', 't', or 'u'",
 };
 
 typedef struct parser {
@@ -599,15 +600,12 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
     case 'u':						\
 	p = do_unicode_escape (parser, p, & b);		\
 	break;						\
-    case BADBYTES:					\
-	parser->bad_beginning = p - 2;			\
-	parser->bad_byte = p - 1;			\
-	STRINGFAIL (unexpected_character);		\
-	break;						\
+							\
     default:						\
 	parser->bad_beginning = p - 2;			\
 	parser->bad_byte = p - 1;			\
-	STRINGFAIL (unknown_escape);			\
+        parser->expected = XESCAPE;			\
+	STRINGFAIL (unexpected_character);		\
     }
 
 /* Resolve "s" by converting escapes into the appropriate things. Put
