@@ -1,28 +1,14 @@
-id: unexpected_character,
-str: "Unexpected character '%c'"
-id: unexpected_end_of_input,
-str: "Unexpected end of input"
-id: non_hexadecimal_character,
-str: "Non-hexadecimal character '%c'"
-id: stray_comma,
-str: "Stray comma"
-id: missing_comma,
-str: "Missing comma"
-id: illegal_byte,
-str: "Illegal byte in string 0x%02x"
-id: bad_literal,
-str: "Unexpected character '%c' in literal"
-id: stray_final_character,
-str: "Stray final character '%c'"
-id: trailing_comma,
-str: "Trailing comma"
-id: leading_zero,
-str: "Leading zero"
-id: second_half_of_surrogate_pair_missing,
-str: "Second half of surrogate pair missing"
-id: not_surrogate_pair,
-str: "Not surrogate pair"
-id: unknown_escape,
-str: "Unknown escape '\\%c'"
-id: empty_input,
-str: "Empty input"
+error: invalid
+
+error: unexpected character '%c'
+
+error: unexpected end of input
+
+error: leading zero
+
+error: second half of surrogate pair missing
+
+error: not surrogate pair
+
+error: empty input
+

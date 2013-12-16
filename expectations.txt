@@ -1,0 +1,61 @@
+category: whitespace
+description: whitespace
+chars: \n \r \t \s
+
+category: comma
+description: comma
+chars: ,
+
+category: value_separator
+description: value separator
+chars: :
+
+category: object_end
+description: end of object
+chars: }
+
+category: array_end
+description: end of array
+chars: ]
+
+category: hexadecimal_character
+description: hexadecimal character
+chars: 0-9 a-f A-F
+
+category: string_start
+description: start of string
+chars: "
+
+category: unicode_escape
+description: unicode escape \\uXXXX
+
+category: digit
+description: digit
+chars: 0-9
+
+category: dot
+description: dot
+chars: .
+
+category: minus
+description: minus
+chars: -
+
+category: plus
+description: plus
+chars: +
+
+category: arrayobjectstart
+description: start of an array, or object,
+chars: { [
+
+category: stringchar
+description: an ASCII or UTF-8 character excluding '\"'
+
+category: literal
+description: literal: 'true', 'false', or 'null'
+
+category: escape
+description: escape
+chars: \ / " b f n r t u
+

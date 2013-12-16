@@ -21,6 +21,6 @@ benchmarks
 ^makeitfile$
 # Corefile!
 ^.*\.core$
-# There aren't any files I plan to distribute.
+# There aren't any files I plan to distribute with these file types.
 ^.*\.pl$
-^errors\.txt$
+^.*\.txt$

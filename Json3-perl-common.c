@@ -98,85 +98,9 @@ const char * type_names[json_overflow] = {
     "unicode escape"
 };
 
-typedef enum {
-    json_error_invalid,
-    json_error_unexpected_character,
-    json_error_unexpected_end_of_input,
-    json_error_leading_zero,
-    json_error_second_half_of_surrogate_pair_missing,
-    json_error_not_surrogate_pair,
-    json_error_empty_input,
-    json_error_overflow
-}
-json_error_t;
+#include "errors.c"
 
-const char * json_errors[json_error_overflow] = {
-    "invalid",
-    "Unexpected character '%c'",
-    "Unexpected end of input",
-    "Leading zero",
-    "Second half of surrogate pair missing",
-    "Not surrogate pair",
-    "Empty input",
-};
-
-enum expectation {
-    xwhitespace,
-    xcomma,
-    xvalue_separator,
-    xobject_end,
-    xarray_end,
-    xhexadecimal_character,
-    xstring_start,
-    xunicode_escape,
-    xdigit,
-    xdot,
-    xminus,
-    xplus,
-    arrayobjectstart,
-    xstringchar,
-    xliteral,
-    xescape,
-    n_expectations
-};
-
-#define XWHITESPACE (1<<xwhitespace)
-#define COMMA (1<<xcomma)
-#define VALUE_SEPARATOR (1<<xvalue_separator)
-#define OBJECT_END (1<<xobject_end)
-#define ARRAY_END (1<<xarray_end)
-#define HEXADECIMAL_CHARACTER (1<<xhexadecimal_character)
-#define STRING_START (1<<xstring_start)
-#define UNICODE_ESCAPE (1<<xunicode_escape)
-#define XDIGIT (1<<xdigit)
-#define XDOT (1<<xdot)
-#define XMINUS (1<<xminus)
-#define XPLUS (1<<xplus)
-#define ARRAYOBJECTSTART (1<<arrayobjectstart)
-#define XSTRINGCHAR (1<<xstringchar)
-#define XLITERAL (1<<xliteral)
-#define XESCAPE (1<<xescape)
-
-#define VALUE_START (ARRAYOBJECTSTART | STRING_START | XDIGIT | XMINUS)
-
-char * input_expectation[n_expectations] = {
-    "whitespace",
-    "comma ','",
-    "value separator ':'",
-    "end of object '}'",
-    "end of array ']'",
-    "hexadecimal character, 0-9, a-f or A-F",
-    "start of string, '\"'",
-    "unicode escape \\uXXXX",
-    "digit 0-9",
-    "dot .",
-    "minus '-'",
-    "plus '+'",
-    "start of an array, '[', or object, '{'",
-    "an ASCII or UTF-8 character excluding '\"'",
-    "'true', 'false', or 'null'",
-    "'\\', '/', '\"', 'b', 'f', 'n', 'r', 't', or 'u'",
-};
+#define VALUE_START (XARRAYOBJECTSTART | XSTRING_START | XDIGIT | XMINUS | XLITERAL)
 
 typedef struct parser {
 
@@ -498,7 +422,7 @@ parse_hex_bytes (parser_t * parser, char * p)
 
 	default:
 	    parser->bad_byte = p + k;
-	    parser->expected = HEXADECIMAL_CHARACTER;
+	    parser->expected = XHEXADECIMAL_CHARACTER;
 	    UNIFAIL (unexpected_character);
 	}
     }
@@ -548,7 +472,7 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
 	}
 	else {
 	    parser->bad_byte = p - 1;
-	    parser->expected = UNICODE_ESCAPE;
+	    parser->expected = XUNICODE_ESCAPE;
 	    STRINGFAIL (second_half_of_surrogate_pair_missing);
 	}
     }

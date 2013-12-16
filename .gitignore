@@ -15,3 +15,4 @@ MANIFEST
 README
 makeitfile
 unicode.[ch]
+errors.c

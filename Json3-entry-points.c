@@ -48,7 +48,7 @@ static void check_end (parser_t * parser)
 #define BADCHAR								\
     parser->bad_byte = parser->end - 1;					\
     parser->bad_type = json_initial;					\
-    parser->expected = ARRAYOBJECTSTART;				\
+    parser->expected = XARRAYOBJECTSTART;				\
     parser->error = json_error_unexpected_character;			\
     failbadinput (parser)
 

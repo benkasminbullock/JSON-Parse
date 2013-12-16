@@ -485,11 +485,11 @@ PREFIX(array) (parser_t * parser)
 	goto array_end;
 
     case ',':
-	parser->expected = VALUE_START | XWHITESPACE | ARRAY_END;
+	parser->expected = VALUE_START | XWHITESPACE | XARRAY_END;
 	FAILARRAY(unexpected_character);
 
     default:
-	parser->expected = ARRAY_END | VALUE_START;
+	parser->expected = XARRAY_END | VALUE_START;
 	FAILARRAY(unexpected_character);
     }
 
@@ -516,7 +516,7 @@ PREFIX(array) (parser_t * parser)
 
     default:
 
-	parser->expected = XWHITESPACE | COMMA | ARRAY_END;
+	parser->expected = XWHITESPACE | XCOMMA | XARRAY_END;
 	FAILARRAY(unexpected_character);
     }
 
@@ -609,16 +609,16 @@ PREFIX(object) (parser_t * parser)
 	    goto hash_start;
 	}
 	else {
-	    parser->expected = XWHITESPACE | STRING_START;
+	    parser->expected = XWHITESPACE | XSTRING_START;
 	    FAILOBJECT(unexpected_character);
 	}
 
 	/* Unreachable */
 
     default:
-	parser->expected = XWHITESPACE | STRING_START;
+	parser->expected = XWHITESPACE | XSTRING_START;
 	if (middle) {
-	    parser->expected |= COMMA;
+	    parser->expected |= XCOMMA;
 	}
 	FAILOBJECT(unexpected_character);
     }
@@ -635,7 +635,7 @@ PREFIX(object) (parser_t * parser)
 	goto hash_value;
 
     default:
-	parser->expected = XWHITESPACE | VALUE_SEPARATOR;
+	parser->expected = XWHITESPACE | XVALUE_SEPARATOR;
 	FAILOBJECT(unexpected_character);
     }
 

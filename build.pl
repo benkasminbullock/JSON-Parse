@@ -10,5 +10,7 @@ perl_build (
     pod => [
 	'lib/JSON/Parse.pod',
     ],
+    clean => './clean.pl',
+    pre => './make-errors.pl',
 );
 exit;
