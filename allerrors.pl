@@ -6,6 +6,11 @@ use lib '/home/ben/projects/Json3/blib/arch';
 use JSON::Parse 'assert_valid_json';
 my @allerrors = (
 {
+    in => '"bad"',
+    parsing => 'initial state',
+    bad_byte => 1,
+},
+{
     in => '   ',
 },
 {
@@ -30,12 +35,12 @@ my @allerrors = (
 },
 {
     in => '{"bad":"bad",}',
-    bad_byte => 13,
+    bad_byte => 14,
     parsing => 'object',
 },
 {
     in => '["bad","bad",]',
-    bad_byte => 13,
+    bad_byte => 14,
     parsing => 'array',
 },
 {
@@ -46,10 +51,12 @@ my @allerrors = (
 {
     in => '{"bad":"bad"}}',
     bad_byte => 14,
+    parsing => 'initial state',
 },
 {
     in => '["bad","bad"]]',
     bad_byte => 14,
+    parsing => 'initial state',
 },
 {
     in => '["' . "pupparoon\0\0 baba". '"]',
@@ -72,6 +79,11 @@ my @allerrors = (
     parsing => 'literal',
 },
 {
+    in => "[tru\0k]",
+    bad_byte => 5,
+    parsing => 'literal',
+},
+{
     in => '[--1]',
     bad_byte => 3,
     parsing => 'number',
@@ -84,6 +96,7 @@ my @allerrors = (
 {
     in => '[+1]',
     bad_byte => 2,
+    parsing => 'array',
 },
 {
     in => '[0.1e++3]',
@@ -137,7 +150,20 @@ my @allerrors = (
     parsing => 'string',
 },
 {
+    in => '["\uD834\u3000"]',
+},
+{
     in => '[1.0e1+0]',
+    bad_byte => 7,
+    parsing => 'number',
+},
+{
+    in => '[1.0ee0]',
+    bad_byte => 6,
+    parsing => 'number',
+},
+{
+    in => '[1.0e1e0]',
     bad_byte => 7,
     parsing => 'number',
 },
@@ -150,6 +176,7 @@ for my $error (@allerrors) {
     my $msg = $@;
     chomp ($msg);
     $msg =~ s/at allerrors\.pl.*$//;
+    $msg =~ s/JSON error at line 1[,:]//;
     my $cleanin = $in;
     $cleanin =~ s/([\x00-\x1F])/sprintf ("\\x%02X", ord ($1))/ge;
 #    if ($msg !~ /array|object/) {
@@ -159,11 +186,11 @@ for my $error (@allerrors) {
 	my $length = $2;
 	if ($error->{bad_byte}) {
 	    if ($error->{bad_byte} != $byte) {
-		print "$error->{bad_byte} != $byte\n";
+		die "$error->{bad_byte} != $byte\n";
 	    }
 	}
 	else {
-	    print "No byte for error / $byte\n";
+	    die "No byte for error / $byte\n";
 	}
 	if (length ($in) != $length) {
 	    print "" . (length $in) . " != $length\n";
@@ -171,16 +198,16 @@ for my $error (@allerrors) {
     }
     my $parsing = $error->{parsing};
     if ($parsing) {
-	if ($msg =~ /parsing\s+(unicode escape|\w+)/) {
+	if ($msg =~ /parsing\s+(unicode escape|initial state|\w+)/) {
 	    if ($1 ne $parsing) {
-		print "Got $1 expected $parsing\n";
+		die "Got $1 expected $parsing\n";
 	    }
 	}
 	else {
-	    print "No parsing $parsing in message.\n";
+	    die "No parsing $parsing in message.\n";
 	}
     }
-    if ($msg =~ /unexpected character/i && $parsing ne 'literal') {
+    if ($msg =~ /unexpected character/i) {
 	if ($msg !~ /expecting/) {
 	    die "No expecting.\n";
 	}

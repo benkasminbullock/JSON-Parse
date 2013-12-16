@@ -55,21 +55,19 @@ like ($@, qr/empty input/i, "flagged as empty input");
 
 # Test comma and colon parsing.
 
-my $stray_comma = qr/stray comma/i;
 my $unknown_character = qr/unexpected character/i;
-my $illegal_trailing_comma = qr/trailing comma/i;
 my $bad_comma_1 = '{,"bad":"bad"}';
-run_fail_like ($bad_comma_1, $stray_comma);
+run_fail_like ($bad_comma_1, $unknown_character);
 my $bad_comma_array = '[,"bad","bad"]';
-run_fail_like ($bad_comma_array, $stray_comma);
+run_fail_like ($bad_comma_array, $unknown_character);
 my $bad_comma_2 = '{"bad",:"bad"}';
 run_fail_like ($bad_comma_2, $unknown_character);
 my $bad_comma_3 = '{"bad":,"bad"}';
 run_fail_like ($bad_comma_3, $unknown_character);
 my $bad_comma_4 = '{"bad":"bad",}';
-run_fail_like ($bad_comma_4, $illegal_trailing_comma);
+run_fail_like ($bad_comma_4, $unknown_character);
 my $bad_comma_5 = '["bad","bad",]';
-run_fail_like ($bad_comma_5, $illegal_trailing_comma);
+run_fail_like ($bad_comma_5, $unknown_character);
 my $no_comma_array = '["bad" "bad"]';
 run_fail_like ($no_comma_array, $unknown_character);
 # Single-element array OK
@@ -80,22 +78,21 @@ run_ok ('[]');
 run_ok ('{}');
 # Check the checking of final junk
 my $too_many_end_braces = '{"bad":"bad"}}';
-my $stray_char = qr/stray final character/i;
-run_fail_like ($too_many_end_braces, $stray_char);
+run_fail_like ($too_many_end_braces, $unknown_character);
 my $too_many_end_brackets = '["bad","bad"]]';
-run_fail_like ($too_many_end_brackets, $stray_char);
+run_fail_like ($too_many_end_brackets, $unknown_character);
 
 run_fail_like ('{"bad":"forgot the end quotes}', qr/end of input/i);
 
 # See what happens when we send a string with a null byte.
 
 my $contains_null = '["' . "pupparoon\0\0 baba". '"]';
-run_fail_like ($contains_null, qr/illegal.*0x00/i);
+run_fail_like ($contains_null, qr/unexpected.*0x00/i);
 
 # See what happens when we send a string with a disallowed byte.
 
 my $contains_junk = '["' . chr (07) . '"]';
-run_fail_like ($contains_junk, qr/illegal.*0x07/i);
+run_fail_like ($contains_junk, qr/unexpected.*0x07/i);
 
 my $contains_escaped_null = '["\u0000"]';
 run_ok ($contains_escaped_null);
@@ -126,7 +123,7 @@ run_fail_like ($unknown_escape_1, qr/unknown escape/i);
 run_ok ('["\t\f\b\r\n\\\\\"\/"]');
 
 my $bad_literal = '[truk]';
-run_fail_like ($bad_literal, qr/unexpected character 'k' in literal/i);
+run_fail_like ($bad_literal, qr/unexpected character 'k'/i);
 
 #  _   _                 _                     
 # | \ | |_   _ _ __ ___ | |__   ___ _ __ ___   
@@ -138,22 +135,22 @@ run_fail_like ($bad_literal, qr/unexpected character 'k' in literal/i);
 # Bad numbers.
 
 my $double_minus = '[--1]';
-run_fail_like ($double_minus, qr/unexpected character/i);
+run_fail_like ($double_minus, $unknown_character);
 
 my $leading_zero = '[01]';
 run_fail_like ($leading_zero, qr/leading zero parsing number/i);
 
 my $leading_plus = '[+1]';
-run_fail_like ($leading_plus, qr/unexpected character/i);
+run_fail_like ($leading_plus, $unknown_character);
 
 my $double_exp_plus = '[0.1e++3]';
-run_fail_like ($double_exp_plus, qr/unexpected character/i);
+run_fail_like ($double_exp_plus, $unknown_character);
 
 my $double_exp_minus = '[0.1e--3]';
-run_fail_like ($double_exp_minus, qr/unexpected character/i);
+run_fail_like ($double_exp_minus, $unknown_character);
 
 my $bad_double = '[1.0e1.0]';
-run_fail_like ($bad_double, qr/too many decimal points/i);
+run_fail_like ($bad_double, $unknown_character);
 
 my $ending = '[1234567';
 run_fail_like ($ending, qr/unexpected end of input/i);
@@ -172,7 +169,7 @@ run_fail_like ('["\z"]', qr/unknown escape '\\z'/i);
 run_fail_like ('{"go":{"buddy":{"go":{"buddy":', qr/unexpected end of input/i);
 run_fail_like ('{"gobuggs}', qr/unexpected end of input parsing/i);
 
-run_fail_like ('["\uNOTHEX"]', qr/non-hexadecimal character 'N'/i);
+run_fail_like ('["\uNOTHEX"]', qr/unexpected character 'N'/i);
 
 run_fail_like ('["\uABC', qr/unexpected end of input/i);
 

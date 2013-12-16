@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-JSON::Parse - Convert JSON into a Perl variable
+JSON::Parse - Read JSON into a Perl variable
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ reference or a hash reference.
 
 If the first argument does not contain a complete valid JSON text,
 C<parse_json> throws a fatal error ("dies"). If the first argument is
-the undefined value or an empty string or a string containing only
+the undefined value, an empty string, or a string containing only
 whitespace, C<parse_json> returns the undefined value.
 
 If the argument contains valid JSON, the return value is either a hash
@@ -70,7 +70,8 @@ returned:
 
 This is exactly the same as L</parse_json> except that it reads the
 JSON from the specified file rather than a scalar. The file must be in
-UTF-8.
+the UTF-8 encoding, and is opened as a character file using the
+":encoding(utf8)" pragma. The output is marked as character strings.
 
 =head2 valid_json
 
@@ -83,12 +84,12 @@ C<Valid_json> returns I<1> if its argument is valid JSON and I<0> if
 not. It also returns I<0> if the input is undefined or the empty
 string.
 
-This is a high-speed validator which runs between three and ten times
-faster than L</parse_json>.
+This is a high-speed validator which runs between roughly two and
+eight times faster than L</parse_json>.
 
 C<Valid_json> does not supply the actual errors which caused
-invalidity. Use L</assert_valid_json> to get error messages when the JSON
-is invalid.
+invalidity. Use L</assert_valid_json> to get error messages when the
+JSON is invalid.
 
 =head2 assert_valid_json
 
@@ -244,18 +245,18 @@ has the same result as a Perl declaration of the form
 
 =head2 null
 
-The JSON null literal is mapped to a scalar C<$JSON::Parse::null>
-containing the undefined value.
+The JSON null literal is mapped to a readonly scalar
+C<$JSON::Parse::null> containing the undefined value.
 
 =head2 true
 
-The JSON true literal is mapped to a scalar C<$JSON::Parse::true>
-containing the value 1.
+The JSON true literal is mapped to a readonly scalar
+C<$JSON::Parse::true> containing the value 1.
 
 =head2 false
 
-The JSON false literal is mapped to a scalar C<$JSON::Parse::false>
-containing the value 0.
+The JSON false literal is mapped to a readonly scalar
+C<$JSON::Parse::false> containing the value 0.
 
 =head1 RESTRICTIONS
 
@@ -328,14 +329,7 @@ the parsing into an C<eval> block:
 
 At the moment the exact content of the diagnostics is not documented
 so please review the source code if you need more details on potential
-outputs. The name of the exception-throwing function is currently
-"failburger", so search through the C files in the top directory of
-the distribution for "failburger":
-
-    cd JSON-Parse
-    grep "failburger" Json3-*.c
-
-This name is likely to be changed in future releases of the module.
+outputs.
 
 Alternatively, the likely syntax of the various error messages is also
 visible in the file F<t/valid-json.t>.
@@ -444,6 +438,10 @@ The module exports nothing by default. All of the functions,
 L</parse_json>, L</json_file_to_perl>, L</valid_json> and
 L</assert_valid_json>, as well as the old function names
 L</validate_json> and L</json_to_perl>, can be exported on request.
+
+All of the functions can be exported using the tag ':all':
+
+    use JSON::Parse ':all';
 
 =head1 SUPPORT
 

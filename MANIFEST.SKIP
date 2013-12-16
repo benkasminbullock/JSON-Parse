@@ -21,3 +21,6 @@ benchmarks
 ^makeitfile$
 # Corefile!
 ^.*\.core$
+# There aren't any files I plan to distribute.
+^.*\.pl$
+^errors\.txt$

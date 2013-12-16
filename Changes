@@ -1,3 +1,8 @@
+0.28_01 2013-12-15
+
+* Remove bad optimization from "Makefile.PL".
+* Error handling more consistent.
+
 0.28 2013-12-12
 
 * Change function name from "validate_json" to "assert_valid_json"

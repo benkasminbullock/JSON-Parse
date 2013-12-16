@@ -13,8 +13,10 @@ static void check_end (parser_t * parser)
 	return;
 
     default:
+	parser->bad_type = json_initial;
 	parser->bad_byte = parser->end - 1;
-	parser->error = json_error_stray_final_character;
+	parser->expected = XWHITESPACE;
+	parser->error = json_error_unexpected_character;
 	failbadinput (parser);
     }
     parser_free (parser);
@@ -44,6 +46,9 @@ static void check_end (parser_t * parser)
    or "{" at the start of the JSON. */
 
 #define BADCHAR								\
+    parser->bad_byte = parser->end - 1;					\
+    parser->bad_type = json_initial;					\
+    parser->expected = ARRAYOBJECTSTART;				\
     parser->error = json_error_unexpected_character;			\
     failbadinput (parser)
 

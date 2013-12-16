@@ -4,7 +4,8 @@ use ExtUtils::MakeMaker;
 
 my $pm = 'lib/JSON/Parse.pm';
 my $pod = 'lib/JSON/Parse.pod';
-my $repo = 'https://github.com/benkasminbullock/JSON-Parse';
+my $github = 'github.com/benkasminbullock/JSON-Parse';
+my $repo = "https://$github";
 
 WriteMakefile (
     NAME => 'JSON::Parse',
@@ -15,9 +16,19 @@ WriteMakefile (
     PREREQ_PM => {
     },
     META_MERGE => {
+	'meta-spec' => {
+	    version => 2,
+	},
         resources => {
-            repository => $repo,
-            bugtracker => "$repo/issues",
+            repository => {
+		type => 'git',
+		url => "git://$github.git",
+		web => $repo,
+	    },
+            bugtracker => {
+		web => "$repo/issues",
+	    },
+	    homepage => 'https://groups.google.com/forum/#!forum/json-parse',
         },
     },
     # All the C files are actually #included into Json3.xs so there is
@@ -28,7 +39,7 @@ WriteMakefile (
     MIN_PERL_VERSION => '5.008009',
 
 # Uncomment the following to get "author tests"
-    OPTIMIZE => '-Wall',
+#    OPTIMIZE => '-Wall',
 # This achieves only small speedups with GCC.
 #    OPTIMIZE => '-O3',
 );
