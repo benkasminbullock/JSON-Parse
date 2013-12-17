@@ -11,8 +11,8 @@ my $jeplus = '[1.9e+9]';
 eval {
     $p = json_to_perl ($jeplus);
 };
-note ($@);
-ok (! $@, "Parsed OK");
+#note ($@);
+ok (! $@, "Parsed $jeplus OK");
 
 my $j = <<EOF;
 {
@@ -27,26 +27,25 @@ EOF
 eval {
     $p = json_to_perl ($j);
 };
-note ($@);
+#note ($@);
 ok (! $@, "Parsed OK");
-if ($@) {
-    print $@;
-    exit;
-}
-ok (compare ($p->{integer}, 100));
-ok (compare ($p->{decimal} , 1.5));
-ok (compare ($p->{exponent} , 100));
-ok (compare ($p->{"exponent-"} , 19/1000));
-ok (compare ($p->{"exponent+"} , 1_900_000_000));
-ok (compare ($p->{fraction} , 0.01));
+
+ok (compare ($p->{integer}, 100), "Got 100 for integer");
+ok (compare ($p->{decimal} , 1.5), "Got 1.5 for decimal");
+ok (compare ($p->{exponent} , 100), "Got 100 for exponent");
+ok (compare ($p->{"exponent-"} , 19/1000), "got 19/1000 for exponent-");
+ok (compare ($p->{"exponent+"} , 1_900_000_000),
+    "got 1_900_000_000 for exponent+");
+ok (compare ($p->{fraction} , 0.01), "got 0.01 for fraction");
 my $q = @{json_to_perl ('[0.12345]')}[0];
-ok (compare ($q, '0.12345'));
+ok (compare ($q, '0.12345'), "Got 0.12345");
+
 # Illegal numbers
 
 eval {
     json_to_perl ('[0...111]');
 };
-ok ($@);
+ok ($@, "Don't accept 0...111");
 eval {
     json_to_perl ('[0111]');
 };

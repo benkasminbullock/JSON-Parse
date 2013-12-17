@@ -8,7 +8,7 @@ my @strings;
 my @labels;
 my $out = 'errors.c';
 open my $o, ">", $out or die $!;
-select $o;
+#select $o;
 for my $e (@e) {
     my $error = $e->{error};
     if ($error) {
@@ -21,13 +21,13 @@ for my $e (@e) {
     }
 }
 
-print <<EOF;
+print $o <<EOF;
 typedef enum {
 EOF
 for my $label (@labels) {
-    print "    json_error_$label,\n";
+    print $o "    json_error_$label,\n";
 }
-print <<EOF;
+print $o <<EOF;
     json_error_overflow
 }
 json_error_t;
@@ -35,9 +35,9 @@ json_error_t;
 const char * json_errors[json_error_overflow] = {
 EOF
 for my $printed (@strings) {
-    print "    \"$printed\",\n";
+    print $o "    \"$printed\",\n";
 }
-print <<EOF;
+print $o <<EOF;
 };
 EOF
 
@@ -63,19 +63,19 @@ for my $expectation (@expectations) {
     push @ds, $d;
 }
 
-print "enum expectation {\n";
+print $o "enum expectation {\n";
 for my $c (@exs) {
-    print "    x$c,\n";
+    print $o "    x$c,\n";
 }
-print "    n_expectations\n};\n";
+print $o "    n_expectations\n};\n";
 
 for my $u (@us) {
-    print "$u\n";
+    print $o "$u\n";
 }
 
-print "char * input_expectation[n_expectations] = {\n";
+print $o "char * input_expectation[n_expectations] = {\n";
 for my $d (@ds) {
-    print "\"$d\"\n";
+    print $o "\"$d\"\n";
 }
-print "};\n";
+print $o "};\n";
 exit;

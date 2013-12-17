@@ -185,23 +185,10 @@ input string is Unicode, escapes like \u87f9 are converted into the
 equivalent UTF-8 bytes and the particular string in which they occur
 is marked as a character string:
 
-    no utf8;
-    # 蟹
-    my $kani = '["\u87f9"]';
-    my $p = parse_json ($kani);
-    print utf8::is_utf8 ($p->[0]);
-    # Prints 1, because it's upgraded regardless of the input string's
-    # flags.
 
 This is modelled on the behaviour of Perl's C<chr>:
 
-    no utf8;
-    my $kani = '87f9';
-    print utf8::is_utf8 ($kani), "\n";
-    # prints a blank line
-    $kani = chr (hex ($kani));
-    print utf8::is_utf8 ($kani), "\n";
-    # prints 1
+[% INCLUDE "chr.pl" | xtidy %]
 
 Surrogate pairs in the form C<\uD834\uDD1E> are also handled.
 

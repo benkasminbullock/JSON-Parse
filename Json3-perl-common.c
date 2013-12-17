@@ -170,13 +170,6 @@ parser_t;
 #define INLINE
 #endif /* def __GNUC__ */
 
-/* All instances of JSON literals are pointed to the following. These
-   are initialized in "BOOT" in "Json3.xs". */
-
-static SV * json_true;
-static SV * json_false;
-static SV * json_null;
-
 /* The size of the buffer for printing errors. */
 
 #define ERRORMSGBUFFERSIZE 0x1000
@@ -359,10 +352,10 @@ expand_buffer (parser_t * parser, int length)
     if (parser->buffer_size < 2 * length + 0x100) {
 	parser->buffer_size = 2 * length + 0x100;
 	if (parser->buffer) {
-	    parser->buffer = realloc (parser->buffer, parser->buffer_size);
+	    Renew (parser->buffer, parser->buffer_size, unsigned char);
 	}
 	else {
-	    parser->buffer = malloc (parser->buffer_size);
+	    Newx (parser->buffer, parser->buffer_size, unsigned char);
 	}
 	if (! parser->buffer) {
 	    failresources (parser, "out of memory");
@@ -680,7 +673,7 @@ static void
 parser_free (parser_t * parser)
 {
     if (parser->buffer) {
-	free (parser->buffer);
+	Safefree (parser->buffer);
     }
 }
 

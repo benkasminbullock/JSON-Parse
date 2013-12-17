@@ -2,6 +2,13 @@
 #include "perl.h"
 #include "XSUB.h"
 
+/* All instances of JSON literals are pointed to the following. These
+   are initialized in "BOOT" in "Json3.xs". */
+
+static SV * json_true;
+static SV * json_false;
+static SV * json_null;
+
 #include "unicode.h"
 #include "unicode.c"
 #include "Json3-perl-common.c"

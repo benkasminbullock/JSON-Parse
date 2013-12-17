@@ -7,9 +7,7 @@ perl_build (
 	dir => '/home/ben/projects/unicode-c',
 	stems => ['unicode'],
     },],
-    pod => [
-	'lib/JSON/Parse.pod',
-    ],
+    make_pod => './make-pod.pl',
     clean => './clean.pl',
     pre => './make-errors.pl',
 );
