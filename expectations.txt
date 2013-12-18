@@ -26,9 +26,6 @@ category: string_start
 description: start of string
 chars: "
 
-category: unicode_escape
-description: unicode escape \\uXXXX
-
 category: digit
 description: digit
 chars: 0-9
@@ -49,13 +46,13 @@ category: arrayobjectstart
 description: start of an array, or object,
 chars: { [
 
+category: escape
+description: escape
+chars: \ / " b f n r t u
+
 category: stringchar
 description: an ASCII or UTF-8 character excluding '\"'
 
 category: literal
 description: literal: 'true', 'false', or 'null'
-
-category: escape
-description: escape
-chars: \ / " b f n r t u
 

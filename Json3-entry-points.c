@@ -13,7 +13,7 @@ static void check_end (parser_t * parser)
 	return;
 
     default:
-	parser->bad_type = json_initial;
+	parser->bad_type = json_initial_state;
 	parser->bad_byte = parser->end - 1;
 	parser->expected = XWHITESPACE;
 	parser->error = json_error_unexpected_character;
@@ -47,7 +47,7 @@ static void check_end (parser_t * parser)
 
 #define BADCHAR								\
     parser->bad_byte = parser->end - 1;					\
-    parser->bad_type = json_initial;					\
+    parser->bad_type = json_initial_state;				\
     parser->expected = XARRAYOBJECTSTART;				\
     parser->error = json_error_unexpected_character;			\
     failbadinput (parser)
@@ -120,6 +120,7 @@ validate (SV * json)
     /* If the string is empty, throw an exception. */
     
     if (parser_o.length == 0) {		
+	parser->bad_type = json_initial_state;
 	parser->error = json_error_empty_input;
 	failbadinput (& parser_o);
     }						
@@ -140,6 +141,7 @@ validate (SV * json)
 
     case '\0':
 	parser->error = json_error_empty_input;
+	parser->bad_type = json_initial_state;
 	failbadinput (& parser_o);
 
     case WHITESPACE:

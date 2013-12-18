@@ -149,6 +149,9 @@ run_fail_like ($double_exp_plus, $unknown_character);
 my $double_exp_minus = '[0.1e--3]';
 run_fail_like ($double_exp_minus, $unknown_character);
 
+my $misplaced_minus = '[0.1e1-3]';
+run_fail_like ($misplaced_minus, $unknown_character);
+
 my $bad_double = '[1.0e1.0]';
 run_fail_like ($bad_double, $unknown_character);
 

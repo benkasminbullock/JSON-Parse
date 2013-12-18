@@ -1,6 +1,6 @@
 error: invalid
 
-error: unexpected character '%c'
+error: unexpected character
 
 error: unexpected end of input
 

@@ -141,7 +141,7 @@ PREFIX(number) (parser_t * parser)
     case '-':
 
 	if (exp) {
-	    if (expminus) {
+	    if (expminus || ! newexp) {
 		parser->expected = XDIGIT;
 		FAILNUMBER (unexpected_character);
 	    }
@@ -221,7 +221,7 @@ PREFIX(number) (parser_t * parser)
 
     if (dot || exp) {
 
-	/* This is a floating point number, so we sent it to
+	/* This is a floating point number, so we send it to
 	   "strtod". */
 
 	double d;
@@ -267,7 +267,7 @@ PREFIX(string) (parser_t * parser)
     len = 0;
 
     /* First of all, we examine the string to work out how long it is
-       and to look for escapes. If we find them, we go to "bad_boys"
+       and to look for escapes. If we find them, we go to "contains_escapes"
        and go back and do all the hard work of converting the escapes
        into the right things. If we don't find any escapes, we just
        use "start" and "len" and copy the string from inside
@@ -279,7 +279,7 @@ PREFIX(string) (parser_t * parser)
 	case '"':
 	    goto string_end;
 	case '\\':
-	    goto bad_boys;
+	    goto contains_escapes;
 	case BADBYTES:
 	    ILLEGALBYTE;
 	default:
@@ -298,7 +298,7 @@ PREFIX(string) (parser_t * parser)
 #endif
     goto string_done;
 
- bad_boys:
+ contains_escapes:
 
     parser->end = start;
 
@@ -378,8 +378,7 @@ PREFIX(literal) (parser_t * parser, char c)
 		 "Attempt to make a literal starting with '%02X'", c); 
     }
 
-    /* The bad character causing the failure is at "parser->end - 1"
-       because we didn't update "c" in the above switches. */
+    /* The bad character causing the failure is at "parser->end - 1". */
 
     parser->bad_byte = parser->end - 1;
     parser->bad_type = json_literal;
@@ -652,7 +651,7 @@ PREFIX(object) (parser_t * parser)
 	FAILOBJECT(unexpected_character);
     }
 
-    if (key.bad_boys) {
+    if (key.contains_escapes) {
 	int klen;
 	klen = resolve_string (parser, & key);
 #ifdef PERLING

@@ -1,0 +1,15 @@
+#!/home/ben/software/install/bin/perl
+use warnings;
+use strict;
+use lib '/home/ben/projects/Json3/blib/lib';
+use lib '/home/ben/projects/Json3/blib/arch';
+use JSON::Parse 'assert_valid_json';
+use Deploy 'file_slurp';
+for (@ARGV) {
+    eval {
+	assert_valid_json (file_slurp ($_));
+    };
+    if ($@) {
+	print "$_: $@\n";
+    }
+}

@@ -18,7 +18,20 @@
  case 0x1C:case 0x1D:case 0x1E:case 0x1F
 
 /* Match whitespace. Whitespace is as defined by the JSON standard,
-   not by Perl. */
+   not by Perl. 
+
+   "Insignificant whitespace is allowed before or after any of the six
+   structural characters.
+
+      ws = *(
+                %x20 /              ; Space
+                %x09 /              ; Horizontal tab
+                %x0A /              ; Line feed or New line
+                %x0D                ; Carriage return
+            )"
+    
+   From JSON RFC.
+*/
 
 #define WHITESPACE         \
     '\n':                  \
@@ -42,7 +55,8 @@
  case '8':    \
  case '9'
 
-/* Match digits. */
+/* Match digits from 1-9. This is handled differently because JSON
+   disallows leading zeros in numbers. */
 
 #define DIGIT19 \
       '1':	\
@@ -65,18 +79,18 @@ typedef struct string {
     char * start;
     unsigned int length;
 
-    /* The "bad_boys" flag is set if there are backslash escapes in
+    /* The "contains_escapes" flag is set if there are backslash escapes in
        the string like "\r", so that it needs to be cleaned up before
        using it. That means we use "parser->buffer". This is to speed
        things up, by not doing the cleanup when it isn't necessary. */
 
-    unsigned bad_boys : 1;
+    unsigned contains_escapes : 1;
 }
 string_t;
 
 typedef enum {
     json_invalid,
-    json_initial,
+    json_initial_state,
     json_string,
     json_number,
     json_literal,
@@ -100,7 +114,9 @@ const char * type_names[json_overflow] = {
 
 #include "errors.c"
 
-#define VALUE_START (XARRAYOBJECTSTART | XSTRING_START | XDIGIT | XMINUS | XLITERAL)
+/* Anything which could be the start of a value. */
+
+#define VALUE_START (XARRAYOBJECTSTART|XSTRING_START|XDIGIT|XMINUS|XLITERAL)
 
 typedef struct parser {
 
@@ -134,7 +150,10 @@ typedef struct parser {
 
     int line;
 
-    /* Where the beginning of the series of unfortunate events was. */
+    /* Where the beginning of the series of unfortunate events
+       was. For example if we are parsing an array, this points to the
+       [ at the start of the array, or if we are parsing a string,
+       this points to the byte after " at the start of the string. */
 
     char * bad_beginning;
 
@@ -174,12 +193,6 @@ parser_t;
 
 #define ERRORMSGBUFFERSIZE 0x1000
 
-/* Error fallthrough. This takes the error and sends it to "croak". */
-
-#define NOBYTE -1
-#define HEXFORMAT "0x%02x"
-#define XLENGTH strlen (HEXFORMAT)
-
 /* Assert failure handler. Coming here means there is a bug in the
    code rather than in the JSON input. We still send it to Perl via
    "croak". */
@@ -199,7 +212,7 @@ failbug (char * file, int line, parser_t * parser, const char * format, ...)
 /* This is a test for whether the string has ended, which we use when
    we catch a zero byte in an unexpected part of the input. Here we
    use ">" rather than ">=" because "parser->end" is incremented by
-   one after each access. */
+   one after each access. See the NEXTBYTE macro. */
 
 #define STRINGEND (parser->end > parser->last_byte)
 
@@ -207,16 +220,29 @@ static INLINE void
 failbadinput (parser_t * parser)
 {
     char buffer[ERRORMSGBUFFERSIZE];
-    char formatbuffer[ERRORMSGBUFFERSIZE];
     const char * format;
     int string_end;
     int i;
     int l;
+
+    /* If the error is "unexpected character", and we are at the end
+       of the input, change to "unexpected end of input". This is
+       probably triggered by reading a byte with value '\0', but we
+       don't check the value of "* parser->bad_byte" in the following
+       "if" statement, since it's an error to go past the expected end
+       of the string regardless of whether the byte is '\0'. */
+
     if (parser->error == json_error_unexpected_character &&
 	STRINGEND) {
 	parser->error = json_error_unexpected_end_of_input;
+	/* We don't care about what byte it was, we went past the end
+	   of the string, which is already a failure. */
 	parser->bad_byte = 0;
+	/* It trips an assertion if "parser->expected" is set for
+	   anything other than an "unexpected character" error. */
+	parser->expected = 0;
     }
+    /* Array bounds check for error message. */
     if (parser->error != json_error_invalid &&
 	parser->error < json_error_overflow) {
 	format = json_errors[parser->error];
@@ -226,86 +252,124 @@ failbadinput (parser_t * parser)
 		 "Bad value for parser->error: %d\n", parser->error);
     }
     l = strlen (format);
-    if (l > ERRORMSGBUFFERSIZE - XLENGTH) {
-	l = ERRORMSGBUFFERSIZE - XLENGTH;
+    if (l > ERRORMSGBUFFERSIZE - 1) {
+	/* Probably should report a bug here rather than coping with
+	   it. */
+	l = ERRORMSGBUFFERSIZE - 1;
     }
     for (i = 0; i < l; i++) {
-	formatbuffer[i] = format[i];
+	buffer[i] = format[i];
     }
-    formatbuffer[l] = '\0';
-    /* If the error is unexpected character or illegal byte, and the
-       actual unexpected character is the end of the string character
-       \0, change to unexpected end of input error. */
-    if (parser->bad_byte) {
-	if (! isprint (* (parser->bad_byte))) {
-	    int percent;
-	    int j;
-	    percent = 0;
-	    for (i = 0, j = 0; i < l; i++, j++) {
-		if (percent) {
-		    if (format[i] == 'c') {
-			int k;
-			j -= 2;
-			for (k = 0; k < XLENGTH; k++, j++) {
-			    formatbuffer[j] = HEXFORMAT[k];
-			}
-			/* Skip the 'c' and trailing '. */
-			i += 2;
-		    }
-		}
-		if (format[i] == '%') {
-		    percent = 1;
-		}
-		else {
-		    percent = 0;
-		}
-		formatbuffer[j] = format[i];
-	    }
+    buffer[l] = '\0';
+    string_end = l;
+
+    /* Repeated arguments to snprintf. */
+
+#define SNARGS buffer + string_end, ERRORMSGBUFFERSIZE - string_end
+
+    /* If we got an unexpected character somewhere, append the exact
+       value of the character to the error message. */
+
+    if (parser->error == json_error_unexpected_character) {
+
+	/* This contains the unexpected character itself, from the
+	   "parser->bad_byte" pointer. */
+
+	unsigned char bb;
+
+	/* Make sure that we were told where the unexpected character
+	   was. Unlocated unexpected characters are a bug. */
+
+	if (! parser->bad_byte) {
+	    failbug (__FILE__, __LINE__, parser,
+		     "unexpected character error but "
+		     "parser->bad_byte is invalid");
 	}
-	string_end = snprintf (buffer, ERRORMSGBUFFERSIZE, formatbuffer,
-			       * parser->bad_byte);
-    }
-    else {
-	string_end = snprintf (buffer, ERRORMSGBUFFERSIZE, formatbuffer);
-    }
-    if (parser->bad_type) {
-	if (parser->bad_type < json_overflow) {
-	    string_end += snprintf (buffer + string_end,
-				    ERRORMSGBUFFERSIZE - string_end,
-				    " parsing %s",
-				    type_names[parser->bad_type]);
-	    if (parser->bad_beginning) {
-		string_end += snprintf (buffer + string_end,
-					ERRORMSGBUFFERSIZE - string_end,
-					" starting from byte %d",
-					parser->bad_beginning
-					- parser->input + 1);
-	    }
-	    if (parser->expected) {
-		int i;
-		int joined;
-		string_end += snprintf (buffer + string_end,
-					ERRORMSGBUFFERSIZE
-					- string_end,
-					": expecting ");
-		joined = 0;
-		for (i = 0; i < n_expectations; i++) {
-		    if (parser->expected & (1<<i)) {
-			if (joined) {
-			    string_end += snprintf (buffer + string_end,
-						    ERRORMSGBUFFERSIZE
-						    - string_end,
-						    " or ");
-			}
-			string_end += snprintf (buffer + string_end,
-						ERRORMSGBUFFERSIZE - string_end,
-						"%s", input_expectation[i]);
-			joined = 1;
-		    }
-		}
-	    }
+
+	bb = * parser->bad_byte;
+
+	/* We have to check what kind of character. For example
+	   printing '\0' with %c will just give a message which
+	   suddenly ends when printed to the terminal, and other
+	   control characters will be invisible. So display the
+	   character in a different way depending on whether it's
+	   printable or not. */
+
+	if (isprint (bb)) {
+	    /* Printable character, print the character itself. */
+	    string_end += snprintf (SNARGS, " '%c'", bb);
+	}
+	else {
+	    /* Unprintable character, print its hexadecimal value. */
+	    string_end += snprintf (SNARGS, " 0x%02x", bb);
 	}
     }
+    /* "parser->bad_type" contains what was being parsed when the
+       error occurred. This should never be undefined. */
+    if (parser->bad_type <= json_invalid ||
+	parser->bad_type >= json_overflow) {
+	failbug (__FILE__, __LINE__, parser,
+		 "parsing type set to invalid value %d in error message",
+		 parser->bad_type);
+    }
+    string_end += snprintf (SNARGS, " parsing %s",
+			    type_names[parser->bad_type]);
+    if (parser->bad_beginning) {
+	string_end += snprintf (SNARGS, " starting from byte %d",
+				parser->bad_beginning - parser->input + 1);
+    }
+
+    /* "parser->expected" is set for the "unexpected character" error
+       and it tells the user what kind of input was expected. It
+       contains various flags or'd together, so this goes through each
+       possible flag and prints a message for it. */
+
+    if (parser->expected) {
+	if (parser->error == json_error_unexpected_character) {
+	    int i;
+	    int joined;
+	    unsigned char bb;
+	    bb = * parser->bad_byte;
+
+	    string_end += snprintf (SNARGS, ": expecting ");
+	    joined = 0;
+	    for (i = 0; i < n_expectations; i++) {
+		if (parser->expected & (1<<i)) {
+		    /* Check that this really is disallowed. */
+		    
+		    /* We don't handle UTF-8 yet. */
+		    if (bb < 0x80) {
+			/* Literals don't give expected character list
+			   yet. */
+			if (i == xliteral) {
+			    continue;
+			}
+			if (allowed[i][bb]) {
+			    failbug (__FILE__, __LINE__, parser,
+				     "mismatch: got %X but it's allowed by %s",
+				     bb, input_expectation[i]);
+			}
+		    }
+		    if (joined) {
+			string_end += snprintf (SNARGS, " or ");
+		    }
+		    string_end += snprintf (SNARGS, "%s", input_expectation[i]);
+		    joined = 1;
+		}
+	    }
+	}
+	else {
+	    failbug (__FILE__, __LINE__, parser,
+		     "expected character set set for non-unexpected char error");
+	}
+    }
+    else if (parser->error == json_error_unexpected_character) {
+	failbug (__FILE__, __LINE__, parser,
+		 "unexpected character error with no expected value set");
+    }
+
+#undef SNARGS
+
     if (parser->length > 0) {
 	if (parser->end - parser->input > parser->length) {
 	    croak ("JSON error at line %d: %s", parser->line,
@@ -363,14 +427,6 @@ expand_buffer (parser_t * parser, int length)
     }
 }
 
-/* The following are used in parsing \u escapes only. */
-
-#define LHEXBYTE						     \
-      'a': case 'b': case 'c': case 'd': case 'e': case 'f'
-
-#define UHEXBYTE						     \
-      'A': case 'B': case 'C': case 'D': case 'E': case 'F' 
-
 #define UNIFAIL(err)						\
     parser->bad_type = json_unicode_escape;			\
     parser->error = json_error_ ## err;				\
@@ -398,11 +454,11 @@ parse_hex_bytes (parser_t * parser, char * p)
 	    unicode = unicode * 16 + c - '0';
 	    break;
 
-	case UHEXBYTE:
+	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
 	    unicode = unicode * 16 + c - 'A' + 10;
 	    break;
 
-	case LHEXBYTE:
+	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 	    unicode = unicode * 16 + c - 'a' + 10;
 	    break;
 
@@ -421,9 +477,6 @@ parse_hex_bytes (parser_t * parser, char * p)
     }
     return unicode;
 }
-
-#undef LHEXBYTE
-#undef UHEXBYTE
 
 #define STRINGFAIL(err)				\
     parser->error = json_error_ ## err;		\
@@ -465,7 +518,6 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
 	}
 	else {
 	    parser->bad_byte = p - 1;
-	    parser->expected = XUNICODE_ESCAPE;
 	    STRINGFAIL (second_half_of_surrogate_pair_missing);
 	}
     }
@@ -477,6 +529,7 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
     * b_ptr += plus;
  end:
     if (unicode >= 0x80 && ! parser->unicode) {
+	/* Force the UTF-8 flag on for this string. */
 	parser->force_unicode = 1;
     }
     return p;
@@ -586,7 +639,7 @@ get_key_string (parser_t * parser, string_t * key)
 {
     char c;
     key->start = parser->end;
-    key->bad_boys = 0;
+    key->contains_escapes = 0;
     while (NEXTBYTE) {
 
 	/* Go on eating bytes until we find a ". */
@@ -598,12 +651,12 @@ get_key_string (parser_t * parser, string_t * key)
 	    parser->bad_beginning = key->start - 1;
 	    STRINGFAIL (unexpected_end_of_input);
 	}
-
 	/* Skip over \x, where x is anything at all. This includes \"
 	   of course. */
 
 	if (c == '\\') {
-	    key->bad_boys = 1;
+	    /* Mark this string as containing escapes. */
+	    key->contains_escapes = 1;
 	    parser->end++;
 	}
     }
