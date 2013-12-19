@@ -170,7 +170,7 @@ PREFIX(number) (parser_t * parser)
     case 'e':
     case 'E':
 
-	if (! zero && ! guess) {
+	if (! zero && ! guess && ! dot) {
 	    parser->expected = XDIGIT;
 	    FAILNUMBER (unexpected_character);
 	}
@@ -285,7 +285,7 @@ PREFIX(number) (parser_t * parser)
 	    /* This looks a bit strange but we can accept a comma or
 	       whitespace or the end of an object or array as the end of a
 	       number. */
-	    parser->expected = XCOMMA | XWHITESPACE; /* bug here, need to include ] and }. */
+	    parser->expected = XCOMMA | XWHITESPACE;
 	    if (zero) {
 		if (dot) {
 		    parser->expected |= XDIGIT;
@@ -304,7 +304,7 @@ PREFIX(number) (parser_t * parser)
 	    else {
 		parser->expected |= XDIGIT;
 	    }
-	    if (guess && ! exp) {
+	    if ((guess || dotdigits) && ! exp) {
 		parser->expected |= XEXPONENTIAL;
 	    }
 	    if (! exp && ! dot && (zero || guess)) {

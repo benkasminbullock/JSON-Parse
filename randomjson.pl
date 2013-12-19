@@ -5,6 +5,6 @@ use lib 'blib/lib';
 use lib 'blib/arch';
 use JSON::Parse;
 
-for (0..50) {
+for (0..1000) {
     JSON::Parse::random_json ();
 }

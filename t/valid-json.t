@@ -172,6 +172,7 @@ run_ok ('[1.0e-4]');
 run_ok ('[0.0001e-4]');
 run_ok ('[0e0]');
 run_ok ('[0e1]');
+run_ok ('[0.2e10]');
 
 run_fail_like ('["a":1]', qr/unexpected character.*':'/i);
 run_fail_like ('{1,2,3}', qr/unexpected character '1' parsing object/i);

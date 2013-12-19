@@ -370,7 +370,7 @@ random_json ()
 		printf ("Failed on first byte with unexpected character.\n");
 	    }
 	    */
-#if 0
+#if 1
 	    printf ("Got error: %s\n", parser_o.last_error);
 #endif
 	    if (parser_o.error == json_error_unexpected_character) {
