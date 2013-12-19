@@ -522,8 +522,6 @@ parse_hex_bytes (parser_t * parser, char * p)
 
     unicode = 0;
 
-    printf ("motherfucker %s\n", p);
-
     for (k = 0; k < strlen ("ABCD"); k++) {
 
 	unsigned char c;
@@ -825,37 +823,37 @@ get_string (parser_t * parser)
     }
     b = parser->buffer;
 
-    while (NEXTBYTE) {
-	switch (c) {
+ string_start:
 
-	case '"':
-	    goto string_end;
-	    break;
-
-	case '\\':
-	    HANDLE_ESCAPES(parser->end);
-	    break;
-
-	case BADBYTES:
-	    ILLEGALBYTE;
-	    break;
-
-	default:
-	    * b++ = c;
-	    break;
-	}
-	if (b - parser->buffer >= parser->buffer_size - 0x100) {
-	    /* Save our offset in parser->buffer, because "realloc" is
-	       called by "expand_buffer", and "b" may no longer point
-	       to a meaningful location. */
-	    int size = b - parser->buffer;
-	    expand_buffer (parser, 2 * parser->buffer_size);
-	    b = parser->buffer + size;
-	}
-	if (STRINGEND) {
-	    STRINGFAIL (unexpected_end_of_input);
-	}
+    if (b - parser->buffer >= parser->buffer_size - 0x100) {
+	/* Save our offset in parser->buffer, because "realloc" is
+	   called by "expand_buffer", and "b" may no longer point
+	   to a meaningful location. */
+	int size = b - parser->buffer;
+	expand_buffer (parser, 2 * parser->buffer_size);
+	b = parser->buffer + size;
     }
+    switch (NEXTBYTE) {
+
+    case '"':
+	goto string_end;
+	break;
+
+    case '\\':
+	HANDLE_ESCAPES(parser->end);
+	goto string_start;
+
+    case BADBYTES:
+	ILLEGALBYTE;
+
+    default:
+	* b++ = c;
+	goto string_start;
+    }
+    if (STRINGEND) {
+	STRINGFAIL (unexpected_end_of_input);
+    }
+
  string_end:
     return b - parser->buffer;
 }

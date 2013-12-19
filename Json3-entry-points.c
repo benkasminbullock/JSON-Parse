@@ -363,12 +363,14 @@ random_json ()
 	if (setjmp (parser_o.biscuit)) {
 #if 0
 	    int j;
+#endif
 	    /*
 	    if (parser_o.error == json_error_unexpected_character &&
 		parser_o.bad_byte == parser_o.input) {
 		printf ("Failed on first byte with unexpected character.\n");
 	    }
 	    */
+#if 0
 	    printf ("Got error: %s\n", parser_o.last_error);
 #endif
 	    if (parser_o.error == json_error_unexpected_character) {

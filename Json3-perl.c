@@ -744,10 +744,6 @@ PREFIX(object) (parser_t * parser)
     SV * value;
 #endif
     string_t key;
-    /* "middle" is true if we have seen ":", until the next comma. */
-    int middle;
-    /* "comma" is true if we have seen ",", until the next key. */
-    int comma;
     /* This is set to -1 if we want a Unicode key. See "perldoc
        perlapi" under "hv_store". */
     int uniflag;
@@ -764,11 +760,6 @@ PREFIX(object) (parser_t * parser)
 	/* Keys are not unicode. */
 	uniflag = 1;
     }
-    
-    /* We have not seen a ":" yet. */
-    middle = 0;
-    /* We have not seen a "," yet. */
-    comma = 0;
 
 #ifdef PERLING
     hv = newHV ();
@@ -777,75 +768,52 @@ PREFIX(object) (parser_t * parser)
  hash_start:
 
     switch (NEXTBYTE) {
-
     case WHITESPACE:
 	goto hash_start;
-
-	/* Unreachable */
-
     case '}':
-	CHECKCOMMA(json_object);
 	goto hash_end;
-
-	/* Unreachable */
-
     case '"':
-	if (middle) {
-	    /* We are expecting to see a comma. */
-	    parser->expected = XWHITESPACE | XCOMMA;
-	    FAILOBJECT(unexpected_character);
-	}
-	else {
-	    /* This is a key, so store the key and then get the hash
-	       separator at "hash_next". */
-	    comma = 0;
-	    get_key_string (parser, & key);
-	    goto hash_next;
-	}
-
-	/* This point is unreachable from above. */
-
-    case ',':
-	if (middle) {
-	    /* We have seen at least one key/value pair, so we accept
-	       this comma and go to the start. */
-	    middle = 0;
-	    comma = 1;
-	    goto hash_start;
-	}
-	else {
-	    /* We didn't expect a comma because we hadn't seen a
-	       key/value pair yet. */
-	    parser->expected = XWHITESPACE | XSTRING_START | XOBJECT_END;
-	    FAILOBJECT(unexpected_character);
-	}
-
-	/* This point is unreachable from above. */
-
+	get_key_string (parser, & key);
+	goto hash_next;
     default:
-	if (middle) {
-	    /* We want to see a comma or the end of the object. */
-	    parser->expected = XWHITESPACE | XCOMMA | XOBJECT_END;
-	}
-	else {
-	    /* We want to see a key or the end of the object. */
-	    parser->expected = XWHITESPACE | XSTRING_START | XOBJECT_END;
-	}
+	parser->expected = XWHITESPACE | XSTRING_START | XOBJECT_END;
+	FAILOBJECT(unexpected_character);
+    }
+
+ hash_middle:
+
+    switch (NEXTBYTE) {
+    case WHITESPACE:
+	goto hash_middle;
+    case '}':
+	goto hash_end;
+    case ',':
+	goto hash_key;
+    default:
+	parser->expected = XWHITESPACE | XCOMMA | XOBJECT_END;
+	FAILOBJECT(unexpected_character);
+    }
+
+ hash_key:
+
+    switch (NEXTBYTE) {
+    case WHITESPACE:
+	goto hash_key;
+    case '"':
+	get_key_string (parser, & key);
+	goto hash_next;
+    default:
+	parser->expected = XWHITESPACE | XSTRING_START;
 	FAILOBJECT(unexpected_character);
     }
 
  hash_next:
 
     switch (NEXTBYTE) {
-
     case WHITESPACE:
 	goto hash_next;
-
     case ':':
-	/* We have seen a key and a separator. */
-	middle = 1;
 	goto hash_value;
-
     default:
 	parser->expected = XWHITESPACE | XVALUE_SEPARATOR;
 	FAILOBJECT(unexpected_character);
@@ -856,9 +824,7 @@ PREFIX(object) (parser_t * parser)
  hash_value:
 
     switch (NEXTBYTE) {
-
 	PARSE(hash_value);
-
     default:
 	parser->expected = XWHITESPACE | VALUE_START;
 	FAILOBJECT(unexpected_character);
@@ -876,8 +842,7 @@ PREFIX(object) (parser_t * parser)
 	(void) hv_store (hv, key.start, key.length * uniflag, value, 0);
 #endif
     }
-
-    goto hash_start;
+    goto hash_middle;
 
  hash_end:
 
