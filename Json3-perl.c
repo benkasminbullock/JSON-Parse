@@ -32,6 +32,209 @@
 
 #define INT_MAX_DIGITS 8
 
+#define USEDIGIT guess = guess * 10 + (c - '0')
+
+static INLINE SVPTR
+PREFIX(number2) (parser_t * parser)
+{
+    /* End marker for strtod/strtol. */
+
+    char * end;
+
+    /* Start marker for strtod/strtol. */
+
+    char * start;
+
+    /* A guess for integer numbers. */
+
+    int guess;
+
+    /* The parsed character itself, the cause of our motion. */
+
+    char c;
+
+    /* If it has exp or dot in it. */
+
+    double d;
+
+    /* Negative number. */
+
+    int minus;
+
+    parser->end--;
+    start = parser->end;
+
+#define FAILNUMBER(err)				\
+    parser->bad_byte = parser->end - 1;		\
+    parser->error = json_error_ ## err;		\
+    parser->bad_type = json_number;		\
+    parser->bad_beginning = start;		\
+    failbadinput (parser)
+
+#define NUMBEREND				\
+         WHITESPACE:				\
+    case ']':					\
+    case '}':					\
+    case ','
+
+#define XNUMBEREND (XCOMMA|XOBJECT_END|XARRAY_END|XWHITESPACE)
+
+ number_start:
+
+    minus = 0;
+
+    switch (NEXTBYTE) {
+    case DIGIT19:
+	guess = c - '0';
+	goto leading_digit19;
+    case '0':
+	goto leading_zero;
+    case '-':
+	minus = 1;
+	goto leading_minus;
+    default:
+	parser->expected = XDIGIT | XMINUS;
+	FAILNUMBER (unexpected_character);
+    }
+
+ leading_digit19:
+
+    switch (NEXTBYTE) {
+    case DIGIT:
+	USEDIGIT;
+	goto leading_digit19;
+    case '.':
+	goto dot;
+    case 'e':
+    case 'E':
+	goto exp;
+    case NUMBEREND:
+        goto int_number_end;
+    default:
+	parser->expected = XDIGIT | XDOT | XEXPONENTIAL | XNUMBEREND;
+	FAILNUMBER (unexpected_character);
+    }
+
+ leading_zero:
+    switch (NEXTBYTE) {
+    case '.':
+	/* "0." */
+	goto dot;
+    case 'e':
+    case 'E':
+	/* "0e" */
+	goto exp;
+    case NUMBEREND:
+	/* "0" */
+        goto int_number_end;
+    default:
+	parser->expected = XDOT | XEXPONENTIAL | XNUMBEREND;
+	FAILNUMBER (unexpected_character);
+    }
+
+ leading_minus:
+    switch (NEXTBYTE) {
+    case DIGIT19:
+	USEDIGIT;
+	goto leading_digit19;
+    case '0':
+	goto leading_zero;
+    default:
+	parser->expected = XDIGIT;
+	FAILNUMBER (unexpected_character);
+    }
+
+    /* Things like "5." are not allowed so there is no NUMBEREND
+       here. */
+
+ dot:
+    switch (NEXTBYTE) {
+    case DIGIT:
+	goto dot_digits;
+    default:
+	parser->expected = XDIGIT;
+	FAILNUMBER (unexpected_character);
+    }
+
+    /* We have as much as 5.5 so we can stop. */
+
+ dot_digits:
+    switch (NEXTBYTE) {
+    case DIGIT:
+	goto dot_digits;
+    case 'e':
+    case 'E':
+	goto exp;
+    case NUMBEREND:
+        goto exp_number_end;
+    default:
+	parser->expected = XDIGIT | XNUMBEREND | XEXPONENTIAL;
+	FAILNUMBER (unexpected_character);
+    }
+
+    /* Things like "10E" are not allowed so there is no NUMBEREND
+       here. */
+
+ exp:
+    switch (NEXTBYTE) {
+    case '-':
+    case '+':
+    case DIGIT:
+	goto exp_digits;
+    default:
+	parser->expected = XDIGIT | XMINUS | XPLUS;
+	FAILNUMBER (unexpected_character);
+    }
+
+    /* We have as much as "3.0e1" or similar. */
+
+ exp_digits:
+    switch (NEXTBYTE) {
+    case DIGIT:
+	goto exp_digits;
+    case NUMBEREND:
+        goto exp_number_end;
+    default:
+	parser->expected = XDIGIT | XNUMBEREND;
+	FAILNUMBER (unexpected_character);
+    }
+
+ exp_number_end:
+    parser->end--;
+    d = strtod (start, & end);
+    if (end == parser->end) {
+	RETURNAGAIN (newSVnv (d));
+    }
+    else {
+	goto string_number_end;
+    }
+
+ int_number_end:
+
+    parser->end--;
+    if (parser->end - start < INT_MAX_DIGITS + minus) {
+	if (minus) {
+	    guess = -guess;
+	}
+	RETURNAGAIN (newSViv (guess));
+    }
+    else {
+	goto string_number_end;
+    }
+
+string_number_end:
+
+    /* We could not convert this number using a number conversion
+       routine, so we are going to convert it to a string.  This might
+       happen with ridiculously long numbers or something. The JSON
+       standard doesn't explicitly disallow integers with a million
+       digits. */
+
+    RETURNAGAIN (newSVpv (start, parser->end - start));
+}
+
+#if 0
+
 /* Turn a number into an SV. */
 
 static INLINE SVPTR
@@ -357,6 +560,8 @@ PREFIX(number) (parser_t * parser)
     RETURNAGAIN (newSVpv (start, parser->end - start));
 }
 
+#endif /* 0 */
+
 static SVPTR
 PREFIX(string) (parser_t * parser)
 {
@@ -523,7 +728,7 @@ static SVPTR PREFIX(object) (parser_t * parser);
 						\
  case '-':					\
  case DIGIT:					\
- SETVALUE PREFIX(number) (parser);		\
+ SETVALUE PREFIX(number2) (parser);		\
  break;						\
 						\
  case '{':					\
