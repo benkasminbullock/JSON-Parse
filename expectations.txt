@@ -43,7 +43,7 @@ description: plus
 chars: +
 
 category: arrayobjectstart
-description: start of an array, or object,
+description: start of an array or object
 chars: { [
 
 category: escape
@@ -54,5 +54,6 @@ category: stringchar
 description: an ASCII or UTF-8 character excluding '\"'
 
 category: literal
-description: literal: 'true', 'false', or 'null'
+description: start of literal
+chars: t f n
 

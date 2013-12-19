@@ -229,6 +229,12 @@ PREFIX(number) (parser_t * parser)
 	if (end == parser->end) {
 	    RETURNAGAIN (newSVnv (d));
 	}
+	else {
+	    /* Oops, Marc Lehmann was right all along. */
+	    failbug (__FILE__, __LINE__, parser,
+		     "unable to parse '%.*s' with strtod",
+		     parser->end - start, start);
+	}
     }
     else {
 	/* If the number has less than INT_MAX_DIGITS, we guess that
@@ -319,6 +325,92 @@ PREFIX(string) (parser_t * parser)
     RETURNAGAIN (string);
 }
 
+#define FAILLITERAL(c)\
+    parser->expected = XLITERAL;\
+    parser->literal_char = c;	\
+    parser->bad_beginning = start;\
+    parser->error = json_error_unexpected_character;\
+    parser->bad_type = json_literal;\
+    parser->bad_byte = parser->end - 1;\
+    failbadinput (parser)
+
+static SVPTR
+PREFIX(literal_true) (parser_t * parser)
+{
+    char * start;
+    start = parser->end - 1;
+    if (* parser->end++ == 'r') {
+	if (* parser->end++ == 'u') {
+	    if (* parser->end++ == 'e') {
+#ifdef PERLING
+		SvREFCNT_inc (json_true);
+#endif
+		RETURNAGAIN (json_true);
+	    }
+	    FAILLITERAL('e');
+	}
+	FAILLITERAL('u');
+    }
+    FAILLITERAL('r');
+
+    /* Unreached, shut up compiler warnings. */
+
+    RETURNAGAIN (& PL_sv_undef);
+}
+
+static SVPTR
+PREFIX(literal_false) (parser_t * parser)
+{
+    char * start;
+    start = parser->end - 1;
+    if (* parser->end++ == 'a') {
+	if (* parser->end++ == 'l') {
+	    if (* parser->end++ == 's') {
+		if (* parser->end++ == 'e') {
+#ifdef PERLING
+		    SvREFCNT_inc (json_false);
+#endif
+		    RETURNAGAIN (json_false);
+		}
+		FAILLITERAL('e');
+	    }
+	    FAILLITERAL('s');
+	}
+	FAILLITERAL('l');
+    }
+    FAILLITERAL('a');
+
+    /* Unreached, shut up compiler warnings. */
+
+    RETURNAGAIN (& PL_sv_undef);
+}
+
+static SVPTR
+PREFIX(literal_null) (parser_t * parser)
+{
+    char * start;
+    start = parser->end - 1;
+    if (* parser->end++ == 'u') {
+	if (* parser->end++ == 'l') {
+	    if (* parser->end++ == 'l') {
+#ifdef PERLING
+		SvREFCNT_inc (json_null);
+#endif
+		RETURNAGAIN (json_null);
+	    }
+	    FAILLITERAL('l');
+	}
+	FAILLITERAL('l');
+    }
+    FAILLITERAL('u');
+
+    /* Unreached, shut up compiler warnings. */
+
+    RETURNAGAIN (& PL_sv_undef);
+}
+
+#if 0 /* old literal thing. */
+
 /* JSON literals. */
 
 static SVPTR
@@ -392,6 +484,8 @@ PREFIX(literal) (parser_t * parser, char c)
     RETURNAGAIN (& PL_sv_undef);
 }
 
+#endif /* 0 */
+
 static SVPTR PREFIX(object) (parser_t * parser);
 
 /* Given one character, decide what to do next. This goes in the
@@ -420,9 +514,13 @@ static SVPTR PREFIX(object) (parser_t * parser);
  break;						\
 						\
  case 'f':					\
+ SETVALUE PREFIX(literal_false) (parser);	\
+ break;			                        \
  case 'n':					\
+ SETVALUE PREFIX(literal_null) (parser);	\
+ break;			                        \
  case 't':					\
- SETVALUE PREFIX(literal) (parser, c);	        \
+ SETVALUE PREFIX(literal_true) (parser);	\
  break
 
 /* Check for illegal comma at the end of a hash/array. */
@@ -483,12 +581,8 @@ PREFIX(array) (parser_t * parser)
 	   array. */
 	goto array_end;
 
-    case ',':
-	parser->expected = VALUE_START | XWHITESPACE | XARRAY_END;
-	FAILARRAY(unexpected_character);
-
     default:
-	parser->expected = XARRAY_END | VALUE_START;
+	parser->expected = VALUE_START | XWHITESPACE | XARRAY_END;
 	FAILARRAY(unexpected_character);
     }
 

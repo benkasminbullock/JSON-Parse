@@ -118,6 +118,11 @@ const char * type_names[json_overflow] = {
 
 #define VALUE_START (XARRAYOBJECTSTART|XSTRING_START|XDIGIT|XMINUS|XLITERAL)
 
+/* The maximum value of bytes to check for. Once UTF-8 is included in
+   the module, this will change to 0x100. */
+
+#define MAXBYTE 0x80
+
 typedef struct parser {
 
     /* The length of "input". */
@@ -173,6 +178,23 @@ typedef struct parser {
 
     json_error_t error;
 
+    /* If we were parsing a literal and found a bad character, what
+       were we expecting? */
+    
+    unsigned char literal_char;
+
+#ifdef TESTRANDOM
+
+    /* Return point for longjmp. */
+
+    jmp_buf biscuit;
+
+    int valid_bytes[MAXBYTE];
+
+    char * last_error;
+
+#endif
+
     /* Unicode? */
 
     unsigned int unicode : 1;
@@ -180,6 +202,14 @@ typedef struct parser {
     /* Force unicode. This happens when we hit "\uxyzy". */
 
     unsigned int force_unicode : 1;
+
+#ifdef TESTRANDOM
+
+    /* This is true if we are testing with random bytes. */
+
+    unsigned randomtest : 1;
+
+#endif /* def TESTRANDOM */
 }
 parser_t;
 
@@ -333,21 +363,44 @@ failbadinput (parser_t * parser)
 
 	    string_end += snprintf (SNARGS, ": expecting ");
 	    joined = 0;
+#ifdef TESTRANDOM
+	    for (i = 0; i < MAXBYTE; i++) {
+		parser->valid_bytes[i] = 0;
+	    }
+#endif /* def TESTRANDOM */
 	    for (i = 0; i < n_expectations; i++) {
 		if (parser->expected & (1<<i)) {
+#ifdef TESTRANDOM
+		    int j;
+		    for (j = 0; j < MAXBYTE; j++) {
+#if 0
+			/* This is to check we have meaningful stuff
+			   in the valid/invalid table. */
+			if (parser->randomtest) {
+			    printf ("%d", allowed[i][j]);
+			}
+#endif /* 0 */
+			parser->valid_bytes[j] |= allowed[i][j];
+		    }
+#if 0
+		    if (parser->randomtest) {
+			printf ("\n");
+		    }
+#endif /* 0 */
+#endif /* def TESTRANDOM */
+
 		    /* Check that this really is disallowed. */
 		    
 		    /* We don't handle UTF-8 yet. */
-		    if (bb < 0x80) {
+		    if (bb < MAXBYTE) {
 			/* Literals don't give expected character list
 			   yet. */
-			if (i == xliteral) {
-			    continue;
-			}
-			if (allowed[i][bb]) {
-			    failbug (__FILE__, __LINE__, parser,
-				     "mismatch: got %X but it's allowed by %s",
-				     bb, input_expectation[i]);
+			if (i != xliteral) {
+			    if (allowed[i][bb]) {
+				failbug (__FILE__, __LINE__, parser,
+					 "mismatch: got %X but it's allowed by %s",
+					 bb, input_expectation[i]);
+			    }
 			}
 		    }
 		    if (joined) {
@@ -360,7 +413,8 @@ failbadinput (parser_t * parser)
 	}
 	else {
 	    failbug (__FILE__, __LINE__, parser,
-		     "expected character set set for non-unexpected char error");
+		     "'expected' is set but error %s != unexp. char",
+		     json_errors[parser->error]);
 	}
     }
     else if (parser->error == json_error_unexpected_character) {
@@ -369,6 +423,17 @@ failbadinput (parser_t * parser)
     }
 
 #undef SNARGS
+
+#ifdef TESTRANDOM
+
+    /* Go back to where we came from. */
+
+    if (parser->randomtest) {
+	parser->last_error = buffer;
+	longjmp (parser->biscuit, 1);
+    }
+
+#endif /* def TESTRANDOM */
 
     if (parser->length > 0) {
 	if (parser->end - parser->input > parser->length) {

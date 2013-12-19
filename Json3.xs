@@ -2,6 +2,14 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#define TESTRANDOM
+
+#ifdef TESTRANDOM
+
+#include <setjmp.h>
+
+#endif /* def TESTRANDOM */
+
 /* All instances of JSON literals are pointed to the following. These
    are initialized in "BOOT" in "Json3.xs". */
 
@@ -45,3 +53,11 @@ void assert_valid_json (json)
 	SV * json;
 CODE:
 	validate (json);
+
+#ifdef TESTRANDOM
+
+void random_json ()
+CODE:
+	random_json ();
+
+#endif /* def TESTRANDOM */
