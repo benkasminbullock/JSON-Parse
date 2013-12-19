@@ -79,7 +79,7 @@ for my $expectation (@expectations) {
 	$regexes{$c} = $r;
     }
     elsif ($c eq 'stringchar') {
-	$regexes{$c} = '[^\x00-\x1F\"]';
+	$regexes{$c} = '[^\x00-\x1F]';
     }
     if (my $r = $regexes{$c}) {
 	my $array = "{";

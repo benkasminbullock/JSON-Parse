@@ -43,6 +43,10 @@ PREFIX(number) (parser_t * parser)
 
     int dot;
 
+    /* Set to 1 if we saw digits after ".". */
+
+    int dotdigits;
+
     /* Set to 1 if we saw "e" or "E". */
 
     int exp;
@@ -65,6 +69,8 @@ PREFIX(number) (parser_t * parser)
 
     int newexp;
 
+    int expdigits;
+
     /* End marker for strtod/strtol. */
 
     char * end;
@@ -84,6 +90,7 @@ PREFIX(number) (parser_t * parser)
     /* Set all the flags to zero. */
 
     dot = 0;
+    dotdigits = 0;
     exp = 0;
     plus = 0;
     zero = 0;
@@ -92,6 +99,7 @@ PREFIX(number) (parser_t * parser)
     guess = 0;
     zero = 0;
     newexp = 0;
+    expdigits = 0;
 
     parser->end--;
     start = parser->end;
@@ -150,7 +158,8 @@ PREFIX(number) (parser_t * parser)
 	    goto number_start;
 	}
 	else {
-	    if (minus) {
+	    /* Use "guess" as a flag that we have seen a digit. */
+	    if (minus || guess || zero) {
 		parser->expected = XDIGIT;
 		FAILNUMBER (unexpected_character);
 	    }
@@ -161,6 +170,14 @@ PREFIX(number) (parser_t * parser)
     case 'e':
     case 'E':
 
+	if (! zero && ! guess) {
+	    parser->expected = XDIGIT;
+	    FAILNUMBER (unexpected_character);
+	}
+	if (dot && ! dotdigits) {
+	    parser->expected = XDIGIT;
+	    FAILNUMBER (unexpected_character);
+	}
 	if (exp) {
 	    parser->expected = XDIGIT;
 	    if (newexp) {
@@ -174,11 +191,19 @@ PREFIX(number) (parser_t * parser)
 
     case '0':
 
+	if (zero && ! dot && ! exp) {
+	    parser->expected = XDOT | XCOMMA | XWHITESPACE | XEXPONENTIAL | XOBJECT_END | XARRAY_END;
+	    FAILNUMBER (unexpected_character);
+	}
 	if (exp) {
 	    newexp = 0;
+	    expdigits = 1;
 	}
 	else {
-	    if (! dot) {
+	    if (dot) {
+		dotdigits = 1;
+	    }
+	    else {
 		if (guess) {
 		    guess = 10 * guess;
 		}
@@ -191,32 +216,105 @@ PREFIX(number) (parser_t * parser)
 
     case DIGIT19:
 
-	if (! dot && ! exp) {
-	    if (zero) {
-		/* "Leading zeros are not allowed." (from section 2.4
-		   of JSON standard.) */
-		FAILNUMBER (leading_zero);
-	    }
-	    guess = 10 * guess + (c - '0');
+	if (zero && ! dot && ! exp) {
+	    parser->expected = XDOT | XCOMMA | XWHITESPACE | XOBJECT_END | XARRAY_END;
+	    FAILNUMBER (unexpected_character);
 	}
-	newexp = 0;
+	if (exp) {
+	    newexp = 0;
+	    expdigits = 1;
+	}
+	else {
+	    if (dot) {
+		dotdigits = 1;
+	    }
+	    else {
+		guess = 10 * guess + (c - '0');
+	    }
+	}
 	goto number_start;
 
-    case '\0':
-	if (STRINGEND) {
-	    FAILNUMBER (unexpected_end_of_input);
+    case WHITESPACE:
+    case ',':
+    case ']':
+    case '}':
+
+	if (minus && ! guess) {
+	    parser->expected = XDIGIT;
+	    FAILNUMBER (unexpected_character);
 	}
 
-	/* Fallthrough. */
+	/* JSON RFC: "The E and optional sign are followed by one or
+	   more digits." So if we have an E and no digits or anything
+	   else, barf. */
 
-    default:
+	if ((exp && ! expdigits) ||
+	    (dot && ! dotdigits)) {
+	    parser->expected = XDIGIT;
+	    if (newexp) {
+		parser->expected |= XPLUS | XMINUS;
+	    }
+	    FAILNUMBER (unexpected_character);
+	}
 
-	/* We read a byte which wasn't part of a number, so push it
-	   back on the byte stack for the next thing to work out what
-	   to do with it. */
+	/* We read a byte which wasn't part of a number, so reject it
+	   and let the next thing to work out what to do with it. */
 
 	parser->end--;
 	break;
+
+    default:
+
+	if (minus && ! guess) {
+	    parser->expected = XDIGIT;
+	    FAILNUMBER (unexpected_character);
+	}
+
+	/* JSON RFC: "The E and optional sign are followed by one or
+	   more digits." So if we have an E and no digits or anything
+	   else, barf. */
+
+	if ((exp && ! expdigits) || (dot && ! dotdigits)) {
+	    parser->expected = XDIGIT;
+	    if (newexp) {
+		parser->expected |= XPLUS | XMINUS;
+	    }
+	    FAILNUMBER (unexpected_character);
+	}
+	else {
+	    /* This looks a bit strange but we can accept a comma or
+	       whitespace or the end of an object or array as the end of a
+	       number. */
+	    parser->expected = XCOMMA | XWHITESPACE; /* bug here, need to include ] and }. */
+	    if (zero) {
+		if (dot) {
+		    parser->expected |= XDIGIT;
+		}
+		else {
+		    if (exp) {
+			/* 0e0 is legal */
+			parser->expected |= XDIGIT;
+		    }
+		    else {
+			/* 0e is legal */
+			parser->expected |= XEXPONENTIAL;
+		    }		    
+		}
+	    }
+	    else {
+		parser->expected |= XDIGIT;
+	    }
+	    if (guess && ! exp) {
+		parser->expected |= XEXPONENTIAL;
+	    }
+	    if (! exp && ! dot && (zero || guess)) {
+		parser->expected |= XDOT;
+	    }
+	    if (newexp) {
+		parser->expected |= XPLUS | XMINUS;
+	    }
+	    FAILNUMBER (unexpected_character);
+	}
     }
 
     if (dot || exp) {
@@ -325,13 +423,13 @@ PREFIX(string) (parser_t * parser)
     RETURNAGAIN (string);
 }
 
-#define FAILLITERAL(c)\
-    parser->expected = XLITERAL;\
-    parser->literal_char = c;	\
-    parser->bad_beginning = start;\
-    parser->error = json_error_unexpected_character;\
-    parser->bad_type = json_literal;\
-    parser->bad_byte = parser->end - 1;\
+#define FAILLITERAL(c)					\
+    parser->expected = XIN_LITERAL;			\
+    parser->literal_char = c;				\
+    parser->bad_beginning = start;			\
+    parser->error = json_error_unexpected_character;	\
+    parser->bad_type = json_literal;			\
+    parser->bad_byte = parser->end - 1;			\
     failbadinput (parser)
 
 static SVPTR
@@ -516,9 +614,11 @@ static SVPTR PREFIX(object) (parser_t * parser);
  case 'f':					\
  SETVALUE PREFIX(literal_false) (parser);	\
  break;			                        \
+						\
  case 'n':					\
  SETVALUE PREFIX(literal_null) (parser);	\
  break;			                        \
+						\
  case 't':					\
  SETVALUE PREFIX(literal_true) (parser);	\
  break
@@ -551,34 +651,24 @@ static SVPTR
 PREFIX(array) (parser_t * parser)
 {
     char c;
+    char * start;
 #ifdef PERLING
     AV * av;
     SV * value;
 #endif
-    /* Have we seen at least one value in the array, so that commas
-       are legal? */
-    int comma;
-    char * start;
 
-    comma = 0;
 #ifdef PERLING
     av = newAV ();
 #endif
     start = parser->end - 1;
 
-    /* We are either at the start of the array, just after "[", or we
-       have seen at least one value, so just after ",". */
-
  array_start:
 
     switch (NEXTBYTE) {
 
-	PARSE(array_start);
+	PARSE (array_start);
 
     case ']':
-	CHECKCOMMA(json_array);
-	/* In legal JSON, this should only be reached for an empty
-	   array. */
 	goto array_end;
 
     default:
@@ -586,7 +676,6 @@ PREFIX(array) (parser_t * parser)
 	FAILARRAY(unexpected_character);
     }
 
-    comma = 1;
 #ifdef PERLING
     av_push (av, value);
 #endif
@@ -601,7 +690,7 @@ PREFIX(array) (parser_t * parser)
 	goto array_middle;
 
     case ',':
-	goto array_start;
+	goto array_next;
 
     case ']':
 	/* Array with at least one element. */
@@ -612,6 +701,23 @@ PREFIX(array) (parser_t * parser)
 	parser->expected = XWHITESPACE | XCOMMA | XARRAY_END;
 	FAILARRAY(unexpected_character);
     }
+
+ array_next:
+
+    switch (NEXTBYTE) {
+
+	PARSE(array_next);
+
+    default:
+	parser->expected = VALUE_START | XWHITESPACE;
+	FAILARRAY(unexpected_character);
+    }
+
+#ifdef PERLING
+    av_push (av, value);
+#endif
+
+    goto array_middle;
 
  array_end:
 
@@ -685,33 +791,45 @@ PREFIX(object) (parser_t * parser)
 
     case '"':
 	if (middle) {
+	    /* We are expecting to see a comma. */
+	    parser->expected = XWHITESPACE | XCOMMA;
 	    FAILOBJECT(unexpected_character);
 	}
 	else {
+	    /* This is a key, so store the key and then get the hash
+	       separator at "hash_next". */
 	    comma = 0;
 	    get_key_string (parser, & key);
 	    goto hash_next;
 	}
 
-	/* Unreachable */
+	/* This point is unreachable from above. */
 
     case ',':
 	if (middle) {
+	    /* We have seen at least one key/value pair, so we accept
+	       this comma and go to the start. */
 	    middle = 0;
 	    comma = 1;
 	    goto hash_start;
 	}
 	else {
-	    parser->expected = XWHITESPACE | XSTRING_START;
+	    /* We didn't expect a comma because we hadn't seen a
+	       key/value pair yet. */
+	    parser->expected = XWHITESPACE | XSTRING_START | XOBJECT_END;
 	    FAILOBJECT(unexpected_character);
 	}
 
-	/* Unreachable */
+	/* This point is unreachable from above. */
 
     default:
-	parser->expected = XWHITESPACE | XSTRING_START;
 	if (middle) {
-	    parser->expected |= XCOMMA;
+	    /* We want to see a comma or the end of the object. */
+	    parser->expected = XWHITESPACE | XCOMMA | XOBJECT_END;
+	}
+	else {
+	    /* We want to see a key or the end of the object. */
+	    parser->expected = XWHITESPACE | XSTRING_START | XOBJECT_END;
 	}
 	FAILOBJECT(unexpected_character);
     }
@@ -724,6 +842,7 @@ PREFIX(object) (parser_t * parser)
 	goto hash_next;
 
     case ':':
+	/* We have seen a key and a separator. */
 	middle = 1;
 	goto hash_value;
 

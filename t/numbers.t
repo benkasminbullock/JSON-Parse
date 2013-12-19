@@ -49,7 +49,7 @@ ok ($@, "Don't accept 0...111");
 eval {
     json_to_perl ('[0111]');
 };
-like ($@, qr/leading zero/i, "Error for leading zero");
+like ($@, qr/unexpected character/i, "Error for leading zero");
 
 my $long_number = '12345678901234567890123456789012345678901234567890';
 my $out = parse_json ("[$long_number]");

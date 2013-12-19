@@ -4,8 +4,6 @@ error: unexpected character
 
 error: unexpected end of input
 
-error: leading zero
-
 error: second half of surrogate pair missing
 
 error: not surrogate pair

@@ -27,7 +27,7 @@ ok ($@, "validate_json dies");
 like ($@, qr/line 5/i, "line number OK");
 
 my $empty = '  ';
-run_fail_like ($empty, qr/empty input/i);
+run_fail_like ($empty, qr/unexpected end of input/i);
 
 my $undef = undef;
 ok (! valid_json ($undef));
@@ -83,6 +83,8 @@ my $too_many_end_brackets = '["bad","bad"]]';
 run_fail_like ($too_many_end_brackets, $unknown_character);
 
 run_fail_like ('{"bad":"forgot the end quotes}', qr/end of input/i);
+# Bug in "get_key_string" found by randomtest
+run_fail_like ("[\"\0]", $unknown_character);
 
 # See what happens when we send a string with a null byte.
 
@@ -138,7 +140,7 @@ my $double_minus = '[--1]';
 run_fail_like ($double_minus, $unknown_character);
 
 my $leading_zero = '[01]';
-run_fail_like ($leading_zero, qr/leading zero parsing number/i);
+run_fail_like ($leading_zero, $unknown_character);
 
 my $leading_plus = '[+1]';
 run_fail_like ($leading_plus, $unknown_character);
@@ -157,6 +159,10 @@ run_fail_like ($bad_double, $unknown_character);
 
 my $ending = '[1234567';
 run_fail_like ($ending, qr/unexpected end of input/i);
+# Don't accept an isolated minus sign.
+my $wsnumber = '[[null, true, -,   7965, 58]]';
+run_fail ($wsnumber);
+
 
 # Numbers we accept.
 
@@ -164,6 +170,8 @@ run_ok ('[1.0e4]');
 run_ok ('[1.0e+4]');
 run_ok ('[1.0e-4]');
 run_ok ('[0.0001e-4]');
+run_ok ('[0e0]');
+run_ok ('[0e1]');
 
 run_fail_like ('["a":1]', qr/unexpected character.*':'/i);
 run_fail_like ('{1,2,3}', qr/unexpected character '1' parsing object/i);
@@ -180,10 +188,12 @@ run_fail_like ('["\uD834monkey\uDD1E"]', qr/second half of surrogate pair missin
 
 my $bad_plus = '[1.0e1+0]';
 run_fail_like ($bad_plus, qr/unexpected character/i);
+run_fail ('{"baba":6-3}');
+run_fail_like ('{"baba":6.', qr/unexpected end of input parsing number/i);
+run_fail_like ("{\"baba\":6.\0", qr/unexpected character.*parsing number/i);
 
 TODO: {
     local $TODO = 'known bugs';
-    # Bad \u escapes 
 };
 done_testing ();
 exit;
@@ -204,11 +214,11 @@ sub run_fail_like
 sub run_fail
 {
     my ($json) = @_;
-    ok (! valid_json ($json), "Parsing of '$json' with 'valid_json' failed");
+    ok (! valid_json ($json), "Error detection for '$json' with 'valid_json'");
     eval {
 	validate_json ($json);
     };
-    ok ($@, "Parsing of '$json' with 'validate_json' failed");
+    ok ($@, "Error detection for '$json' with 'validate_json'");
     return $@;
 }
 

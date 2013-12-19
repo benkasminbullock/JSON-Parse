@@ -42,6 +42,10 @@ category: plus
 description: plus
 chars: +
 
+category: exponential
+description: exponential sign
+chars: e E
+
 category: arrayobjectstart
 description: start of an array or object
 chars: { [
@@ -51,9 +55,12 @@ description: escape
 chars: \ / " b f n r t u
 
 category: stringchar
-description: an ASCII or UTF-8 character excluding '\"'
+description: an ASCII or UTF-8 character
 
 category: literal
 description: start of literal
 chars: t f n
+
+category: in_literal
+description: after the start of literal
 

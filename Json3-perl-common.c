@@ -69,6 +69,9 @@
  case '8':	\
  case '9'
 
+#define UHEX  'A': case 'B': case 'C': case 'D': case 'E': case 'F'
+#define LHEX  'a': case 'b': case 'c': case 'd': case 'e': case 'f'
+
 /* A "string_t" is a pointer into the input, which lives in
    "parser->input". The "string_t" structure is used for copying
    strings when the string does not contain any escapes. When a string
@@ -368,8 +371,20 @@ failbadinput (parser_t * parser)
 		parser->valid_bytes[i] = 0;
 	    }
 #endif /* def TESTRANDOM */
+	    if (parser->expected & XIN_LITERAL) {
+		if (! parser->literal_char) {
+		    failbug (__FILE__, __LINE__, parser,
+			     "expected literal character unset");
+		}
+		parser->valid_bytes[parser->literal_char] = 1;
+	    }
 	    for (i = 0; i < n_expectations; i++) {
-		if (parser->expected & (1<<i)) {
+		int X;
+		X = 1<<i;
+		if (X & XIN_LITERAL) {
+		    continue;
+		}
+		if (parser->expected & X) {
 #ifdef TESTRANDOM
 		    int j;
 		    for (j = 0; j < MAXBYTE; j++) {
@@ -393,14 +408,12 @@ failbadinput (parser_t * parser)
 		    
 		    /* We don't handle UTF-8 yet. */
 		    if (bb < MAXBYTE) {
-			/* Literals don't give expected character list
-			   yet. */
-			if (i != xliteral) {
-			    if (allowed[i][bb]) {
-				failbug (__FILE__, __LINE__, parser,
-					 "mismatch: got %X but it's allowed by %s",
-					 bb, input_expectation[i]);
-			    }
+			if (i != xin_literal) {
+			if (allowed[i][bb]) {
+			    failbug (__FILE__, __LINE__, parser,
+				     "mismatch: got %X but it's allowed by %s",
+				     bb, input_expectation[i]);
+			}
 			}
 		    }
 		    if (joined) {
@@ -419,7 +432,9 @@ failbadinput (parser_t * parser)
     }
     else if (parser->error == json_error_unexpected_character) {
 	failbug (__FILE__, __LINE__, parser,
-		 "unexpected character error with no expected value set");
+		 "unexpected character error for 0X%02X at byte %d "
+		 "with no expected value set", * parser->bad_byte,
+		 parser->bad_byte - parser->input);
     }
 
 #undef SNARGS
@@ -507,6 +522,8 @@ parse_hex_bytes (parser_t * parser, char * p)
 
     unicode = 0;
 
+    printf ("motherfucker %s\n", p);
+
     for (k = 0; k < strlen ("ABCD"); k++) {
 
 	unsigned char c;
@@ -519,11 +536,11 @@ parse_hex_bytes (parser_t * parser, char * p)
 	    unicode = unicode * 16 + c - '0';
 	    break;
 
-	case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+	case UHEX:
 	    unicode = unicode * 16 + c - 'A' + 10;
 	    break;
 
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+	case LHEX:
 	    unicode = unicode * 16 + c - 'a' + 10;
 	    break;
 
@@ -542,6 +559,9 @@ parse_hex_bytes (parser_t * parser, char * p)
     }
     return unicode;
 }
+
+/* STRINGFAIL applies for any kind of failure within a string, not
+   just unexpected character errors. */
 
 #define STRINGFAIL(err)				\
     parser->error = json_error_ ## err;		\
@@ -696,6 +716,7 @@ resolve_string (parser_t * parser, string_t * s)
 
 #define NEXTBYTE (c = *parser->end++)
 
+
 /* Get an object key value and put it into "key". Check for
    escapes. */
 
@@ -703,27 +724,78 @@ static INLINE void
 get_key_string (parser_t * parser, string_t * key)
 {
     char c;
+    int i;
+
     key->start = parser->end;
     key->contains_escapes = 0;
-    while (NEXTBYTE) {
 
+ key_string_next:
+
+    switch (NEXTBYTE) {
+
+    case '"':
 	/* Go on eating bytes until we find a ". */
 
-	if (c == '"') {
-	    break;
-	}
-	if (parser->end >= parser->last_byte) {
-	    parser->bad_beginning = key->start - 1;
-	    STRINGFAIL (unexpected_end_of_input);
-	}
-	/* Skip over \x, where x is anything at all. This includes \"
-	   of course. */
+	break;
 
-	if (c == '\\') {
-	    /* Mark this string as containing escapes. */
-	    key->contains_escapes = 1;
-	    parser->end++;
+    case '\\':
+	/* Mark this string as containing escapes. */
+	key->contains_escapes = 1;
+
+	switch (NEXTBYTE) {
+
+	case '\\':
+	case '/': 
+	case '"': 
+	case 'b':
+	case 'f': 
+	case 'n': 
+	case 'r': 
+	case 't': 
+	    /* Eat another byte. */
+	    goto key_string_next;
+
+	case 'u': 
+
+	    /* i counts the bytes, from 0 to 3. */
+	    i = 0;
+	unitunes:
+	    switch (NEXTBYTE) {
+	    case DIGIT:
+	    case UHEX:
+	    case LHEX:
+		i++;
+		if (i >= strlen ("ABCD")) {
+		    goto key_string_next;
+		}
+		else {
+		    goto unitunes;
+		}
+	    default:
+		parser->bad_beginning = parser->end - 1 - i;
+		parser->expected = XHEXADECIMAL_CHARACTER;
+		parser->bad_byte = parser->end - 1;
+		UNIFAIL (unexpected_character);
+	    }
+
+	default:
+	    parser->bad_beginning = key->start - 1;
+	    parser->expected = XESCAPE;
+	    parser->bad_byte = parser->end - 1;
+	    STRINGFAIL (unexpected_character);
 	}
+
+    case BADBYTES:
+
+	parser->bad_beginning = key->start - 1;
+	parser->expected = XSTRINGCHAR;
+	parser->bad_byte = parser->end - 1;
+	STRINGFAIL (unexpected_character);
+
+    default:
+
+	/* Eat another byte. */
+	goto key_string_next;
     }
     key->length = parser->end - key->start - 1;
 }
@@ -752,6 +824,7 @@ get_string (parser_t * parser)
 	expand_buffer (parser, 0x1000);
     }
     b = parser->buffer;
+
     while (NEXTBYTE) {
 	switch (c) {
 

@@ -185,6 +185,7 @@ input string is Unicode, escapes like \u87f9 are converted into the
 equivalent UTF-8 bytes and the particular string in which they occur
 is marked as a character string:
 
+[% INCLUDE "kani.pl" | xtidy %]
 
 This is modelled on the behaviour of Perl's C<chr>:
 
