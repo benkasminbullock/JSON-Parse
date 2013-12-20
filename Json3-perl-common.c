@@ -186,6 +186,10 @@ typedef struct parser {
     
     unsigned char literal_char;
 
+    /* The end expected. */
+
+    int end_expected;
+
 #ifdef TESTRANDOM
 
     /* Return point for longjmp. */

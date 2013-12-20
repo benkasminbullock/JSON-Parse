@@ -77,7 +77,7 @@ PREFIX(number2) (parser_t * parser)
     case '}':					\
     case ','
 
-#define XNUMBEREND (XCOMMA|XOBJECT_END|XARRAY_END|XWHITESPACE)
+#define XNUMBEREND (XCOMMA|XWHITESPACE|parser->end_expected)
 
  number_start:
 
@@ -717,7 +717,7 @@ static SVPTR PREFIX(object) (parser_t * parser);
 /* Given one character, decide what to do next. This goes in the
    switch statement in both "object ()" and "array ()". */
 
-#define PARSE(start)				\
+#define PARSE(start,expected)			\
 						\
  case WHITESPACE:				\
  goto start;					\
@@ -728,6 +728,7 @@ static SVPTR PREFIX(object) (parser_t * parser);
 						\
  case '-':					\
  case DIGIT:					\
+ parser->end_expected = expected;	        \
  SETVALUE PREFIX(number2) (parser);		\
  break;						\
 						\
@@ -794,7 +795,8 @@ PREFIX(array) (parser_t * parser)
 
     switch (NEXTBYTE) {
 
-	PARSE (array_start);
+	BPUB (XARRAY_END);
+	PARSE (array_start,XARRAY_END);
 
     case ']':
 	goto array_end;
@@ -834,7 +836,7 @@ PREFIX(array) (parser_t * parser)
 
     switch (NEXTBYTE) {
 
-	PARSE(array_next);
+	PARSE(array_next, XARRAY_END);
 
     default:
 	parser->expected = VALUE_START | XWHITESPACE;
@@ -952,7 +954,7 @@ PREFIX(object) (parser_t * parser)
  hash_value:
 
     switch (NEXTBYTE) {
-	PARSE(hash_value);
+	PARSE(hash_value, XOBJECT_END);
     default:
 	parser->expected = XWHITESPACE | VALUE_START;
 	FAILOBJECT(unexpected_character);
