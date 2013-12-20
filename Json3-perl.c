@@ -752,19 +752,6 @@ static SVPTR PREFIX(object) (parser_t * parser);
  SETVALUE PREFIX(literal_true) (parser);	\
  break
 
-/* Check for illegal comma at the end of a hash/array. */
-
-#define CHECKCOMMA(type)						\
-    if (comma) {							\
-	/* This is tripped when looking at ] or }. */			\
-	parser->bad_beginning = start;					\
-	parser->error = json_error_unexpected_character;		\
-	parser->bad_type = type;					\
-	parser->bad_byte = parser->end - 1;				\
-	parser->expected = VALUE_START;					\
-	failbadinput (parser);						\
-    }
-
 #define FAILARRAY(err)				\
     parser->bad_byte = parser->end - 1;		\
     parser->bad_type = json_array;		\
