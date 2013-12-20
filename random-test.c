@@ -281,7 +281,7 @@ random_json ()
 		print_json (& parser_o);
 		if (parser_o.error == json_error_second_half_of_surrogate_pair_missing) {
 		    printf ("Unfixable error.\n");
-		    return;
+		    goto end;
 		}
 		fprintf (stderr, "error: %s.\n", parser_o.last_error);
 		exit (1);
@@ -295,6 +295,9 @@ random_json ()
 	    break;
 	}
     }
+ end:
+    parser_free (& parser_o);
+    free (json);
 }
 
 
