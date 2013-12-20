@@ -163,6 +163,7 @@ run_fail_like ($ending, qr/unexpected end of input/i);
 my $wsnumber = '[[null, true, -,   7965, 58]]';
 run_fail ($wsnumber);
 
+run_fail ('[43E+]');
 
 # Numbers we accept.
 

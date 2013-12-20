@@ -79,8 +79,6 @@ PREFIX(number2) (parser_t * parser)
 
 #define XNUMBEREND (XCOMMA|XWHITESPACE|parser->end_expected)
 
- number_start:
-
     minus = 0;
 
     switch (NEXTBYTE) {
@@ -179,10 +177,21 @@ PREFIX(number2) (parser_t * parser)
     switch (NEXTBYTE) {
     case '-':
     case '+':
+	goto exp_sign;
     case DIGIT:
 	goto exp_digits;
     default:
 	parser->expected = XDIGIT | XMINUS | XPLUS;
+	FAILNUMBER (unexpected_character);
+    }
+
+ exp_sign:
+
+    switch (NEXTBYTE) {
+    case DIGIT:
+	goto exp_digits;
+    default:
+	parser->expected = XDIGIT;
 	FAILNUMBER (unexpected_character);
     }
 
@@ -782,7 +791,6 @@ PREFIX(array) (parser_t * parser)
 
     switch (NEXTBYTE) {
 
-	BPUB (XARRAY_END);
 	PARSE (array_start,XARRAY_END);
 
     case ']':

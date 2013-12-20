@@ -16,3 +16,5 @@ README
 makeitfile
 unicode.[ch]
 errors.c
+
+random-test
