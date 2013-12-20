@@ -2,6 +2,9 @@
 
 * Remove bad optimization from "Makefile.PL".
 * Error handling more consistent; fewer types of error message.
+* Rewrite of internals for number, array, hash parsing.
+* Very extensive testing with random input done to root out remaining problems.
+* Many small bugs in number, hash, array parsing fixed.
 
 0.28 2013-12-12
 

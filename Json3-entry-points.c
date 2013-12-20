@@ -416,6 +416,11 @@ random_json ()
 		alter_one_byte (& parser_o);
 	    }
 	    else {
+		print_json (& parser_o);
+		if (parser_o.error == json_error_second_half_of_surrogate_pair_missing) {
+		    printf ("Unfixable error.\n");
+		    return;
+		}
 		fprintf (stderr, "error: %s.\n", parser_o.last_error);
 		exit (1);
 	    }

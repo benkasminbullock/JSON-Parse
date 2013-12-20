@@ -15,7 +15,7 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.28_02';
+our $VERSION = '0.28_03';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 

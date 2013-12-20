@@ -2,7 +2,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#define TESTRANDOM
+//#define TESTRANDOM
 
 #ifdef TESTRANDOM
 

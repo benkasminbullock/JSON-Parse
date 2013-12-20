@@ -380,7 +380,9 @@ failbadinput (parser_t * parser)
 		    failbug (__FILE__, __LINE__, parser,
 			     "expected literal character unset");
 		}
+#ifdef TESTRANDOM
 		parser->valid_bytes[parser->literal_char] = 1;
+#endif /* def TESTRANDOM */
 	    }
 	    for (i = 0; i < n_expectations; i++) {
 		int X;
