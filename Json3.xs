@@ -19,7 +19,7 @@ static SV * json_null;
 
 #include "unicode.h"
 #include "unicode.c"
-#include "Json3-perl-common.c"
+#include "Json3-common.c"
 #define PERLING
 #include "Json3-perl.c"
 #undef PERLING

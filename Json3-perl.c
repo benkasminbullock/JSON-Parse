@@ -1,3 +1,8 @@
+/* The C part is broken into three pieces, "Json3-common.c",
+   "Json3-perl.c", and "Json3-entry-points.c". This file contains the
+   "Perl" stuff, for example if we have a string, the stuff to convert
+   it into a Perl hash key or a Perl scalar is in this file. */
+
 /* There are two routes through the code, the PERLING route and the
    non-PERLING route. If we go via the non-PERLING route, we never
    create or alter any Perl-related stuff, we just parse each byte and
