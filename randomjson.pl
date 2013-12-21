@@ -6,9 +6,10 @@ use lib 'blib/arch';
 use JSON::Parse;
 
 my $bytes = 0;
-
-for (0..10000) {
-    print "Test $_:\n";
+my $count = 0;
+while ($bytes < 1e9) {
+    $count++;
+    print "Test $count: $bytes bytes so far\n";
     $bytes += JSON::Parse::random_json ();
 }
 

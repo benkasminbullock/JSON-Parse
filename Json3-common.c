@@ -577,11 +577,14 @@ do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
 {
     int unicode;
     unsigned int plus;
+    unsigned char * start;
+    start = p;
     unicode = parse_hex_bytes (parser, p);
     p += 4;
     plus = ucs2_to_utf8 (unicode, *b_ptr);
     if (plus == UNICODE_BAD_INPUT) {
-	failbadinput (parser);
+	parser->bad_beginning = start;
+	UNIFAIL (bad_unicode_input);
     }
     else if (plus == UNICODE_SURROGATE_PAIR) {
 	int unicode2;

@@ -10,3 +10,4 @@ error: not surrogate pair
 
 error: empty input
 
+error: bad_unicode_input
