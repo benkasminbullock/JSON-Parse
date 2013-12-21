@@ -4,7 +4,7 @@
 
 /* TESTRANDOM should never be defined in the code released to CPAN. */
 
-//#define TESTRANDOM
+#define TESTRANDOM
 
 #ifdef TESTRANDOM
 #include <setjmp.h>
@@ -59,8 +59,10 @@ CODE:
 
 #ifdef TESTRANDOM
 
-void random_json ()
+int random_json ()
 CODE:
-	random_json ();
+	RETVAL = random_json ();
+OUTPUT:
+	RETVAL
 
 #endif /* def TESTRANDOM */

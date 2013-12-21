@@ -13,49 +13,72 @@
                   
 */
 
-/* This is a torture test. It creates a string containing all-null
-   bytes and feeds it to the parser. The parser responds with an error
-   message containing a list of what bytes it considered acceptable or
-   unacceptable at the point where parsing failed,
-   "parser->valid_bytes". This test's routine "alter_one_byte" then
-   takes each one of the bytes from 0 to MAXBYTE, changes the
-   offending final byte into it, and sends the resulting string to the
-   parser again.
+/*
 
-   If the byte was supposed to be invalid, this prints an error and
-   halts if the parser allows it. If the byte was supposed to be
-   valid, this prints an error and halts if the parser disallows
-   it. Thus this checks that the list of valid and invalid bytes is
-   correct. 
+  This is a torture test. The main entry point is the function
+  "random_json". "Random_json" creates a string containing all-null
+  bytes, and feeds it to "c_validate" in the file
+  "Json3-entry-points.c". "C_validate" responds with an error message
+  containing a list of what bytes it considered acceptable or
+  unacceptable at the point where parsing failed,
+  "parser->valid_bytes". The routine "alter_one_byte" below then
+  changes the offending final byte into each byte from 0 to MAXBYTE,
+  and sends the resulting string to the parser again.
 
-   "Alter_one_byte" also keeps a list of the valid bytes in "choose",
-   and after it has finished testing that the parser's list of valid
-   and invalid bytes is consisten with the parser's behaviour, it then
-   randomly chooses one of the valid bytes, and lengthens the string
-   by one valid byte, with a zero byte after that. This new longer
-   string is then sent to the parser again, and the process of
-   torturing with valid and invalid bytes is repeated.
+  "Alter_one_byte" then checks that the list of valid and invalid
+  bytes is correct. If the byte was supposed to be invalid and the
+  parser allows it, or if the byte was supposed to be valid and the
+  parser disallows it, it prints an error and halts.
 
-   There are three ways "random_json" can halt without exiting:
+  If the invalid byte wasn't detected, the error is either "no bad
+  byte in parser" if no error occurred, or if an error occurred, but
+  not at the location of the invalid byte, "Failed to detect error in
+  <type> with bad byte", followed by the error itself, followed by the
+  pointer and byte contents. 
 
-   1. The string overflows the buffer length,
+  Conversely, if a valid byte was rejected, the error message given is
+  printed as in "Got error <error message> with supposedly valid
+  value" plus the pointer and byte details and the error message.
 
-   In this case, "random_json" merely returns without printing a
-   message.
+  Various code useful for tracking down the exact error is in the
+  file but commented out since it creates a huge amount of screen
+  noise. To locate and switch on this debugging code, search this
+  file for lines of the form "#if 0" and set to "#if 1" to get the
+  specific type of debugging offered.
 
-   2. The string is a valid JSON string,
+  "Alter_one_byte" also keeps a list of the valid bytes in "choose",
+  and after it has successfully tested the valid and invalid bytes,
+  it then randomly chooses one of the valid bytes, and lengthens the
+  string by one valid byte, with a zero byte after that. This new
+  longer string is then sent to the parser again, and the process of
+  testing the consistency of the error messages with valid and
+  invalid bytes is repeated.
 
-   In this case "random_json" finishes with a message "Success in
-   parsing."
+  There are three ways "random_json" can halt without exiting:
 
-   3. The string contains a surrogate pair error.
+  1. The string overflows the buffer length,
 
-   It's virtually impossible to fix a surrogate pair error by byte
-   fiddling, so in the rare cases this happens, "random_json" simply
-   prints a message "Unfixable error" and returns. */
+  In this case, "random_json" merely returns without printing a
+  message.
+
+  2. The string is a valid JSON string,
+
+  In this case "random_json" finishes with a message "Success in
+  parsing."
+
+  3. The string contains a surrogate pair error.
+
+  It's virtually impossible to fix a surrogate pair error by byte
+  fiddling, so in the rare cases this happens, "random_json" simply
+  prints a message "Unfixable error" and returns.
+
+*/
 
 #define MAXBYTE 0x80
 #define INITIALLENGTH 0x1000
+
+
+/* Print one character in the most readable format. */
 
 static void
 print_json_char (unsigned char c)
@@ -88,6 +111,8 @@ print_json_char (unsigned char c)
     }
 }
 
+/* Print out the JSON in "parser". */
+
 static void
 print_json (parser_t * parser)
 {
@@ -114,10 +139,17 @@ reset_parser (parser_t * parser)
     parser->last_byte = parser->input + parser->length;
 }
 
+#define SURROPAIRFAIL							\
+    if (parser->error ==						\
+	json_error_second_half_of_surrogate_pair_missing) {		\
+	printf ("Unfixable error.\n");					\
+	goto end;							\
+    }
+
 /* Alter the final byte and run again, and see if an error is
    produced. */
 
-static void
+static int
 alter_one_byte (parser_t * parser)
 {
     int i;
@@ -135,6 +167,11 @@ alter_one_byte (parser_t * parser)
 
     expected_bad_byte = parser->bad_byte;
     //    printf ("%p %p %p %p\n", expected_bad_byte, parser->input, parser->last_byte, parser->end);
+
+    /* Copy the list of valid bytes from the parser, because the valid
+       byte list in the parser will be overwritten with each
+       successive call to "c_validate". */
+
     for (i = 0; i < MAXBYTE; i++) {
 	valid_bytes[i] = parser->valid_bytes[i];
     }
@@ -142,42 +179,45 @@ alter_one_byte (parser_t * parser)
     for (i = 0; i < MAXBYTE; i++) {
 	if (! valid_bytes[i]) {
 #if 0
+	    /* Notify of doing an invalid byte test. */
 	    printf ("I don't think that ");
 	    print_json_char (i);
 	    printf (" is OK\n");
 #endif
+	    /* Change the byte to the supposedly invalid value. Use
+	       "expected_bad_byte" because the parser's bad_byte is
+	       reset each time. */
+	    //printf ("Setting value to %d\n", i);
+	    * expected_bad_byte = i;
+	    //		print_json (parser);
+	    reset_parser (parser);
 	    if (setjmp (parser->biscuit)) {
 		/* Failed. */
 		if (parser->bad_byte != expected_bad_byte) {
-		    if ((i == ']' ||
-			 i == '}')) {
-			/* End of numbers causes these problems,
-			   cannot fix without huge efforts. */
-		    }
-		    else {
-			fprintf (stderr, "Failed to detect error in %s with bad byte ",
-				type_names[parser->bad_type]);
+		    SURROPAIRFAIL;
+		    fprintf (stderr, "Failed to detect error in %s"
+			     " with bad byte ",
+			     type_names[parser->bad_type]);
 		    print_json_char (*expected_bad_byte);
 		    printf (":\n");
 		    print_json (parser);
 		    fprintf (stderr,
-			     "parser->bad_byte=%p should be %p with byte %d.\n",
-			     parser->bad_byte, expected_bad_byte, i);
+			     "parser->bad_byte=%p "
+			     "should be %p with byte %d, error was %s.\n",
+			     parser->bad_byte, expected_bad_byte, i,
+			     parser->last_error);
 		    exit (EXIT_FAILURE);
-		    }
 		}
 		else {
 		    //		    printf ("Bad byte as expected.\n");
 		}
 	    }
 	    else {
-		/* Change the byte to the supposedly invalid value. Use
-		   "expected_bad_byte" because the parser's bad_byte is
-		   reset each time. */
-		//printf ("Setting value to %d\n", i);
-		* expected_bad_byte = i;
-		//		print_json (parser);
-		reset_parser (parser);
+		/* The above "if" statement is like the a "catch" and
+		   this "else" statement is like a "try" in
+		   JavaScript. Alternatively, this "else" is a Perl
+		   "eval" and the above if branch is like "if ($@)" in
+		   Perl. */
 		c_validate (parser);
 	    }
 	}
@@ -191,18 +231,11 @@ alter_one_byte (parser_t * parser)
 	    n_choose++;
 	    if (setjmp (parser->biscuit)) {
 		if (parser->bad_byte == expected_bad_byte) {
-		    if ((i == ']' ||
-			 i == '}')) {
-			/* End of numbers causes these problems,
-			   cannot fix without huge efforts. */
-		    }
-		    else {
 		    print_json (parser);
 		    fprintf (stderr,
 			     "Got error %s to %p with supposedly valid value wanted %p with byte %d.\n",
 			     parser->last_error, parser->bad_byte, expected_bad_byte, i);
 		    exit (EXIT_FAILURE);
-		    }
 		}
 	    }
 	    else {
@@ -226,9 +259,18 @@ alter_one_byte (parser_t * parser)
     /* We now have one more valid byte, and only the last byte is
        questionable. */
     parser->length++;
+    return 0;
+ end:
+    /* Bail out, we have generated an unfixable string e.g. a
+       surrogate pair with the second half broken. */
+    return -1;
 }
 
-static void
+/* Make a string of completely random yet valid JSON. This
+   torture-tests the parser by checking that its marking of valid and
+   invalid bytes is correct. */
+
+static int
 random_json ()
 {
     char * json;
@@ -281,7 +323,10 @@ random_json ()
 		}
 #endif
 		/* Alter bytes and run again. */
-		alter_one_byte (& parser_o);
+		if (alter_one_byte (& parser_o)) {
+		    /* Trap for unfixable errors. */
+		    goto end;
+		}
 		//print_json (& parser_o);
 	    }
 	    else if (parser_o.error == json_error_empty_input) {
@@ -327,5 +372,6 @@ random_json ()
  end:
     parser_free (& parser_o);
     free (json);
+    return parser_o.length * MAXBYTE;
 }
 
