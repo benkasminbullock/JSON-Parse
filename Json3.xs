@@ -2,12 +2,12 @@
 #include "perl.h"
 #include "XSUB.h"
 
+/* TESTRANDOM should never be defined in the code released to CPAN. */
+
 //#define TESTRANDOM
 
 #ifdef TESTRANDOM
-
 #include <setjmp.h>
-
 #endif /* def TESTRANDOM */
 
 /* All instances of JSON literals are pointed to the following. These
@@ -25,6 +25,9 @@ static SV * json_null;
 #undef PERLING
 #include "Json3-perl.c"
 #include "Json3-entry-points.c"
+#ifdef TESTRANDOM
+#include "Json3-random-test.c"
+#endif /* def TESTRANDOM */
 
 MODULE=JSON::Parse PACKAGE=JSON::Parse
 
