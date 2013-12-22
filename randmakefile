@@ -3,3 +3,6 @@ FILES=Json3-perl.c Json3-random-test.c Json3-common.c \
 
 random-test: random-test.c $(FILES)
 	$(CC) $(CFLAGS) -o $@ random-test.c
+
+clean:
+	-rm -f random-test

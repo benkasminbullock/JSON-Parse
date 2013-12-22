@@ -259,10 +259,10 @@ static INLINE void
 failbadinput (parser_t * parser)
 {
     char buffer[ERRORMSGBUFFERSIZE];
-    const char * format;
     int string_end;
     int i;
     int l;
+    const char * format;
 
     /* If the error is "unexpected character", and we are at the end
        of the input, change to "unexpected end of input". This is
@@ -282,18 +282,14 @@ failbadinput (parser_t * parser)
 	parser->expected = 0;
     }
     /* Array bounds check for error message. */
-    if (parser->error != json_error_invalid &&
-	parser->error < json_error_overflow) {
-	format = json_errors[parser->error];
-    }
-    else {
+    if (parser->error <= json_error_invalid &&
+	parser->error >= json_error_overflow) {
 	failbug (__FILE__, __LINE__, parser,
 		 "Bad value for parser->error: %d\n", parser->error);
     }
+    format = json_errors[parser->error];
     l = strlen (format);
-    if (l > ERRORMSGBUFFERSIZE - 1) {
-	/* Probably should report a bug here rather than coping with
-	   it. */
+    if (l >= ERRORMSGBUFFERSIZE - 1) {
 	l = ERRORMSGBUFFERSIZE - 1;
     }
     for (i = 0; i < l; i++) {
@@ -862,13 +858,11 @@ get_string (parser_t * parser)
 	HANDLE_ESCAPES(parser->end);
 	goto string_start;
 
-    case BADBYTES:
-	ILLEGALBYTE;
-
 #define ADDBYTE (* b++ = c)
 #include "utf8-byte-one.c"
 
     default:
+    case BADBYTES:
 	ILLEGALBYTE;
     }
 
@@ -876,13 +870,13 @@ get_string (parser_t * parser)
 	STRINGFAIL (unexpected_end_of_input);
     }
 
-    goto string_end;
+ string_end:
+    return b - parser->buffer;
 
 #include "utf8-next-byte.c"
 #undef ADDBYTE
 
- string_end:
-    return b - parser->buffer;
+    goto string_end;
 }
 
 static void

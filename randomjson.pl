@@ -7,7 +7,7 @@ use JSON::Parse;
 
 my $bytes = 0;
 my $count = 0;
-while ($bytes < 1e6) {
+while ($bytes < 1e8) {
     $count++;
     print "Test $count: $bytes bytes so far\n";
     $bytes += JSON::Parse::random_json ();

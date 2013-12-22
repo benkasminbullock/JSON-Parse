@@ -44,7 +44,7 @@ sub bench
 
 my %min;
 my $min = 1e99;
-my $count = 50;
+my $count = 10;
 my $times = 100;
 
 print "Repetitions: $count x $times = ", $count * $times, "\n";
