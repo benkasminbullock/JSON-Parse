@@ -330,7 +330,11 @@ failbadinput (parser_t * parser)
 	   character in a different way depending on whether it's
 	   printable or not. */
 
-	if (isprint (bb)) {
+	/* Don't use "isprint" because on Windows it seems to think
+	   that 0x80 is printable:
+	   http://www.cpantesters.org/cpan/report/d6438b68-6bf4-1014-8647-737bdb05e747. */
+
+	if (bb >= 0x20 && bb < 0x7F) {
 	    /* Printable character, print the character itself. */
 	    string_end += snprintf (SNARGS, " '%c'", bb);
 	}
