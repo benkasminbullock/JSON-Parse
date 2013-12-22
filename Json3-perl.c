@@ -42,11 +42,11 @@
 static INLINE SVPTR
 PREFIX(number2) (parser_t * parser)
 {
-    /* End marker for strtod/strtol. */
+    /* End marker for strtod. */
 
     char * end;
 
-    /* Start marker for strtod/strtol. */
+    /* Start marker for strtod. */
 
     char * start;
 
@@ -56,7 +56,7 @@ PREFIX(number2) (parser_t * parser)
 
     /* The parsed character itself, the cause of our motion. */
 
-    char c;
+    unsigned char c;
 
     /* If it has exp or dot in it. */
 
@@ -67,13 +67,14 @@ PREFIX(number2) (parser_t * parser)
     int minus;
 
     parser->end--;
-    start = parser->end;
+    start = (char *) parser->end;
 
 #define FAILNUMBER(err)				\
     parser->bad_byte = parser->end - 1;		\
     parser->error = json_error_ ## err;		\
     parser->bad_type = json_number;		\
-    parser->bad_beginning = start;		\
+    parser->bad_beginning =			\
+	(unsigned char*) start;			\
     failbadinput (parser)
 
 #define NUMBEREND				\
@@ -216,7 +217,7 @@ PREFIX(number2) (parser_t * parser)
  exp_number_end:
     parser->end--;
     d = strtod (start, & end);
-    if (end == parser->end) {
+    if ((unsigned char *) end == parser->end) {
 	RETURNAGAIN (newSVnv (d));
     }
     else {
@@ -226,7 +227,7 @@ PREFIX(number2) (parser_t * parser)
  int_number_end:
 
     parser->end--;
-    if (parser->end - start < INT_MAX_DIGITS + minus) {
+    if (parser->end - (unsigned char *) start < INT_MAX_DIGITS + minus) {
 	if (minus) {
 	    guess = -guess;
 	}
@@ -244,7 +245,7 @@ string_number_end:
        standard doesn't explicitly disallow integers with a million
        digits. */
 
-    RETURNAGAIN (newSVpv (start, parser->end - start));
+    RETURNAGAIN (newSVpv (start, (char *) parser->end - start));
 }
 
 #if 0
@@ -579,12 +580,12 @@ PREFIX(number) (parser_t * parser)
 static SVPTR
 PREFIX(string) (parser_t * parser)
 {
-    char c;
+    unsigned char c;
 #ifdef PERLING
     SV * string;
 #endif
     int len;
-    char * start;
+    unsigned char * start;
 
     start = parser->end;
     len = 0;
@@ -597,27 +598,32 @@ PREFIX(string) (parser_t * parser)
        "input". This is a trick to increase the speed of
        processing. */
 
-    while (NEXTBYTE) {
-	switch (c) {
-	case '"':
-	    goto string_end;
-	case '\\':
-	    goto contains_escapes;
-	case BADBYTES:
-	    ILLEGALBYTE;
-	default:
-	    len++;
-	}
+ string_start:
+    switch (NEXTBYTE) {
+    case '"':
+	goto string_end;
+    case '\\':
+	goto contains_escapes;
+    case BADBYTES:
+	ILLEGALBYTE;
+#define ADDBYTE len++
+#include "utf8-byte-one.c"
+	
+    default:
+	ILLEGALBYTE;
     }
     /* Parsing of the string ended due to a \0 byte flipping the
        "while" switch and we dropped into this section before
        reaching the string's end. */
     ILLEGALBYTE;
 
+#include "utf8-next-byte.c"
+#undef ADDBYTE
+
  string_end:
 
 #ifdef PERLING
-    string = newSVpvn (start, len);
+    string = newSVpvn ((char *) start, len);
 #endif
     goto string_done;
 
@@ -654,7 +660,7 @@ PREFIX(string) (parser_t * parser)
 static SVPTR
 PREFIX(literal_true) (parser_t * parser)
 {
-    char * start;
+    unsigned char * start;
     start = parser->end - 1;
     if (* parser->end++ == 'r') {
 	if (* parser->end++ == 'u') {
@@ -678,7 +684,7 @@ PREFIX(literal_true) (parser_t * parser)
 static SVPTR
 PREFIX(literal_false) (parser_t * parser)
 {
-    char * start;
+    unsigned char * start;
     start = parser->end - 1;
     if (* parser->end++ == 'a') {
 	if (* parser->end++ == 'l') {
@@ -705,7 +711,7 @@ PREFIX(literal_false) (parser_t * parser)
 static SVPTR
 PREFIX(literal_null) (parser_t * parser)
 {
-    char * start;
+    unsigned char * start;
     start = parser->end - 1;
     if (* parser->end++ == 'u') {
 	if (* parser->end++ == 'l') {
@@ -780,8 +786,8 @@ static SVPTR PREFIX(object) (parser_t * parser);
 static SVPTR
 PREFIX(array) (parser_t * parser)
 {
-    char c;
-    char * start;
+    unsigned char c;
+    unsigned char * start;
 #ifdef PERLING
     AV * av;
     SV * value;
@@ -878,7 +884,7 @@ PREFIX(object) (parser_t * parser)
        perlapi" under "hv_store". */
     int uniflag;
     /* Start of parsing. */
-    char * start;
+    unsigned char * start;
 
     start = parser->end - 1;
 
@@ -969,7 +975,7 @@ PREFIX(object) (parser_t * parser)
     }
     else {
 #ifdef PERLING
-	(void) hv_store (hv, key.start, key.length * uniflag, value, 0);
+	(void) hv_store (hv, (char *) key.start, key.length * uniflag, value, 0);
 #endif
     }
     goto hash_middle;

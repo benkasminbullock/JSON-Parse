@@ -1,3 +1,5 @@
+#include "utf8-bytes.c"
+
 /* These things are common between the validation and the parsing
    routines. This is #included into "Json3.xs". */
 
@@ -79,7 +81,7 @@
 
 typedef struct string {
 
-    char * start;
+    unsigned char * start;
     unsigned int length;
 
     /* The "contains_escapes" flag is set if there are backslash escapes in
@@ -115,6 +117,8 @@ const char * type_names[json_overflow] = {
     "unicode escape"
 };
 
+#define MAXBYTE 0x100
+
 #include "errors.c"
 
 /* Anything which could be the start of a value. */
@@ -124,8 +128,6 @@ const char * type_names[json_overflow] = {
 /* The maximum value of bytes to check for. Once UTF-8 is included in
    the module, this will change to 0x100. */
 
-#define MAXBYTE 0x80
-
 typedef struct parser {
 
     /* The length of "input". */
@@ -134,17 +136,17 @@ typedef struct parser {
 
     /* The input. */
 
-    char * input;
+    unsigned char * input;
 
     /* The end-point of the parsing. This increments through
        "input". */
 
-    char * end;
+    unsigned char * end;
 
     /* The last byte of "input", "parser->input +
        parser->length". This is used to detect overflows. */
 
-    char * last_byte;
+    unsigned char * last_byte;
 
     /* Allocated size of "buffer". */
 
@@ -163,7 +165,7 @@ typedef struct parser {
        [ at the start of the array, or if we are parsing a string,
        this points to the byte after " at the start of the string. */
 
-    char * bad_beginning;
+    unsigned char * bad_beginning;
 
     /* The bad type itself. */
 
@@ -175,7 +177,7 @@ typedef struct parser {
 
     /* The byte which caused the parser to fail. */
 
-    char * bad_byte;
+    unsigned char * bad_byte;
 
     /* The type of error encountered. */
 
@@ -412,14 +414,11 @@ failbadinput (parser_t * parser)
 
 		    /* Check that this really is disallowed. */
 		    
-		    /* We don't handle UTF-8 yet. */
-		    if (bb < MAXBYTE) {
-			if (i != xin_literal) {
+		    if (i != xin_literal) {
 			if (allowed[i][bb]) {
 			    failbug (__FILE__, __LINE__, parser,
 				     "mismatch: got %X but it's allowed by %s",
 				     bb, input_expectation[i]);
-			}
 			}
 		    }
 		    if (joined) {
@@ -521,7 +520,7 @@ expand_buffer (parser_t * parser, int length)
 /* Parse the hex bit of a \uXYZA escape. */
 
 static INLINE int
-parse_hex_bytes (parser_t * parser, char * p)
+parse_hex_bytes (parser_t * parser, unsigned char * p)
 {
     int k;
     int unicode;
@@ -572,8 +571,8 @@ parse_hex_bytes (parser_t * parser, char * p)
     parser->bad_type = json_string;		\
     failbadinput (parser)
 
-static INLINE char *
-do_unicode_escape (parser_t * parser, char * p, unsigned char ** b_ptr)
+static INLINE unsigned char *
+do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
 {
     int unicode;
     unsigned int plus;
@@ -694,7 +693,7 @@ resolve_string (parser_t * parser, string_t * s)
        want to mess around with the value of "parser->end", which is
        always pointing to one after the last byte viewed. */
 
-    char * p;
+    unsigned char * p;
 
     p = s->start;
 
@@ -723,14 +722,13 @@ resolve_string (parser_t * parser, string_t * s)
 
 #define NEXTBYTE (c = *parser->end++)
 
-
 /* Get an object key value and put it into "key". Check for
    escapes. */
 
 static INLINE void
 get_key_string (parser_t * parser, string_t * key)
 {
-    char c;
+    unsigned char c;
     int i;
 
     key->start = parser->end;
@@ -801,10 +799,17 @@ get_key_string (parser_t * parser, string_t * key)
 
     default:
 
-	/* Eat another byte. */
-	goto key_string_next;
+	/* Do nothing. */
+#define ADDBYTE 
+#define string_start key_string_next
+#include "utf8-byte-one.c"
     }
     key->length = parser->end - key->start - 1;
+    return;
+
+#include "utf8-next-byte.c"
+#undef string_start
+#undef ADDBYTE
 }
 
 #define ILLEGALBYTE							\
@@ -823,7 +828,7 @@ get_string (parser_t * parser)
 {
     unsigned char * b;
     unsigned char c;
-    char * start;
+    unsigned char * start;
 
     start = parser->end;
 
@@ -855,13 +860,21 @@ get_string (parser_t * parser)
     case BADBYTES:
 	ILLEGALBYTE;
 
+#define ADDBYTE (* b++ = c)
+#include "utf8-byte-one.c"
+
     default:
-	* b++ = c;
-	goto string_start;
+	ILLEGALBYTE;
     }
+
     if (STRINGEND) {
 	STRINGFAIL (unexpected_end_of_input);
     }
+
+    goto string_end;
+
+#include "utf8-next-byte.c"
+#undef ADDBYTE
 
  string_end:
     return b - parser->buffer;

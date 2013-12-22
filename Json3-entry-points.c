@@ -33,7 +33,8 @@ static void check_end (parser_t * parser)
 /* Set up the parser. */
 
 #define GETSTRING							\
-    parser_o.end = parser_o.input = SvPV (json, parser_o.length);	\
+    parser_o.end = parser_o.input =					\
+	(unsigned char *) SvPV (json, parser_o.length);			\
     parser->unicode = SvUTF8 (json) ? 1 : 0
 
 #endif /* ndef NOPERL */

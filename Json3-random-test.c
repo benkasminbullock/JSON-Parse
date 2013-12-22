@@ -74,9 +74,7 @@
 
 */
 
-#define MAXBYTE 0x80
 #define INITIALLENGTH 0x1000
-
 
 /* Print one character in the most readable format. */
 
@@ -117,7 +115,7 @@ static void
 print_json (parser_t * parser)
 {
     int i;
-    char * json;
+    unsigned char * json;
     json = parser->input;
     printf ("JSON is now: ");
     for (i = 0; i < parser->length; i++) {
@@ -156,7 +154,7 @@ alter_one_byte (parser_t * parser)
     int valid_bytes[MAXBYTE];
     int choose[MAXBYTE];
     int n_choose;
-    char * expected_bad_byte;
+    unsigned char * expected_bad_byte;
 
     n_choose = 0;
 
@@ -273,7 +271,7 @@ alter_one_byte (parser_t * parser)
 static int
 random_json ()
 {
-    char * json;
+    unsigned char * json;
     int json_size;
     int json_length;
     int i;

@@ -56,6 +56,7 @@ chars: \ / " b f n r t u
 
 category: stringchar
 description: an ASCII or UTF-8 character
+chars: \x20-\x7f \xC2-\xF4
 
 category: literal
 description: start of literal
@@ -63,4 +64,28 @@ chars: t f n
 
 category: in_literal
 description: after the start of literal
+
+category: not_20_7f_c2_f4
+description: printable ASCII or first byte of UTF-8
+chars: \x20-\x7f \xc2-\xf4
+
+category: not_80_8f
+description: bytes in range 80-8f
+chars: \x80-\x8f
+
+category: not_80_9f
+description: bytes in range 80-9f
+chars: \x80-\x9f
+
+category: not_80_bf
+description: bytes in range 80-bf
+chars: \x80-\xbf
+
+category: not_90_bf
+description: bytes in range 90-bf
+chars: \x90-\xbf
+
+category: not_a0_bf
+description: bytes in range a0-bf
+chars: \xa0-\xbf
 

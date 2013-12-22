@@ -48,6 +48,7 @@ my @exs;
 my @ds;
 my @arrays;
 my %regexes;
+my $perline = 32;
 for my $expectation (@expectations) {
     my $c = $expectation->{category};
     push @exs, $c;
@@ -78,22 +79,24 @@ for my $expectation (@expectations) {
 #	print "<@chrs> $r\n";
 	$regexes{$c} = $r;
     }
-    elsif ($c eq 'stringchar') {
-	$regexes{$c} = '[^\x00-\x1F]';
+    else {
+	$regexes{$c} = '[^\x00-\xFF]';
     }
-    if (my $r = $regexes{$c}) {
-	my $array = "{";
-	for (0..127) {
-	    if (chr ($_) =~ /$r/) {
-		$array .= "1,";
-	    }
-	    else {
-		$array .= "0,";
-	    }
+    my $r = $regexes{$c};
+    my $array = "{";
+    for (0..255) {
+	if (chr ($_) =~ /$r/) {
+	    $array .= "1,";
 	}
-	$array .= "},";
-	push @arrays, $array;
+	else {
+	    $array .= "0,";
+	}
+	if ($_ % $perline == $perline -1) {
+	    $array .= "\n ";
+	}
     }
+    $array .= "},";
+    push @arrays, $array;
     push @ds, $d;
 }
 
@@ -113,7 +116,7 @@ for my $d (@ds) {
 }
 print $o "};\n";
 
-print $o "unsigned char allowed[n_expectations][128] = {\n";
+print $o "unsigned char allowed[n_expectations][MAXBYTE] = {\n";
 for my $i (0..$#arrays) {
     print $o "/* $exs[$i] */\n";
     print $o "$arrays[$i]\n";
