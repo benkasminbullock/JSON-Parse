@@ -4,7 +4,7 @@
 
 /* TESTRANDOM should never be defined in the code released to CPAN. */
 
-#define TESTRANDOM
+//#define TESTRANDOM
 
 #ifdef TESTRANDOM
 #include <setjmp.h>

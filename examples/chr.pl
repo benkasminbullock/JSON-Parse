@@ -1,12 +1,10 @@
 #!/home/ben/software/install/bin/perl
 use warnings;
 use strict;
-
 no utf8;
 my $kani = '87f9';
-print utf8::is_utf8 ($kani), "\n";
-# prints a blank line
+print "1: is utf8\n" if utf8::is_utf8 ($kani);
+# prints nothing
 $kani = chr (hex ($kani));
-print utf8::is_utf8 ($kani), "\n";
-# prints 1
-
+print "2: is utf8\n" if utf8::is_utf8 ($kani);
+# prints "2: is utf8"

@@ -1,4 +1,4 @@
-0.28_03 2013-12-15
+0.28_04 2013-12-15
 
 * Remove bad optimization from "Makefile.PL".
 * Error handling more consistent; fewer types of error message.

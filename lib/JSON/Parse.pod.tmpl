@@ -52,16 +52,12 @@ If the argument contains valid JSON, the return value is either a hash
 or an array reference. If the input JSON text is a serialized object,
 a hash reference is returned:
 
-    my $perl = parse_json ('{"a":1, "b":2}');
-    print ref $perl, "\n";
-    # Prints "HASH".
+[% INCLUDE "hash.pl" | xtidy %]
 
 If the input JSON text is a serialized array, an array reference is
 returned:
 
-    my $perl = parse_json ('["a", "b", "c"]');
-    print ref $perl, "\n";
-    # Prints "ARRAY".
+[% INCLUDE "array.pl" | xtidy %]
 
 =head2 json_file_to_perl
 
@@ -158,21 +154,11 @@ output strings will be marked as Unicode characters. If the input is
 not marked as Unicode characters, the output strings will not be
 marked as Unicode characters. Thus, 
 
-    # The scalar $sasori looks like Unicode to Perl
-    use utf8;
-    my $sasori = '["蠍"]';
-    my $p = parse_json ($sasori);
-    print utf8::is_utf8 ($p->[0]);
-    # Prints 1.
+[% INCLUDE "sasori.pl" | xtidy %]
 
 but
 
-    # The scalar $ebi does not look like Unicode to Perl
-    no utf8;
-    my $ebi = '["海老"]';
-    my $p = parse_json ($ebi);
-    print utf8::is_utf8 ($p->[0]);
-    # Prints nothing.
+[% INCLUDE "ebi.pl" | xtidy %]
 
 Escapes of the form \uXXXX (see page three of L</RFC 4627>) are mapped
 to ASCII if XXXX is less than 0x80, or to UTF-8 if XXXX is greater
