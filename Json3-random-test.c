@@ -104,7 +104,12 @@ print_json_char (unsigned char c)
 	    printf ("\\n");
 	    break;
 	default:
-	    printf ("0X%02X", c);
+	    if (c >= 0x80) {
+		printf ("%c", c);
+	    }
+	    else {
+		printf ("\\X%02X", c);
+	    }
 	}
     }
 }

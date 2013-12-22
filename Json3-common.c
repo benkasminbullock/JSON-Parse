@@ -417,8 +417,10 @@ failbadinput (parser_t * parser)
 		    if (i != xin_literal) {
 			if (allowed[i][bb]) {
 			    failbug (__FILE__, __LINE__, parser,
-				     "mismatch: got %X but it's allowed by %s",
-				     bb, input_expectation[i]);
+				     "mismatch parsing %s: got %X "
+				     "but it's allowed by %s (%d)",
+				     type_names[parser->bad_type], bb,
+				     input_expectation[i], i);
 			}
 		    }
 		    if (joined) {
@@ -797,12 +799,15 @@ get_key_string (parser_t * parser, string_t * key)
 	parser->bad_byte = parser->end - 1;
 	STRINGFAIL (unexpected_character);
 
-    default:
-
-	/* Do nothing. */
 #define ADDBYTE 
 #define string_start key_string_next
 #include "utf8-byte-one.c"
+    default:
+
+	parser->bad_beginning = key->start - 1;
+	parser->expected = XSTRINGCHAR;
+	parser->bad_byte = parser->end - 1;
+	STRINGFAIL (unexpected_character);
     }
     key->length = parser->end - key->start - 1;
     return;

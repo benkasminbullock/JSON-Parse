@@ -5,6 +5,7 @@
 * Rewrite of internals for number, array, hash parsing.
 * Very extensive testing with random input done to root out remaining problems.
 * Many small bugs in number, hash, array parsing fixed.
+* UTF-8 validation in strings.
 
 0.28 2013-12-12
 

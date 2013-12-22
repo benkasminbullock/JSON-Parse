@@ -7,10 +7,7 @@
 #include <time.h>
 
 static void
-croak (char * format, ...)
-{
-    exit (EXIT_FAILURE);
-}
+croak (char * format, ...);
 
 #include "unicode.h"
 #include "unicode.c"
@@ -28,6 +25,17 @@ croak (char * format, ...)
 #define NOPERL
 #include "Json3-entry-points.c"
 #include "Json3-random-test.c"
+
+static void
+croak (char * format, ...)
+{
+    va_list args;
+    va_start (args, format);
+    vfprintf (stderr, format, args);
+    va_end (args);
+    fprintf (stderr, "\n");
+    exit (EXIT_FAILURE);
+}
 
 
 int main ()

@@ -1,0 +1,5 @@
+FILES=Json3-perl.c Json3-random-test.c Json3-common.c \
+	utf8-next-byte.c utf8-byte-one.c utf8-bytes.c 
+
+random-test: random-test.c $(FILES)
+	$(CC) $(CFLAGS) -o $@ random-test.c
