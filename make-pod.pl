@@ -3,6 +3,10 @@ use warnings;
 use strict;
 use Template;
 use FindBin;
+use lib 'blib/arch';
+use lib 'blib/lib';
+use JSON::Parse 'validate_json';
+use Table::Readable 'read_table';
 
 # Names of the input and output files containing the documentation.
 
@@ -30,6 +34,49 @@ my $tt = Template->new (
     },
 );
 
+my @errors = read_table ('errormsg.txt');
+# Remove "invalid".
+
+shift @errors;
+
+for my $error (@errors) {
+    my $d = $error->{description};
+    my $count = 0;
+    while ($d =~ /(!(.*?)!)/) {
+	my $text = $1;
+	my $example = $2;
+	die if !$example;
+	eval {
+	    validate_json ($example);
+	};
+	if (! $@) {
+	    die "No error running $error";
+	}
+	my $out = $@;
+	if ($out !~ /\Q$error->{error}/i) {
+	    # Don't die here since if module is faulty this can
+	    # happen, then a circular problem occurs.
+	    warn "Did not get $error->{error} parsing $example";
+	}
+	# Remove this file's name from the error message.
+	$out =~ s/at \.\/make-pod\.pl.*$//;
+	my $expanded = <<EOF;
+    validate_json ('$example');
+
+gives output
+
+    $out
+EOF
+	$d =~ s/\Q$text/$expanded/;
+	$count++;
+	if ($count > 19) {
+	    die "$count over";
+	}
+    }
+    $error->{description} = $d;
+    $error->{error} = ucfirst ($error->{error});
+}
+$vars{errors} = \@errors;
 $tt->process ($input, \%vars, $output, {binmode => 'utf8'})
     or die '' . $tt->error ();
 
@@ -50,7 +97,7 @@ sub xtidy
 
     $text =~ s/use\s+(strict|warnings);\s+//g;
     $text =~ s/^binmode\s+STDOUT.*?utf8.*?\s+$//gm;
-    $text =~ s/use\s+JSON::Parse.*?;\s+//;
+#    $text =~ s/use\s+JSON::Parse.*?;\s+//;
 
     # Replace tabs with spaces.
 

@@ -192,13 +192,15 @@ typedef struct parser {
 
     int end_expected;
 
+    /* Bytes we accept. */
+
+    int valid_bytes[MAXBYTE];
+
 #ifdef TESTRANDOM
 
     /* Return point for longjmp. */
 
     jmp_buf biscuit;
-
-    int valid_bytes[MAXBYTE];
 
     char * last_error;
 
@@ -255,7 +257,42 @@ failbug (char * file, int line, parser_t * parser, const char * format, ...)
 
 #define STRINGEND (parser->end > parser->last_byte)
 
-static INLINE void
+/* One of the types which demands a specific next byte. */
+
+#define SPECIFIC(c) (((c) & XIN_LITERAL) || ((c) & XIN_SURROGATE_PAIR))
+
+/* Make the list of valid bytes. */
+
+static void make_valid_bytes (parser_t * parser)
+{
+    int i;
+    for (i = 0; i < MAXBYTE; i++) {
+	parser->valid_bytes[i] = 0;
+    }
+    for (i = 0; i < n_expectations; i++) {
+	int X;
+	X = 1<<i;
+	if (SPECIFIC(X)) {
+	    continue;
+	}
+	if (parser->expected & X) {
+	    int j;
+	    for (j = 0; j < MAXBYTE; j++) {
+		parser->valid_bytes[j] |= allowed[i][j];
+	    }
+	}
+    }
+    if (SPECIFIC(parser->expected)) {
+	parser->valid_bytes[parser->literal_char] = 1;
+    }
+}
+
+/* Repeated arguments to snprintf. */
+
+#define SNARGS buffer + string_end, ERRORMSGBUFFERSIZE - string_end
+
+
+static void
 failbadinput (parser_t * parser)
 {
     char buffer[ERRORMSGBUFFERSIZE];
@@ -287,6 +324,61 @@ failbadinput (parser_t * parser)
 	failbug (__FILE__, __LINE__, parser,
 		 "Bad value for parser->error: %d\n", parser->error);
     }
+
+#ifndef NOPERL
+
+    /* Make an error in JSON format. */
+
+    json_diagnostics = get_sv ("JSON::Parse::json_diagnostics", 0);
+    if (! json_diagnostics) {
+	failbug (__FILE__, __LINE__, parser,
+		 "$JSON::Parse::json_diagnostics variable does not exist");
+    }
+    if (SvTRUE (json_diagnostics)) {
+	string_end = 0;
+	string_end +=
+	    snprintf (SNARGS,
+		      "{"
+		      "\"input length\":%d"
+		      ",\"bad type\":\"%s\""
+		      ",\"error\":\"%s\"",
+		      parser->length,
+		      type_names[parser->bad_type],
+		      json_errors[parser->error]);
+	if (parser->bad_byte) {
+	    string_end += snprintf (SNARGS,
+				    ",\"bad byte position\":%d"
+				    ",\"bad byte contents\":%d",
+				    parser->bad_byte - parser->input,
+				    * parser->bad_byte);
+	    
+	}
+	if (parser->bad_beginning) {
+	    string_end +=
+		snprintf (SNARGS, ",\"start of broken component\":%d",
+			  parser->bad_beginning - parser->input + 1);
+	}
+	if (parser->error == json_error_unexpected_character) {
+	    int j;
+	    make_valid_bytes (parser);
+	    string_end +=
+		snprintf (SNARGS, ",\"valid bytes\":[%d",
+			  parser->valid_bytes[0]);
+	    for (j = 1; j < MAXBYTE; j++) {
+		string_end += snprintf (SNARGS, ",%d",
+					parser->valid_bytes[j]);
+	    }
+	    string_end +=
+		snprintf (SNARGS, "]");
+	}
+	string_end +=
+	    snprintf (SNARGS, "}\n");
+	printf ("%s\n", buffer);
+	croak (buffer);
+    }
+
+#endif
+
     format = json_errors[parser->error];
     l = strlen (format);
     if (l >= ERRORMSGBUFFERSIZE - 1) {
@@ -297,10 +389,6 @@ failbadinput (parser_t * parser)
     }
     buffer[l] = '\0';
     string_end = l;
-
-    /* Repeated arguments to snprintf. */
-
-#define SNARGS buffer + string_end, ERRORMSGBUFFERSIZE - string_end
 
     /* If we got an unexpected character somewhere, append the exact
        value of the character to the error message. */
@@ -377,11 +465,12 @@ failbadinput (parser_t * parser)
 		parser->valid_bytes[i] = 0;
 	    }
 #endif /* def TESTRANDOM */
-	    if (parser->expected & XIN_LITERAL) {
+	    if (SPECIFIC(parser->expected)) {
 		if (! parser->literal_char) {
 		    failbug (__FILE__, __LINE__, parser,
 			     "expected literal character unset");
 		}
+		snprintf (SNARGS, "'%c'", parser->literal_char);
 #ifdef TESTRANDOM
 		parser->valid_bytes[parser->literal_char] = 1;
 #endif /* def TESTRANDOM */
@@ -389,7 +478,7 @@ failbadinput (parser_t * parser)
 	    for (i = 0; i < n_expectations; i++) {
 		int X;
 		X = 1<<i;
-		if (X & XIN_LITERAL) {
+		if (SPECIFIC(X)) {
 		    continue;
 		}
 		if (parser->expected & X) {
@@ -477,6 +566,8 @@ failbadinput (parser_t * parser)
 	croak ("JSON error: %s", buffer);
     }
 }
+
+#undef SPECIFIC
 
 /* This is for failures not due to errors in the input or to bugs but
    to exhaustion of resources, i.e. out of memory. */
@@ -573,6 +664,15 @@ parse_hex_bytes (parser_t * parser, unsigned char * p)
     parser->bad_type = json_string;		\
     failbadinput (parser)
 
+#define FAILSURROGATEPAIR(c)				\
+    parser->expected = XIN_SURROGATE_PAIR;		\
+    parser->literal_char = c;				\
+    parser->bad_beginning = start - 2;			\
+    parser->error = json_error_unexpected_character;	\
+    parser->bad_type = json_unicode_escape;		\
+    parser->bad_byte = p - 1;				\
+    failbadinput (parser)
+
 static INLINE unsigned char *
 do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
 {
@@ -584,34 +684,44 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
     p += 4;
     plus = ucs2_to_utf8 (unicode, *b_ptr);
     if (plus == UNICODE_BAD_INPUT) {
-	parser->bad_beginning = start;
-	UNIFAIL (bad_unicode_input);
+	failbug (__FILE__, __LINE__, parser,
+		 "Failed to parse unicode input %.4s", start);
     }
     else if (plus == UNICODE_SURROGATE_PAIR) {
 	int unicode2;
 	int plus2;
-	if (*p++ == '\\' && *p++ == 'u') {
-	    unicode2 = parse_hex_bytes (parser, p);
-	    p += 4;
-	    plus2 = surrogate_to_utf8 (unicode, unicode2, * b_ptr);
-	    if (plus2 <= 0) {
-		if (plus2 == UNICODE_NOT_SURROGATE_PAIR) {
-		    parser->bad_byte = 0;
-		    parser->bad_beginning = p - 4;
-		    UNIFAIL (not_surrogate_pair);
+	if (parser->last_byte - p < 6) {
+	    parser->bad_beginning = start - 2;
+	    parser->bad_type = json_unicode_escape;
+	    parser->error = json_error_unexpected_end_of_input;
+	    failbadinput (parser);
+	}
+	if (*p++ == '\\') {
+	    if (*p++ == 'u') {
+		unicode2 = parse_hex_bytes (parser, p);
+		p += 4;
+		plus2 = surrogate_to_utf8 (unicode, unicode2, * b_ptr);
+		if (plus2 <= 0) {
+		    if (plus2 == UNICODE_NOT_SURROGATE_PAIR) {
+			parser->bad_byte = 0;
+			parser->bad_beginning = p - 4;
+			UNIFAIL (not_surrogate_pair);
+		    }
+		    else {
+			failbug (__FILE__, __LINE__, parser,
+				 "unhandled error %d from surrogate_to_utf8",
+				 plus2);
+		    }
 		}
-		else {
-		    failbug (__FILE__, __LINE__, parser,
-			     "unhandled error %d from surrogate_to_utf8",
-			     plus2);
-		}
+		* b_ptr += plus2;
+		goto end;
 	    }
-	    * b_ptr += plus2;
-	    goto end;
+	    else {
+		FAILSURROGATEPAIR ('u');
+	    }
 	}
 	else {
-	    parser->bad_byte = p - 1;
-	    STRINGFAIL (second_half_of_surrogate_pair_missing);
+	    FAILSURROGATEPAIR ('\\');
 	}
     }
     else if (plus <= 0) {
@@ -631,7 +741,7 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
 /* Handle backslash escapes. We can't use the NEXTBYTE macro here for
    the reasons outlined below. */
 
-#define HANDLE_ESCAPES(p)				\
+#define HANDLE_ESCAPES(p,start)				\
     switch (c = * ((p)++)) {				\
 							\
     case '\\':						\
@@ -665,7 +775,7 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
 	break;						\
 							\
     default:						\
-	parser->bad_beginning = p - 2;			\
+	parser->bad_beginning = start;			\
 	parser->bad_byte = p - 1;			\
         parser->expected = XESCAPE;			\
 	STRINGFAIL (unexpected_character);		\
@@ -710,7 +820,7 @@ resolve_string (parser_t * parser, string_t * s)
 
 	c = *p++;
 	if (c == '\\') {
-	    HANDLE_ESCAPES(p);
+	    HANDLE_ESCAPES(p,s->start - 1);
 	}
 	else {
 	    *b++ = c;
@@ -817,8 +927,12 @@ get_key_string (parser_t * parser, string_t * key)
 #undef ADDBYTE
 }
 
+/* "start - 1" puts the start on the " rather than after it. "start"
+   is usually after the quote because the quote is eaten on the way
+   here. */
+
 #define ILLEGALBYTE							\
-    parser->bad_beginning = start;					\
+    parser->bad_beginning = start - 1;					\
     parser->bad_byte = parser->end - 1;					\
     parser->expected = XSTRINGCHAR;					\
     STRINGFAIL (unexpected_character)
@@ -859,7 +973,7 @@ get_string (parser_t * parser)
 	break;
 
     case '\\':
-	HANDLE_ESCAPES(parser->end);
+	HANDLE_ESCAPES(parser->end, start - 1);
 	goto string_start;
 
 #define ADDBYTE (* b++ = c)

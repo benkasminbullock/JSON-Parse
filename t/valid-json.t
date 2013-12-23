@@ -186,7 +186,9 @@ run_fail_like ('["\uNOTHEX"]', qr/unexpected character 'N'/i);
 
 run_fail_like ('["\uABC', qr/unexpected end of input/i);
 
-run_fail_like ('["\uD834monkey\uDD1E"]', qr/second half of surrogate pair missing/i);
+run_fail_like ('["\uD834monkey\uDD1E"]', qr/unexpected character 'm'/i);
+# This checks the string-length-checking code.
+run_fail_like ('["\udc00???"]', qr/Unexpected end of input parsing unicode escape starting from byte 3/);
 
 my $bad_plus = '[1.0e1+0]';
 run_fail_like ($bad_plus, qr/unexpected character/i);

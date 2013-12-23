@@ -65,6 +65,9 @@ chars: t f n
 category: in_literal
 description: after the start of literal
 
+category: in_surrogate_pair
+description: the second half of a surrogate pair
+
 category: not_20_7f_c2_f4
 description: printable ASCII or first byte of UTF-8
 chars: \x20-\x7f \xc2-\xf4

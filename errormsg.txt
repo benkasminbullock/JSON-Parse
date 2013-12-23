@@ -1,13 +1,88 @@
 error: invalid
 
 error: unexpected character
+%%description:
+
+An unexpected character was encountered in the input. For example,
+when looking at the beginning of a string supposedly containing JSON,
+there are six possible characters, the four JSON whitespace characters
+plus "[" and "{". If the module encounters a plus sign, it will give
+an error like this:
+
+!+!
+
+The message always includes a list of what characters are allowed.
+
+If there is some recognizable structure being parsed, the error
+message will include its starting point in the form "starting from
+byte n":
+
+!{"this":"\a"}!
+
+A feature of JSON is that parsing it requires only one byte to be
+examined at a time. Thus almost all parsing problems can be handled
+using the "Unexpected character" error type, including spelling errors
+in literals:
+
+![true,folse]!
+
+and the missing second half of a surrogate pair:
+
+!["\udc00? <-- should be a second half here"]!
+
+All kinds of errors can occur parsing numbers, for example a missing
+fraction,
+
+![1.e9]!
+
+and a leading zero,
+
+![0123]!
+
+The error message is this complicated because all of the following are
+valid here: whitespace: C<[0 ]>; comma: C<[0,1]>, end of array:
+C<[0]>, dot: C<[0.1]>, or exponential: C<[0e0]>.
+
+These are all handled by this error.  Thus the error messages are a
+little confusing as diagnostics.
+
+Previous versions of this module gave more informative messages like
+"leading zero in number". (The messages weren't documented.) The
+reason to change over to the single message was because it makes the
+parsing code simpler, and because the testing code described in
+L</TESTING> makes use of the internals of this error to check that the
+error message produced actually do correspond to the invalid and valid
+bytes allowed by the parser, at the exact byte given.
+
+%%
 
 error: unexpected end of input
+%%description:
 
-error: second half of surrogate pair missing
+The end of the string was encountered before the end of whatever was
+being parsed was. For example, if a quote is missing from the end of
+the string, it will give an error like this:
+
+!{"Your boy":"Tommy Sotomayor}!
+
+%%
 
 error: not surrogate pair
+%%description:
+
+While parsing a string, a surrogate pair was encountered. While trying
+to turn this into UTF-8, the second half of the surrogate pair turned
+out to be an invalid value.
+
+!["\uDC00\uABCD"]!
+
+%%
 
 error: empty input
+%%description:
 
-error: bad_unicode_input
+This error occurs for L</assert_valid_json> when it's given an empty
+or undefined value. Given empty input, L</parse_json> returns an
+undefined value rather than throwing an error.
+
+%%

@@ -10,6 +10,10 @@
 #include <setjmp.h>
 #endif /* def TESTRANDOM */
 
+/* Experimental. */
+
+static SV * json_diagnostics;
+
 /* All instances of JSON literals are pointed to the following. These
    are initialized in "BOOT" in "Json3.xs". */
 

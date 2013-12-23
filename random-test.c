@@ -1,3 +1,8 @@
+/* This is a C version of "random_json()". It can be compiled without
+   reference to Perl.
+
+   It prints one string of random JSON and exits. */
+
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>

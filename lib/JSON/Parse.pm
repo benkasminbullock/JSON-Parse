@@ -15,9 +15,13 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.28_04';
+our $VERSION = '0.28_05';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
+
+# Experimental, return a string of JSON as the error.
+
+our $json_diagnostics;
 
 our $true;
 our $false;

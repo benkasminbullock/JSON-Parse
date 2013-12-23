@@ -2,5 +2,5 @@
 use warnings;
 use strict;
 use Deploy 'do_system';
-unlink (qw/errors.c README/);
+unlink (qw!errors.c README!);
 do_system ("make -f randmakefile clean");
