@@ -316,82 +316,108 @@ The following error messages are produced:
 =head1 SPEED
 
 On the author's computer, the module's speed of parsing is
-approximately the same or slightly faster than L<JSON::XS>, with small
-variations depending on the type of input. Some special types of
-input, such as floating point numbers containing an exponential part,
-like "1e09", are about two or three times faster to parse with this
-module than with L<JSON::XS>. This is because in JSON::Parse, parsing
-of exponentials is done by the system's C<strtod> function, but
-JSON::XS contains its own parser for exponentials.
+approximately the same as L<JSON::XS>, with small variations depending
+on the type of input. For validation, L</valid_json> is faster than
+any other module known to the author, and up to ten times faster than
+JSON::XS.
 
-For validation, L</valid_json> is faster than any other module known
-to the author. 
+Some special types of input, such as floating point numbers containing
+an exponential part, like "1e09", seem to be about two or three times
+faster to parse with this module than with L<JSON::XS>. In
+JSON::Parse, parsing of exponentials is done by the system's C<strtod>
+function, but JSON::XS contains its own parser for exponentials, so
+these results may be system-dependent.
+
+On the other hand, JSON::XS makes better use of Perl's inbuilt string
+handling than JSON::Parse and so it's faster for some types of
+strings. The main focus of the version 0.29 release is increased
+accuracy and better handling of edge cases. I'm planning to attend to
+the speed issues in future versions.
 
 There is some benchmarking code in the github repository under the
 directory "benchmarks" for those wishing to test these claims. The
 script F<benchmarks/bench> is an adaptation of the similar script in
 the L<JSON::XS> distribution.
 
-Here is an example with "benchmarks/long.json", originally downloaded
-from L<http://dist.schmorp.de/misc/json/long.json>:
+The following benchmark tests used version 0.29 of JSON::Parse and
+version 3.01 of JSON::XS on the files in the "benchmarks" directory of
+JSON::Parse. "short.json" and "long.json" are the benchmarks used by
+JSON::XS.
 
-    Repetitions: 50 x 100 = 5000
+=over
+
+=item short.json
+
+    Repetitions: 10 x 100 = 1000
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     |   9691.538 |  0.0051591 |
-    JSON::Parse   |   3313.665 |  0.0150890 |
-    JSON::XS      |   3318.751 |  0.0150659 |
+    JP::valid     | 358487.521 |  0.0000279 |
+    JSON::Parse   | 179243.761 |  0.0000558 |
+    JSON::XS      | 156503.881 |  0.0000639 |
     --------------+------------+------------+
 
-Here JP::valid is the running time of JSON::Parse's L</valid_json>. A
-higher number in the second column, or a smaller number in the third
-column, is faster.
 
-Here is an example with "benchmarks/words-array.json":
+=item long.json
 
-    Repetitions: 50 x 100 = 5000		 
+    Repetitions: 10 x 100 = 1000
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     | 169535.327 |  0.0002949 |
-    JSON::Parse   |  22533.061 |  0.0022190 |
-    JSON::XS      |  21185.493 |  0.0023601 |
+    JP::valid     |   6385.968 |  0.0015659 |
+    JSON::Parse   |   2803.492 |  0.0035670 |
+    JSON::XS      |   3506.357 |  0.0028520 |
     --------------+------------+------------+
 
-Here is an example with "benchmarks/exp.json", containing floating
-point numbers:
 
-    Repetitions: 50 x 100 = 5000
+=item words-array.json
+
+    Repetitions: 10 x 100 = 1000
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     |  83352.623 |  0.0005999 |
-    JSON::Parse   |  30826.870 |  0.0016220 |
-    JSON::XS      |  13545.743 |  0.0036912 |
+    JP::valid     | 164482.510 |  0.0000608 |
+    JSON::Parse   |  22622.999 |  0.0004420 |
+    JSON::XS      |  21936.736 |  0.0004559 |
     --------------+------------+------------+
 
-Here is an example with "benchmarks/literals.json", containing JSON literals:
 
-    Repetitions: 50 x 100 = 5000
+=item exp.json
+
+    Repetitions: 10 x 100 = 1000
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     | 182519.756 |  0.0002739 |
-    JSON::Parse   |  31564.600 |  0.0015841 |
-    JSON::XS      |  17939.709 |  0.0027871 |
+    JP::valid     |  88487.426 |  0.0001130 |
+    JSON::Parse   |  35726.610 |  0.0002799 |
+    JSON::XS      |  13662.228 |  0.0007319 |
     --------------+------------+------------+
 
-Here is an example with "benchmarks/cpantesters.json", a 250K file:
 
-    Repetitions: 5 x 10 = 50
+=item literals.json
+
+    Repetitions: 10 x 100 = 1000
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     |    876.736 |  0.0057030 |
-    JSON::Parse   |    140.631 |  0.0355539 |
-    JSON::XS      |    131.866 |  0.0379171 |
+    JP::valid     | 204600.195 |  0.0000489 |
+    JSON::Parse   |  31230.856 |  0.0003202 |
+    JSON::XS      |  17578.810 |  0.0005689 |
     --------------+------------+------------+
+
+
+=item cpantesters.json
+
+    Repetitions: 10 x 100 = 1000
+    --------------+------------+------------+
+    module        |      1/min |        min |
+    --------------|------------|------------|
+    JP::valid     |    631.187 |  0.0158432 |
+    JSON::Parse   |    132.401 |  0.0755279 |
+    JSON::XS      |    131.020 |  0.0763240 |
+    --------------+------------+------------+
+
+=back
 
 =head1 SEE ALSO
 
@@ -399,31 +425,41 @@ Here is an example with "benchmarks/cpantesters.json", a 250K file:
 
 =item RFC 4627
 
-JSON is specified in L<http://www.ietf.org/rfc/rfc4627.txt>.
+JSON is specified in L<RFC 4627 "The application/json Media Type for JavaScript Object Notation (JSON)"|http://www.ietf.org/rfc/rfc4627.txt>.
 
 =item JSON, JSON::XS, and friends
 
 These modules allow both reading and writing of JSON. JSON::Parse
 originated as a response to the overcomplex interface of L<JSON>, in
-particular its exasperating and buggy handling of Unicode.
+particular its exasperating handling of Unicode.
 
 There are also a lot of other modules for parsing and producing JSON
-on CPAN. I have found the following ones: L<JSON::DWIW>, L<JSON::SL>,
-L<JSON::Any>, L<JSON::YAJL>, L<JSON::Util>, L<JSON::Tiny>,
-L<Pegex::JSON>, L<JSON::Streaming::Reader>, L<JSON::Syck>,
-L<Mojo::JSON>.
+on CPAN. I have found the following ones: L<JSON::DWIW>, L<JSON::Any>,
+L<JSON::YAJL>, L<JSON::Util>, L<JSON::Tiny>, L<Pegex::JSON>,
+L<JSON::Streaming::Reader>, L<JSON::Syck>, L<Mojo::JSON>. Please let
+me know of any others I've missed.
 
 A fork of JSON::XS also exists as L<Cpanel::JSON::XS>. This is related
-to some kind of feud about how to report bugs. Please see the module
-for details. Another module, L<JSON::XS::VersionOneAndTwo>, supports
-two different interfaces of JSON::XS. However, JSON::XS is now onto
-version 3.
+to a disagreement about how to report bugs. Please see the module for
+details. Another module, L<JSON::XS::VersionOneAndTwo>, supports two
+different interfaces of JSON::XS. However, JSON::XS is now onto
+version 3. L<JSON::SL> also seems to be a fork of JSON::XS. I was
+unable to run its example code.
 
 =back
 
 =head1 TEST RESULTS
 
-The ActiveState test results are at L<http://code.activestate.com/ppm/JSON-Parse/>.
+The CPAN testers results are at the usual place. At the time of
+release of this 0.29 version of the module, apart from pre-5.8.9
+versions of Perl, there is only one CPAN testers testing machine on
+which JSON::Parse fails its tests, a Windows 5.16.3 multithreaded
+Perl. So far I have been unable to work out why these tests are
+failing on that machine. If JSON::Parse does not install on your
+machine, let me know.
+
+The ActiveState test results are at
+L<http://code.activestate.com/ppm/JSON-Parse/>.
 
 =head1 EXPORTS
 
@@ -451,19 +487,18 @@ error messages and validation of input. Some of the testing code is
 supplied with the module in the F</t/> subdirectory of the
 distribution.
 
-More extensive testing code is in the github repository which is not
+More extensive testing code is in the git repository. This is not
 supplied in the CPAN distribution. A script, F<randomjson.pl>,
 generates a set number of bytes of random JSON and checks that the
-module's bytewise validation of input is correct. The script needs to
-be edited to supply the required number of bytes, for example, one
-gigabyte. This relies on a C file F<Json3-random-test.c> and it also
-requires F<Json3.xs> to be edited to make the macro C<TESTRANDOM> true
-(uncomment line 7 of the file). The testing code deliberately creates
-parsing failures and uses C setjmp/longjmp to catch the errors, so
-it's not guaranteed to work on all operating systems.
+module's bytewise validation of input is correct. This setup relies on
+a C file F<Json3-random-test.c> which isn't in the CPAN distribution,
+and it also requires F<Json3.xs> to be edited to make the macro
+C<TESTRANDOM> true (uncomment line 7 of the file). The testing code
+uses C setjmp/longjmp, so it's not guaranteed to work on all operating
+systems and is commented out for CPAN releases.
 
-A pure C version called "random-test.c" also exists. This applies the
-tests, and requires no Perl at all.
+A pure C version called "random-test.c" also exists. This applies
+exactly the same tests, and requires no Perl at all.
 
 =head1 AUTHOR
 

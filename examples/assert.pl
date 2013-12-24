@@ -8,4 +8,4 @@ eval {
 if ($@) {
     print "Your JSON was invalid: $@\n";
 }
-# Prints "Your JSON was invalid: JSON error: unexpected character ':' parsing array"
+# Prints "Unexpected character ':' parsing array"

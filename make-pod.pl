@@ -50,7 +50,7 @@ for my $error (@errors) {
 	    validate_json ($example);
 	};
 	if (! $@) {
-	    die "No error running $error";
+	    warn "No error running $error";
 	}
 	my $out = $@;
 	if ($out !~ /\Q$error->{error}/i) {

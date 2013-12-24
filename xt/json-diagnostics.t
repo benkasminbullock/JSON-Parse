@@ -8,12 +8,24 @@ eval {
     assert_valid_json ("baba");
 };
 my $error = $@;
-note ($@);
+#note ($@);
 $JSON::Parse::json_diagnostics = 0;
+my $j;
 eval {
-    assert_valid_json ($error);
+    $j = parse_json ($error);
 };
-ok (! $@);
-
-note ($@);
+ok (! $@, "got valid JSON error message");
+#print "$error\n";
+my @valid = ("\t", "\r", "\n", ' ', '{', '['); 
+my @valid_bytes = (0) x 256;
+for (@valid) {
+#    print ord ($_), "\n";
+    $valid_bytes[ord ($_)] = 1;
+}
+#for my $i (0..$#{$j->{'valid bytes'}}) {
+#    printf "%3d:$j->{'valid bytes'}->[$i]/$valid_bytes[$i] ", $i;
+#}
+#print "\n";
+is_deeply ($j->{"valid bytes"}, \@valid_bytes, "valid bytes same");
+#note ($@);
 done_testing ();

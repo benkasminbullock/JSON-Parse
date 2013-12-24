@@ -40,7 +40,7 @@
 #define USEDIGIT guess = guess * 10 + (c - '0')
 
 static INLINE SVPTR
-PREFIX(number2) (parser_t * parser)
+PREFIX(number) (parser_t * parser)
 {
     /* End marker for strtod. */
 
@@ -85,6 +85,7 @@ PREFIX(number2) (parser_t * parser)
 
 #define XNUMBEREND (XCOMMA|XWHITESPACE|parser->end_expected)
 
+    guess = 0;
     minus = 0;
 
     switch (NEXTBYTE) {
@@ -231,6 +232,10 @@ PREFIX(number2) (parser_t * parser)
 	if (minus) {
 	    guess = -guess;
 	}
+	/*
+	printf ("number debug: '%.*s': %d\n",
+		parser->end - (unsigned char *) start, start, guess);
+	*/
 	RETURNAGAIN (newSViv (guess));
     }
     else {
@@ -420,7 +425,7 @@ static SVPTR PREFIX(object) (parser_t * parser);
  case '-':					\
  case DIGIT:					\
  parser->end_expected = expected;	        \
- SETVALUE PREFIX(number2) (parser);		\
+ SETVALUE PREFIX(number) (parser);		\
  break;						\
 						\
  case '{':					\
@@ -473,14 +478,14 @@ PREFIX(array) (parser_t * parser)
 
     switch (NEXTBYTE) {
 
-	PARSE (array_start,XARRAY_END);
+	PARSE (array_start, XARRAY_END);
 
     case ']':
 	goto array_end;
 
     default:
 	parser->expected = VALUE_START | XWHITESPACE | XARRAY_END;
-	FAILARRAY(unexpected_character);
+	FAILARRAY (unexpected_character);
     }
 
 #ifdef PERLING
@@ -625,8 +630,6 @@ PREFIX(object) (parser_t * parser)
 	parser->expected = XWHITESPACE | XVALUE_SEPARATOR;
 	FAILOBJECT(unexpected_character);
     }
-
-    /* Unreachable */
 
  hash_value:
 

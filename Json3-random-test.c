@@ -104,12 +104,7 @@ print_json_char (unsigned char c)
 	    printf ("\\n");
 	    break;
 	default:
-	    if (c >= 0x80) {
-		printf ("%c", c);
-	    }
-	    else {
-		printf ("\\X%02X", c);
-	    }
+	    printf ("\\X%02X", c);
 	}
     }
 }
@@ -142,11 +137,12 @@ reset_parser (parser_t * parser)
     parser->last_byte = parser->input + parser->length;
 }
 
-#define SURROPAIRFAIL							\
-    if (parser->error ==						\
-	json_error_second_half_of_surrogate_pair_missing) {		\
-	printf ("Unfixable error.\n");					\
-	goto end;							\
+#define SURROPAIRFAIL					\
+    if ((parser->error ==				\
+	 json_error_not_surrogate_pair) ||		\
+	(parser->bad_type == json_unicode_escape)) {	\
+	printf ("Unfixable error.\n");			\
+	goto end;					\
     }
 
 /* Alter the final byte and run again, and see if an error is
@@ -205,9 +201,11 @@ alter_one_byte (parser_t * parser)
 		    printf (":\n");
 		    print_json (parser);
 		    fprintf (stderr,
-			     "parser->bad_byte=%p "
-			     "should be %p with byte %d, error was %s.\n",
-			     parser->bad_byte, expected_bad_byte, i,
+			     "parser->bad_byte=%d "
+			     "should be %d with byte %d (0x%02X)"
+			     ", error was %s.\n",
+			     parser->bad_byte - parser->input,
+			     expected_bad_byte - parser->input, i, i,
 			     parser->last_error);
 		    exit (EXIT_FAILURE);
 		}
@@ -236,8 +234,10 @@ alter_one_byte (parser_t * parser)
 		if (parser->bad_byte == expected_bad_byte) {
 		    print_json (parser);
 		    fprintf (stderr,
-			     "Got error %s to %p with supposedly valid value wanted %p with byte %d.\n",
-			     parser->last_error, parser->bad_byte, expected_bad_byte, i);
+			     "Got error %s to %p with supposedly "
+			     "valid value wanted %p with byte %d.\n",
+			     parser->last_error, parser->bad_byte,
+			     expected_bad_byte, i);
 		    exit (EXIT_FAILURE);
 		}
 	    }
@@ -255,7 +255,13 @@ alter_one_byte (parser_t * parser)
     }
     
     /* Finally, stuff a random byte into the thing. */
+ nouniescapes:
     * expected_bad_byte = choose[random () % n_choose];
+    if (* expected_bad_byte == 'u' && * (expected_bad_byte - 1) == '\\') {
+	/* Temporarily ban \u because of endless hassles with
+	   surrogate pairs. */
+	goto nouniescapes;
+    }
 #if 0
     printf ("Chossing byte '%c' %X\n", * expected_bad_byte, * expected_bad_byte);
 #endif
@@ -281,7 +287,9 @@ random_json ()
     int json_length;
     int i;
     parser_t parser_o = {0};
+    parser_t * parser;
 
+    parser = & parser_o;
     json_size = INITIALLENGTH;
     json = malloc (json_size);
     if (! json) {
@@ -355,11 +363,8 @@ random_json ()
 		alter_one_byte (& parser_o);
 	    }
 	    else {
+		SURROPAIRFAIL;
 		print_json (& parser_o);
-		if (parser_o.error == json_error_second_half_of_surrogate_pair_missing) {
-		    printf ("Unfixable error.\n");
-		    goto end;
-		}
 		fprintf (stderr, "error: %s.\n", parser_o.last_error);
 		exit (1);
 	    }

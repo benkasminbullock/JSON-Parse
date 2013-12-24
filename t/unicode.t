@@ -66,6 +66,8 @@ ok (! utf8::is_utf8 ($p->[1]), "input string not upgraded, even though it's UTF-
 ok (utf8::is_utf8 ($p->[2]), "upgrade this too");
 is (length ($p->[2]), 2, "length is two by magic");
 
+ok (! valid_json ('["\uDE8C "]'), "invalid \uDE8C + space");
+
 # There is a small danger that the user could put non-UTF-8 bytes and
 # then get a non-UTF-8 string upgraded into Perl "utf8", because we
 # don't validate all the bytes in the input string (should do this).

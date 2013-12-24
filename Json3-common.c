@@ -46,7 +46,7 @@
 /* Match digits. */
 
 #define DIGIT \
-    '0':      \
+      '0':    \
  case '1':    \
  case '2':    \
  case '3':    \
@@ -291,6 +291,56 @@ static void make_valid_bytes (parser_t * parser)
 
 #define SNARGS buffer + string_end, ERRORMSGBUFFERSIZE - string_end
 
+/* Coming in to this routine, we have checked the error for validity
+   and converted at failbadinput. If this is called directly the bug
+   traps won't work. */
+
+static void
+failbadinput_json (parser_t * parser)
+{
+    char buffer[ERRORMSGBUFFERSIZE];
+    int string_end;
+    int i;
+    int l;
+    const char * format;
+
+    string_end = 0;
+    string_end +=
+	snprintf (SNARGS,
+		  "{"
+		  "\"input length\":%d"
+		  ",\"bad type\":\"%s\""
+		  ",\"error\":\"%s\"",
+		  parser->length,
+		  type_names[parser->bad_type],
+		  json_errors[parser->error]);
+    if (parser->bad_byte) {
+	string_end += snprintf (SNARGS,
+				",\"bad byte position\":%d"
+				",\"bad byte contents\":%d",
+				parser->bad_byte - parser->input,
+				* parser->bad_byte);
+    }
+    if (parser->bad_beginning) {
+	string_end +=
+	    snprintf (SNARGS, ",\"start of broken component\":%d",
+		      parser->bad_beginning - parser->input + 1);
+    }
+    if (parser->error == json_error_unexpected_character) {
+	int j;
+	make_valid_bytes (parser);
+	string_end +=
+	    snprintf (SNARGS, ",\"valid bytes\":[%d",
+		      parser->valid_bytes[0]);
+	for (j = 1; j < MAXBYTE; j++) {
+	    string_end += snprintf (SNARGS, ",%d",
+				    parser->valid_bytes[j]);
+	}
+	string_end += snprintf (SNARGS, "]");
+    }
+    string_end += snprintf (SNARGS, "}\n");
+    croak (buffer);
+}
 
 static void
 failbadinput (parser_t * parser)
@@ -335,46 +385,7 @@ failbadinput (parser_t * parser)
 		 "$JSON::Parse::json_diagnostics variable does not exist");
     }
     if (SvTRUE (json_diagnostics)) {
-	string_end = 0;
-	string_end +=
-	    snprintf (SNARGS,
-		      "{"
-		      "\"input length\":%d"
-		      ",\"bad type\":\"%s\""
-		      ",\"error\":\"%s\"",
-		      parser->length,
-		      type_names[parser->bad_type],
-		      json_errors[parser->error]);
-	if (parser->bad_byte) {
-	    string_end += snprintf (SNARGS,
-				    ",\"bad byte position\":%d"
-				    ",\"bad byte contents\":%d",
-				    parser->bad_byte - parser->input,
-				    * parser->bad_byte);
-	    
-	}
-	if (parser->bad_beginning) {
-	    string_end +=
-		snprintf (SNARGS, ",\"start of broken component\":%d",
-			  parser->bad_beginning - parser->input + 1);
-	}
-	if (parser->error == json_error_unexpected_character) {
-	    int j;
-	    make_valid_bytes (parser);
-	    string_end +=
-		snprintf (SNARGS, ",\"valid bytes\":[%d",
-			  parser->valid_bytes[0]);
-	    for (j = 1; j < MAXBYTE; j++) {
-		string_end += snprintf (SNARGS, ",%d",
-					parser->valid_bytes[j]);
-	    }
-	    string_end +=
-		snprintf (SNARGS, "]");
-	}
-	string_end +=
-	    snprintf (SNARGS, "}\n");
-	printf ("%s\n", buffer);
-	croak (buffer);
+	failbadinput_json (parser);
     }
 
 #endif
@@ -816,11 +827,11 @@ resolve_string (parser_t * parser, string_t * s)
     b = parser->buffer;
 
     while (p - s->start < s->length) {
-	char c;
+	unsigned char c;
 
 	c = *p++;
 	if (c == '\\') {
-	    HANDLE_ESCAPES(p,s->start - 1);
+	    HANDLE_ESCAPES (p, s->start - 1);
 	}
 	else {
 	    *b++ = c;

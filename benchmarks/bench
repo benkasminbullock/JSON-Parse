@@ -5,7 +5,7 @@ use JSON::XS qw(decode_json);
 use lib '/home/ben/projects/Json3/blib/lib';
 use lib '/home/ben/projects/Json3/blib/arch';
 
-use JSON::Parse qw/parse_json valid_json/;
+use JSON::Parse '0.28_06', qw/parse_json valid_json/;
 
 use Time::HiRes;
 use List::Util;
