@@ -68,23 +68,23 @@ description: after the start of literal
 category: in_surrogate_pair
 description: the second half of a surrogate pair
 
-category: not_80_8f
+category: bytes_80_8f
 description: bytes in range 80-8f
 chars: \x80-\x8f
 
-category: not_80_9f
+category: bytes_80_9f
 description: bytes in range 80-9f
 chars: \x80-\x9f
 
-category: not_80_bf
+category: bytes_80_bf
 description: bytes in range 80-bf
 chars: \x80-\xbf
 
-category: not_90_bf
+category: bytes_90_bf
 description: bytes in range 90-bf
 chars: \x90-\xbf
 
-category: not_a0_bf
+category: bytes_a0_bf
 description: bytes in range a0-bf
 chars: \xa0-\xbf
 

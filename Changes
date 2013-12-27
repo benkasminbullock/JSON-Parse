@@ -1,3 +1,8 @@
+0.29_01
+
+* Prototypes removed from functions
+* Documentation rewrites
+
 0.29 2013-12-25
 
 * UTF-8 validation in strings
