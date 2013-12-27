@@ -73,7 +73,11 @@ EOF
 	    die "$count over";
 	}
     }
-    $error->{description} = $d;
+#    print "$d\n";
+    $tt->process (\$d, \%vars, \my $out, {binmode => 'utf8'})
+        or die '' . $tt->error ();
+    $error->{description}  = $out;
+#    print "$error->{description}\n";
     $error->{error} = ucfirst ($error->{error});
 }
 $vars{errors} = \@errors;

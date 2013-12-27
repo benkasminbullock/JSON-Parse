@@ -1,4 +1,5 @@
 #define FAILUTF8(want)					\
+    parser->bad_beginning = startofutf8string - 1;	\
     parser->bad_type = json_string;			\
     parser->bad_byte = parser->end - 1;			\
     parser->expected = want;				\

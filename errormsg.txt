@@ -3,11 +3,11 @@ error: invalid
 error: unexpected character
 %%description:
 
-An unexpected character was encountered in the input. For example,
-when looking at the beginning of a string supposedly containing JSON,
-there are six possible characters, the four JSON whitespace characters
-plus "[" and "{". If the module encounters a plus sign, it will give
-an error like this:
+An unexpected character (byte) was encountered in the input. For
+example, when looking at the beginning of a string supposedly
+containing JSON, there are six possible characters, the four JSON
+whitespace characters plus "[" and "{". If the module encounters a
+plus sign, it will give an error like this:
 
 !+!
 
@@ -53,6 +53,16 @@ parsing code simpler, and because the testing code described in
 L</TESTING> makes use of the internals of this error to check that the
 error message produced actually do correspond to the invalid and valid
 bytes allowed by the parser, at the exact byte given.
+
+This is a bytewise error, thus for example if a miscoded UTF-8 appears
+in the input, an error message saying what bytes would be valid at
+that point will be printed.
+
+[% INCLUDE "bad-utf8.pl" | xtidy %]
+
+prints
+
+[% INCLUDE "bad-utf8.txt" | xtidy %]
 
 %%
 

@@ -55,7 +55,7 @@ description: escape
 chars: \ / " b f n r t u
 
 category: stringchar
-description: an ASCII or UTF-8 character
+description: printable ASCII or first byte of UTF-8
 chars: \x20-\x7f \xC2-\xF4
 
 category: literal
@@ -67,10 +67,6 @@ description: after the start of literal
 
 category: in_surrogate_pair
 description: the second half of a surrogate pair
-
-category: not_20_7f_c2_f4
-description: printable ASCII or first byte of UTF-8
-chars: \x20-\x7f \xc2-\xf4
 
 category: not_80_8f
 description: bytes in range 80-8f
