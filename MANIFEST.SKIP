@@ -35,6 +35,8 @@ benchmarks
 ^randomjson\.pl$
 # Don't add the UTF-8 test code to the repo:
 ^utf8test/.*$
+# Makefile for C random stuff
+^randmakefile$
 # Local variables:
 # comment-start: "#" 
 # End:

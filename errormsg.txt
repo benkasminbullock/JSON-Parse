@@ -63,7 +63,7 @@ The end of the string was encountered before the end of whatever was
 being parsed was. For example, if a quote is missing from the end of
 the string, it will give an error like this:
 
-!{"first":"Suzuki","second":"Murakami","third":"Ando}!
+!{"first":"Suzuki","second":"Murakami","third":"Asada}!
 
 %%
 

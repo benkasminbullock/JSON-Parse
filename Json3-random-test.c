@@ -81,6 +81,8 @@
 static void
 print_json_char (unsigned char c)
 {
+    printf ("%c", c);
+    return;
     if (isprint (c)) {
 	if (c == ' ') {
 	    printf (" ");

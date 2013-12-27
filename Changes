@@ -1,11 +1,9 @@
-0.28_06 2013-12-15
+0.29 2013-12-25
 
-* Remove bad optimization from "Makefile.PL".
-* Error handling more consistent; fewer types of error message.
-* Rewrite of internals for number, array, hash parsing.
-* Very extensive testing with random input done to root out remaining problems.
-* Many small bugs in number, hash, array parsing fixed.
-* UTF-8 validation in strings.
+* UTF-8 validation in strings
+* Number, object, array parsing improvements
+* Fewer error messages & documented (see DIAGNOSTICS in pod)
+* Testing done with random input to root out problems (see TESTING in pod)
 
 0.28 2013-12-12
 

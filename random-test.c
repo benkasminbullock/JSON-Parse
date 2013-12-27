@@ -25,9 +25,9 @@ croak (char * format, ...);
 #define Renew(a,b,c) a = realloc (a, b*sizeof (c))
 #define Safefree(a) free (a)
 
+#define NOPERL
 #include "Json3-common.c"
 #include "Json3-perl.c"
-#define NOPERL
 #include "Json3-entry-points.c"
 #include "Json3-random-test.c"
 
