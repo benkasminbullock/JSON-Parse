@@ -63,8 +63,9 @@ returned:
 
 This is exactly the same as L</parse_json> except that it reads the
 JSON from the specified file rather than a scalar. The file must be in
-the UTF-8 encoding, and is opened as a character file using the
-":encoding(utf8)" pragma. The output is marked as character strings.
+the UTF-8 encoding, and is opened as a character file using
+C<:encoding(UTF-8)> (see L<PerlIO::encoding> and L<perluniintro> for
+details). The output is marked as character strings.
 
 =head2 valid_json
 
@@ -267,7 +268,8 @@ module. For example, for the UTF-16 format,
     my $input_utf8 = decode ('UTF-16', $input);
     my $perl = parse_json ($input_utf8);
 
-or, for a file,
+or, for a file, use C<:encoding> (see L<PerlIO::encoding> and
+L<perluniintro>):
 
     open my $input, "<:encoding(UTF-16)", 'some-json-file'; 
 

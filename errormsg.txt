@@ -46,8 +46,8 @@ C<[0]>, dot: C<[0.1]>, or exponential: C<[0e0]>.
 These are all handled by this error.  Thus the error messages are a
 little confusing as diagnostics.
 
-Previous versions of this module gave more informative messages like
-"leading zero in number". (The messages weren't documented.) The
+Versions of this module prior to 0.29 gave more informative messages
+like "leading zero in number". (The messages weren't documented.) The
 reason to change over to the single message was because it makes the
 parsing code simpler, and because the testing code described in
 L</TESTING> makes use of the internals of this error to check that the

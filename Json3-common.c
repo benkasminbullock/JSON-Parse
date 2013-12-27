@@ -184,6 +184,8 @@ const char * type_names[json_overflow] = {
     "unicode escape"
 };
 
+/* The maximum value of bytes to check for. */
+
 #define MAXBYTE 0x100
 
 #include "errors.c"
@@ -191,9 +193,6 @@ const char * type_names[json_overflow] = {
 /* Anything which could be the start of a value. */
 
 #define VALUE_START (XARRAYOBJECTSTART|XSTRING_START|XDIGIT|XMINUS|XLITERAL)
-
-/* The maximum value of bytes to check for. Once UTF-8 is included in
-   the module, this will change to 0x100. */
 
 typedef struct parser {
 
