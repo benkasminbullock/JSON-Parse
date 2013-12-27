@@ -1,0 +1,148 @@
+This is a list of distribution files in alphabetical order. I'm
+gradually adding comments to which file is which.
+
+* benchmarks
+
+Benchmarking for the module.
+
+* benchmarks/bench
+
+Benchmarking script.
+
+* benchmarks/big-ints.json
+* benchmarks/cpantesters.json
+* benchmarks/escape-words.json
+* benchmarks/exp-plus.json
+* benchmarks/exp.json
+* benchmarks/floating.json
+* benchmarks/letters.json
+* benchmarks/literals.json
+* benchmarks/long.json
+* benchmarks/numbers-object.json
+* benchmarks/oneliteral.json
+* benchmarks/pub-bench.pl
+* benchmarks/sentences-object.json
+* benchmarks/short.json
+* benchmarks/small-ints.json
+* benchmarks/url-numbers.json
+* benchmarks/url-short.json
+* benchmarks/url.json
+* benchmarks/words-array.json
+* benchmarks/words-object-20.json
+* benchmarks/words-object.json
+* build.pl
+
+Build script, uses private module Perl::Build.
+
+* Changes
+
+Changelog
+
+* clean.pl
+
+Tidyup script
+
+* errormsg.txt
+
+A list of the error messages used to make "errors.c" and the documentation.
+
+* examples
+
+Example Perl scripts using JSON::Parse.
+
+* examples/array.pl
+* examples/assert.pl
+* examples/chr.pl
+* examples/ebi.pl
+* examples/hash.pl
+* examples/kani.pl
+* examples/long-number.pl
+* examples/sasori.pl
+* examples/synopsis.pl
+* expectations.txt
+
+* Json3-common.c
+
+One of the three main C files, the top one.
+
+* Json3-entry-points.c
+
+This C file contains entry points for the module.
+
+* Json3-perl.c
+
+The bottom C file.
+
+* Json3-random-test.c
+
+Testing code not distributed to CPAN.
+
+* Json3.xs
+* lib
+
+The directory for the Perl and POD.
+
+* lib/JSON
+* lib/JSON/Parse.pm
+* lib/JSON/Parse.pod
+* lib/JSON/Parse.pod.tmpl
+* make-errors.pl
+
+This makes "errors.c" from "errormsg.txt" and "expectations.txt".
+
+* make-pod.pl
+* Makefile.PL
+* MANIFEST.SKIP
+* randmakefile
+
+This makes "random-test" from "random-test.c" and the other files.
+
+* random-test.c
+
+C version of "randomjson.pl"
+
+* randomjson.pl
+* script
+* script/validjson
+
+Postulated validator for module.
+
+* t
+* t/array.t
+* t/JSON-Parse.t
+* t/Json3.t
+* t/numbers.t
+* t/read-file.t
+* t/syntax-error-1.json
+* t/syntax.t
+* t/test-empty-string.t
+* t/test.json
+
+File used by "read-file.t"
+
+* t/unicode.t
+* t/utf8.t
+* t/valid-json.t
+* t/whitespace.t
+* test-true.pl
+* utf8-byte-one.c
+
+A C macro as a file, switch statement contents.
+
+* utf8-bytes.c
+
+C macro definitions for UTF-8.
+
+* utf8-next-byte.c
+
+C macro, switches for handling UTF-8 continuation bytes
+
+* xt
+
+Author tests.
+
+* xt/distro.t
+* xt/examples.t
+* xt/exports.t
+* xt/json-diagnostics.t
+* xt/testrandom-invalid.t
