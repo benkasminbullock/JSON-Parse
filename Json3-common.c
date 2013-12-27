@@ -357,6 +357,14 @@ static void make_valid_bytes (parser_t * parser)
 
 #define SNARGS buffer + string_end, ERRORMSGBUFFERSIZE - string_end
 
+#define EROVERFLOW							\
+    if (string_end >= ERRORMSGBUFFERSIZE - 0x100) {			\
+	failbug (__FILE__, __LINE__, parser,				\
+		 "Error string length is %d"				\
+		 " of maximum %d. Bailing out.",			\
+		 string_end, ERRORMSGBUFFERSIZE);			\
+    }
+
 /* Coming in to this routine, we have checked the error for validity
    and converted at failbadinput. If this is called directly the bug
    traps won't work. */
@@ -380,17 +388,20 @@ failbadinput_json (parser_t * parser)
 		  parser->length,
 		  type_names[parser->bad_type],
 		  json_errors[parser->error]);
+    EROVERFLOW;
     if (parser->bad_byte) {
 	string_end += snprintf (SNARGS,
 				",\"bad byte position\":%d"
 				",\"bad byte contents\":%d",
 				parser->bad_byte - parser->input,
 				* parser->bad_byte);
+	EROVERFLOW;
     }
     if (parser->bad_beginning) {
 	string_end +=
 	    snprintf (SNARGS, ",\"start of broken component\":%d",
 		      parser->bad_beginning - parser->input + 1);
+	EROVERFLOW;
     }
     if (parser->error == json_error_unexpected_character) {
 	int j;
@@ -398,13 +409,17 @@ failbadinput_json (parser_t * parser)
 	string_end +=
 	    snprintf (SNARGS, ",\"valid bytes\":[%d",
 		      parser->valid_bytes[0]);
+	EROVERFLOW;
 	for (j = 1; j < MAXBYTE; j++) {
 	    string_end += snprintf (SNARGS, ",%d",
 				    parser->valid_bytes[j]);
 	}
+	EROVERFLOW;
 	string_end += snprintf (SNARGS, "]");
+	EROVERFLOW;
     }
     string_end += snprintf (SNARGS, "}\n");
+    EROVERFLOW;
     croak (buffer);
 }
 
@@ -502,10 +517,12 @@ failbadinput (parser_t * parser)
 	if (bb >= 0x20 && bb < 0x7F) {
 	    /* Printable character, print the character itself. */
 	    string_end += snprintf (SNARGS, " '%c'", bb);
+	    EROVERFLOW;
 	}
 	else {
 	    /* Unprintable character, print its hexadecimal value. */
 	    string_end += snprintf (SNARGS, " 0x%02x", bb);
+	    EROVERFLOW;
 	}
     }
     /* "parser->bad_type" contains what was being parsed when the
@@ -518,9 +535,11 @@ failbadinput (parser_t * parser)
     }
     string_end += snprintf (SNARGS, " parsing %s",
 			    type_names[parser->bad_type]);
+    EROVERFLOW;
     if (parser->bad_beginning) {
 	string_end += snprintf (SNARGS, " starting from byte %d",
 				parser->bad_beginning - parser->input + 1);
+	EROVERFLOW;
     }
 
     /* "parser->expected" is set for the "unexpected character" error
@@ -536,6 +555,7 @@ failbadinput (parser_t * parser)
 	    bb = * parser->bad_byte;
 
 	    string_end += snprintf (SNARGS, ": expecting ");
+	    EROVERFLOW;
 	    joined = 0;
 #ifdef TESTRANDOM
 	    for (i = 0; i < MAXBYTE; i++) {
@@ -547,7 +567,8 @@ failbadinput (parser_t * parser)
 		    failbug (__FILE__, __LINE__, parser,
 			     "expected literal character unset");
 		}
-		snprintf (SNARGS, "'%c'", parser->literal_char);
+		string_end += snprintf (SNARGS, "'%c'", parser->literal_char);
+		EROVERFLOW;
 #ifdef TESTRANDOM
 		parser->valid_bytes[parser->literal_char] = 1;
 #endif /* def TESTRANDOM */
@@ -591,8 +612,10 @@ failbadinput (parser_t * parser)
 		    }
 		    if (joined) {
 			string_end += snprintf (SNARGS, " or ");
+			EROVERFLOW;
 		    }
 		    string_end += snprintf (SNARGS, "%s", input_expectation[i]);
+		    EROVERFLOW;
 		    joined = 1;
 		}
 	    }
@@ -647,7 +670,8 @@ failbadinput (parser_t * parser)
 #undef SPECIFIC
 
 /* This is for failures not due to errors in the input or to bugs but
-   to exhaustion of resources, i.e. out of memory. */
+   to exhaustion of resources, i.e. out of memory, or file errors
+   would go here if there were any C file opening things anywhere. */
 
 static INLINE void failresources (parser_t * parser, const char * format, ...)
 {
