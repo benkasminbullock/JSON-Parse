@@ -36,7 +36,19 @@ ok (valid_json ($argonauts), "Valid OK JSON");
 
 my $Q = parse_json ('');
 ok (! defined $Q, "Empty string returns undef");
+{
+    # Switch off uninitialized value warning for this test.
+    no warnings;
+    my $R = parse_json (undef);
+    ok (! defined $R, "undefined value as input returns undef");
+}
+my $S = parse_json ('    ');
+ok (! defined $S, "whitespace as input returns undef");
 ok (! valid_json (''), "! Valid empty string");
+eval {
+    my $T = parse_json ();
+};
+
 my $n;
 eval {
     $n = '{"骪":"\u9aaa"';

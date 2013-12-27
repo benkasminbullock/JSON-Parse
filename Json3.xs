@@ -35,7 +35,7 @@ static SV * json_null;
 
 MODULE=JSON::Parse PACKAGE=JSON::Parse
 
-PROTOTYPES: ENABLE
+PROTOTYPES: DISABLE
 
 BOOT:
 {

@@ -85,31 +85,31 @@ cmp_ok (abs ($af->[2] - 3e-12), '<', 3e-12 * $eps);
 
 # Nested hash
 
-my $on2 = parse_json ('{"gusty":{"fart":"hag"}}');
+my $on2 = parse_json ('{"gust":{"breeze":"wind"}}');
 ok ($on2);
 is (ref $on2, 'HASH');
 is (scalar keys %$on2, 1);
-is_deeply ($on2, {gusty => {fart => 'hag'}}, "Nested hash depth 2");
+is_deeply ($on2, {gust => {breeze => 'wind'}}, "Nested hash depth 2");
 
 # Nested hash
 
-my $on4 = parse_json ('{"gusty":{"flabby":{"flatulent":{"fart":"hag"}},"miserable":"masturbator"}}');
+my $on4 = parse_json ('{"gusty":{"breezy":{"monkey":{"flat":"hog"}},"miserable":"dawson"}}');
 ok ($on4);
 is (ref $on4, 'HASH');
 is (scalar keys %$on4, 1);
-is_deeply ($on4, {gusty => {flabby => {flatulent => {fart => 'hag'}}, miserable => 'masturbator'}},
+is_deeply ($on4, {gusty => {breezy => {monkey => {flat => 'hog'}}, miserable => 'dawson'}},
 	   "Nested hash depth 4");
 
 # Array of things with escapes
 
-my $escjson = '["\\t", "boobles\n", "\u1234"]';
+my $escjson = '["\\t", "bubbles\n", "\u1234"]';
 
 my $aesc = parse_json ($escjson);
 
 # Test one by one.
 
 is ($aesc->[0], "\t");
-is ($aesc->[1], "boobles\n");
+is ($aesc->[1], "bubbles\n");
 ok (utf8::is_utf8 ($aesc->[2]), "Unicode switched on for character escapes");
 
 my $ao = parse_json ('[{"baby":"chops"}, {"starsky":"hutch"}]');
