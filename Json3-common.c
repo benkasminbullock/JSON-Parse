@@ -355,7 +355,18 @@ static void make_valid_bytes (parser_t * parser)
 
 /* Repeated arguments to snprintf. */
 
-#define SNARGS buffer + string_end, ERRORMSGBUFFERSIZE - string_end
+#define SNEND buffer + string_end
+#define SNSIZE ERRORMSGBUFFERSIZE - string_end
+/*
+
+Disabled due to clash with Darwin compiler:
+
+http://www.cpantesters.org/cpan/report/7c69e0f0-70c0-11e3-95aa-bcf4d95af652
+http://www.cpantesters.org/cpan/report/6cde36da-6fd1-11e3-946f-2b87da5af652
+
+#define SNEND, SNSIZE buffer + string_end, ERRORMSGBUFFERSIZE - string_end
+
+*/
 
 #define EROVERFLOW							\
     if (string_end >= ERRORMSGBUFFERSIZE - 0x100) {			\
@@ -380,7 +391,7 @@ failbadinput_json (parser_t * parser)
 
     string_end = 0;
     string_end +=
-	snprintf (SNARGS,
+	snprintf (SNEND, SNSIZE,
 		  "{"
 		  "\"input length\":%d"
 		  ",\"bad type\":\"%s\""
@@ -390,7 +401,7 @@ failbadinput_json (parser_t * parser)
 		  json_errors[parser->error]);
     EROVERFLOW;
     if (parser->bad_byte) {
-	string_end += snprintf (SNARGS,
+	string_end += snprintf (SNEND, SNSIZE,
 				",\"bad byte position\":%d"
 				",\"bad byte contents\":%d",
 				parser->bad_byte - parser->input,
@@ -399,7 +410,7 @@ failbadinput_json (parser_t * parser)
     }
     if (parser->bad_beginning) {
 	string_end +=
-	    snprintf (SNARGS, ",\"start of broken component\":%d",
+	    snprintf (SNEND, SNSIZE, ",\"start of broken component\":%d",
 		      parser->bad_beginning - parser->input + 1);
 	EROVERFLOW;
     }
@@ -407,18 +418,18 @@ failbadinput_json (parser_t * parser)
 	int j;
 	make_valid_bytes (parser);
 	string_end +=
-	    snprintf (SNARGS, ",\"valid bytes\":[%d",
+	    snprintf (SNEND, SNSIZE, ",\"valid bytes\":[%d",
 		      parser->valid_bytes[0]);
 	EROVERFLOW;
 	for (j = 1; j < MAXBYTE; j++) {
-	    string_end += snprintf (SNARGS, ",%d",
+	    string_end += snprintf (SNEND, SNSIZE, ",%d",
 				    parser->valid_bytes[j]);
 	}
 	EROVERFLOW;
-	string_end += snprintf (SNARGS, "]");
+	string_end += snprintf (SNEND, SNSIZE, "]");
 	EROVERFLOW;
     }
-    string_end += snprintf (SNARGS, "}\n");
+    string_end += snprintf (SNEND, SNSIZE, "}\n");
     EROVERFLOW;
     croak (buffer);
 }
@@ -516,12 +527,12 @@ failbadinput (parser_t * parser)
 
 	if (bb >= 0x20 && bb < 0x7F) {
 	    /* Printable character, print the character itself. */
-	    string_end += snprintf (SNARGS, " '%c'", bb);
+	    string_end += snprintf (SNEND, SNSIZE, " '%c'", bb);
 	    EROVERFLOW;
 	}
 	else {
 	    /* Unprintable character, print its hexadecimal value. */
-	    string_end += snprintf (SNARGS, " 0x%02x", bb);
+	    string_end += snprintf (SNEND, SNSIZE, " 0x%02x", bb);
 	    EROVERFLOW;
 	}
     }
@@ -533,11 +544,11 @@ failbadinput (parser_t * parser)
 		 "parsing type set to invalid value %d in error message",
 		 parser->bad_type);
     }
-    string_end += snprintf (SNARGS, " parsing %s",
+    string_end += snprintf (SNEND, SNSIZE, " parsing %s",
 			    type_names[parser->bad_type]);
     EROVERFLOW;
     if (parser->bad_beginning) {
-	string_end += snprintf (SNARGS, " starting from byte %d",
+	string_end += snprintf (SNEND, SNSIZE, " starting from byte %d",
 				parser->bad_beginning - parser->input + 1);
 	EROVERFLOW;
     }
@@ -554,24 +565,17 @@ failbadinput (parser_t * parser)
 	    unsigned char bb;
 	    bb = * parser->bad_byte;
 
-	    string_end += snprintf (SNARGS, ": expecting ");
+	    string_end += snprintf (SNEND, SNSIZE, ": expecting ");
 	    EROVERFLOW;
 	    joined = 0;
-#ifdef TESTRANDOM
-	    for (i = 0; i < MAXBYTE; i++) {
-		parser->valid_bytes[i] = 0;
-	    }
-#endif /* def TESTRANDOM */
+
 	    if (SPECIFIC(parser->expected)) {
 		if (! parser->literal_char) {
 		    failbug (__FILE__, __LINE__, parser,
 			     "expected literal character unset");
 		}
-		string_end += snprintf (SNARGS, "'%c'", parser->literal_char);
+		string_end += snprintf (SNEND, SNSIZE, "'%c'", parser->literal_char);
 		EROVERFLOW;
-#ifdef TESTRANDOM
-		parser->valid_bytes[parser->literal_char] = 1;
-#endif /* def TESTRANDOM */
 	    }
 	    for (i = 0; i < n_expectations; i++) {
 		int X;
@@ -580,24 +584,6 @@ failbadinput (parser_t * parser)
 		    continue;
 		}
 		if (parser->expected & X) {
-#ifdef TESTRANDOM
-		    int j;
-		    for (j = 0; j < MAXBYTE; j++) {
-#if 0
-			/* This is to check we have meaningful stuff
-			   in the valid/invalid table. */
-			if (parser->randomtest) {
-			    printf ("%d", allowed[i][j]);
-			}
-#endif /* 0 */
-			parser->valid_bytes[j] |= allowed[i][j];
-		    }
-#if 0
-		    if (parser->randomtest) {
-			printf ("\n");
-		    }
-#endif /* 0 */
-#endif /* def TESTRANDOM */
 
 		    /* Check that this really is disallowed. */
 		    
@@ -611,10 +597,10 @@ failbadinput (parser_t * parser)
 			}
 		    }
 		    if (joined) {
-			string_end += snprintf (SNARGS, " or ");
+			string_end += snprintf (SNEND, SNSIZE, " or ");
 			EROVERFLOW;
 		    }
-		    string_end += snprintf (SNARGS, "%s", input_expectation[i]);
+		    string_end += snprintf (SNEND, SNSIZE, "%s", input_expectation[i]);
 		    EROVERFLOW;
 		    joined = 1;
 		}
@@ -633,7 +619,8 @@ failbadinput (parser_t * parser)
 		 parser->bad_byte - parser->input);
     }
 
-#undef SNARGS
+#undef SNEND
+#undef SNSIZE
 
 #ifdef TESTRANDOM
 
@@ -641,6 +628,7 @@ failbadinput (parser_t * parser)
 
     if (parser->randomtest) {
 	parser->last_error = buffer;
+	make_valid_bytes (parser);
 	longjmp (parser->biscuit, 1);
     }
 
