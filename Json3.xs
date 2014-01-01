@@ -28,11 +28,16 @@ static SV * json_null;
 #define PERLING
 #include "Json3-perl.c"
 #undef PERLING
+#define TOKENING
+#include "Json3-perl.c"
+#undef TOKENING
 #include "Json3-perl.c"
 #include "Json3-entry-points.c"
 #ifdef TESTRANDOM
 #include "Json3-random-test.c"
 #endif /* def TESTRANDOM */
+
+typedef json_token_t * JSON__Tokenize;
 
 MODULE=JSON::Parse PACKAGE=JSON::Parse
 
@@ -61,6 +66,20 @@ void assert_valid_json (json)
 	SV * json;
 CODE:
 	validate (json);
+
+MODULE=JSON::Parse PACKAGE=JSON::Tokenize
+
+JSON::Tokenize tokenize_json (json)
+	SV * json;
+CODE:
+	RETVAL = tokenize (json);
+OUTPUT:
+	RETVAL
+
+void DESTROY (tokens)
+	json_token_t * tokens;
+CODE:
+	tokenize_free (tokens);
 
 #ifdef TESTRANDOM
 
