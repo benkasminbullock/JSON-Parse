@@ -176,6 +176,8 @@ print_tokens (json_token_t * t)
     }
 }
 
+#ifndef NOPERL
+
 static json_token_t *
 c_tokenize (parser_t * parser)
 {
@@ -228,8 +230,6 @@ tokenize_free (json_token_t * token)
     }
     Safefree (token);
 }
-
-#ifndef NOPERL
 
 /* This is the entry point for validation. */
 

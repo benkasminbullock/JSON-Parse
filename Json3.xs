@@ -16,7 +16,7 @@
 static SV * json_diagnostics;
 
 /* All instances of JSON literals are pointed to the following. These
-   are initialized in "BOOT" in "Json3.xs". */
+   are initialized in "BOOT" in "json.xs". */
 
 static SV * json_true;
 static SV * json_false;
@@ -24,17 +24,17 @@ static SV * json_null;
 
 #include "unicode.h"
 #include "unicode.c"
-#include "Json3-common.c"
+#include "json-common.c"
 #define PERLING
-#include "Json3-perl.c"
+#include "json-perl.c"
 #undef PERLING
 #define TOKENING
-#include "Json3-perl.c"
+#include "json-perl.c"
 #undef TOKENING
-#include "Json3-perl.c"
-#include "Json3-entry-points.c"
+#include "json-perl.c"
+#include "json-entry-points.c"
 #ifdef TESTRANDOM
-#include "Json3-random-test.c"
+#include "json-random-test.c"
 #endif /* def TESTRANDOM */
 #include "json-whitespace.c"
 
