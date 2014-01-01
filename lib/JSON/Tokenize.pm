@@ -1,3 +1,5 @@
+# This does only one job, exporting the single function below.
+
 package JSON::Tokenize;
 use JSON::Parse;
 use parent Exporter;

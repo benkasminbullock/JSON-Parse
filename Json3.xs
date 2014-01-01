@@ -36,6 +36,7 @@ static SV * json_null;
 #ifdef TESTRANDOM
 #include "Json3-random-test.c"
 #endif /* def TESTRANDOM */
+#include "json-whitespace.c"
 
 typedef json_token_t * JSON__Tokenize;
 
@@ -80,6 +81,16 @@ void DESTROY (tokens)
 	json_token_t * tokens;
 CODE:
 	tokenize_free (tokens);
+
+MODULE=JSON::Parse PACKAGE=JSON::Whitespace
+
+SV * strip_whitespace (tokens, json)
+	JSON::Tokenize tokens;
+	SV * json;
+CODE:
+	RETVAL = strip_whitespace (tokens, json);
+OUTPUT:
+	RETVAL
 
 #ifdef TESTRANDOM
 

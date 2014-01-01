@@ -774,17 +774,16 @@ PREFIX(object) (parser_t * parser)
 	klen = resolve_string (parser, & key);
 #ifdef PERLING
 	(void) hv_store (hv, (char *) parser->buffer, klen * uniflag, value, 0);
-#elif defined(TOKENING)
-	prev = json_token_set_next (prev, value);
 #endif
     }
     else {
 #ifdef PERLING
 	(void) hv_store (hv, (char *) key.start, key.length * uniflag, value, 0);
-#elif defined(TOKENING)
-	prev = json_token_set_next (prev, value);
 #endif
     }
+#if defined(TOKENING)
+    prev = json_token_set_next (prev, value);
+#endif
     goto hash_middle;
 
  hash_end:

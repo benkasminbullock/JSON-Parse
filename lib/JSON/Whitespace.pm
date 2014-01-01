@@ -11,6 +11,8 @@ sub json_no_space
 {
     my ($json) = @_;
     my $tokens = tokenize_json ($json);
+    my $nospace = strip_whitespace ($tokens, $json);
+    return $nospace;
 }
 
 # my @values = (qw/
