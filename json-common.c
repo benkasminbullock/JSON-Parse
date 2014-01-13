@@ -412,7 +412,7 @@ failbadinput_json (parser_t * parser)
 	string_end += snprintf (SNEND, SNSIZE,
 				",\"bad byte position\":%d"
 				",\"bad byte contents\":%d",
-				parser->bad_byte - parser->input,
+				parser->bad_byte - parser->input + 1,
 				* parser->bad_byte);
 	EROVERFLOW;
     }

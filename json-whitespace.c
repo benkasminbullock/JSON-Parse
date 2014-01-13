@@ -6,19 +6,104 @@ typedef struct json_ws {
     unsigned int news_l;
     /* Copy point. */
     char * q;
+    /* Origin */
+    char * p;
     /* Top of token tree. */
     json_token_t * t;
     /* Token under examination now. */
     json_token_t * next;
+
+    char * before[n_json_tokens];
+    char * after[n_json_tokens];
+    int array_depth;
+    int object_depth;
+    char * array_indent;
+    char * object_indent;
 }
 json_ws_t;
 
+static void copy_whitespace (json_ws_t * ws, char * w)
+{
+    char * q;
+    q = ws->q;
+    while (*w) {
+	*q++ = *w++;
+    }
+    ws->q = q;
+}
+
+static int whitespace_json (json_ws_t * ws)
+{
+    /* Copy place. */
+    char * c;
+    /* Value of q at entry to this routine, used to calculate added
+       length. */
+    char * qorig;
+    json_token_t * next;
+    char * q;
+
+    q = ws->q;
+    qorig = q;
+    next = ws->next;
+
+    while (next) {
+	/* Copy start of string. */
+	copy_whitespace (ws, ws->before[next->type]);
+	switch (next->type) {
+	case json_token_object:
+	    *q++ = '{';
+	    ws->object_depth++;
+	    ws->q = q;
+	    q += whitespace_json (ws);
+	    ws->object_depth--;
+	    *q++ = '}';
+	    break;
+	case json_token_array:
+	    *q++ = '[';
+	    ws->array_depth++;
+	    ws->q = q;
+	    q += whitespace_json (ws);
+	    ws->object_depth--;
+	    *q++ = ']';
+	    break;
+	case json_token_string:
+	case json_token_key:
+	case json_token_literal:
+	case json_token_number:
+	    for (c = ws->p + next->start; c <= ws->p + next->end; c++) {
+		*q++ = *c;
+	    }
+	    break;
+	case json_token_comma:
+	    *q++ = ',';
+	    break;
+	case json_token_colon:
+	    *q++ = ':';
+	    break;
+	default:
+	    croak ("unhandled token type %d", next->type);
+	}
+	/* Copy end of string. */
+	c = ws->after[next->type];
+	while (*c) {
+	    *q++ = *c++;
+	}
+	next = next->next;
+    }
+    return q - qorig;
+}
+
 static int copy_json (char * p, char * q, json_token_t * t)
 {
+    /* Loop variable. */
     json_token_t * next;
+    /* Copy place. */
     char * c;
-    next = t;
+    /* Value of q at entry to this routine, used to calculate added
+       length. */
     char * qorig;
+
+    next = t;
     qorig = q;
     while (next) {
 	switch (next->type) {

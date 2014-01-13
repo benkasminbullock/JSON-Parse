@@ -1,8 +1,9 @@
-0.29_01 2013-12-30
+0.29_02 2013-12-30
 
 * Prototypes removed from functions
 * Documentation rewrites
 * Changes to compile on Darwin OS
+* Use "assert_valid_json" in DIAGNOSTICS section of pod.
 
 0.29 2013-12-25
 

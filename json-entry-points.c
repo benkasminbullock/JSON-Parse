@@ -106,9 +106,6 @@ parse (SV * json)
 
     default:
 	BADCHAR;
-	/* This merely stops a compiler warning about "r" being used
-	   uninitialized. */
-	r = & PL_sv_undef;
     }
 
     check_end (parser);
