@@ -3,6 +3,7 @@
 typedef struct json_ws {
     SV * news;
     SV * olds;
+    /* Length of new string. */
     unsigned int news_l;
     /* Copy point. */
     char * q;
@@ -13,6 +14,7 @@ typedef struct json_ws {
     /* Token under examination now. */
     json_token_t * next;
 
+    /* Whitespace to add before and after. */
     char * before[n_json_tokens];
     char * after[n_json_tokens];
     int array_depth;
@@ -139,12 +141,16 @@ static int copy_json (char * p, char * q, json_token_t * t)
     return q - qorig;
 }
 
+/* Remove all the whitespace. */
+
 static SV * strip_whitespace (json_token_t * tokens, SV * json)
 {
     SV * stripped;
     char * p;
     char * q;
+    /* Original length. */
     unsigned int l;
+    /* Length of output. */
     unsigned int m;
     p = SvPV (json, l);
     stripped = newSV (l);

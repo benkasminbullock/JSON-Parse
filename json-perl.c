@@ -1,5 +1,5 @@
-/* The C part is broken into three pieces, "Json3-common.c",
-   "Json3-perl.c", and "Json3-entry-points.c". This file contains the
+/* The C part is broken into three pieces, "json-common.c",
+   "json-perl.c", and "json-entry-points.c". This file contains the
    "Perl" stuff, for example if we have a string, the stuff to convert
    it into a Perl hash key or a Perl scalar is in this file. */
 

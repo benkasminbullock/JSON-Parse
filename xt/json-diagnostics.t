@@ -35,10 +35,10 @@ eval {
     assert_valid_json ($loonie);
 };
 ok ($@);
-print "$@\n";
-my $j = parse_json ($@);
-is ($j->{'bad byte contents'}, ord ('l'));
-is ($j->{'bad byte position'}, 4);
+note "$@\n";
+my $j2 = parse_json ($@);
+is ($j2->{'bad byte contents'}, ord ('l'));
+is ($j2->{'bad byte position'}, 4);
 
 #note ($@);
 done_testing ();

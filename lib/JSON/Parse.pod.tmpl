@@ -486,13 +486,13 @@ More extensive testing code is in the git repository. This is not
 supplied in the CPAN distribution. A script, F<randomjson.pl>,
 generates a set number of bytes of random JSON and checks that the
 module's bytewise validation of input is correct. This setup relies on
-a C file F<Json3-random-test.c> which isn't in the CPAN distribution,
+a C file F<json-random-test.c> which isn't in the CPAN distribution,
 and it also requires F<Json3.xs> to be edited to make the macro
 C<TESTRANDOM> true (uncomment line 7 of the file). The testing code
 uses C setjmp/longjmp, so it's not guaranteed to work on all operating
 systems and is commented out for CPAN releases.
 
-A pure C version called "random-test.c" also exists. This applies
+A pure C version called F<random-test.c> also exists. This applies
 exactly the same tests, and requires no Perl at all.
 
 =head1 AUTHOR

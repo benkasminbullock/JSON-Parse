@@ -68,6 +68,16 @@ void assert_valid_json (json)
 CODE:
 	validate (json);
 
+#ifdef TESTRANDOM
+
+int random_json ()
+CODE:
+	RETVAL = random_json ();
+OUTPUT:
+	RETVAL
+
+#endif /* def TESTRANDOM */
+
 MODULE=JSON::Parse PACKAGE=JSON::Tokenize
 
 JSON::Tokenize tokenize_json (json)
@@ -92,12 +102,3 @@ CODE:
 OUTPUT:
 	RETVAL
 
-#ifdef TESTRANDOM
-
-int random_json ()
-CODE:
-	RETVAL = random_json ();
-OUTPUT:
-	RETVAL
-
-#endif /* def TESTRANDOM */
