@@ -28,7 +28,6 @@ WriteMakefile (
             bugtracker => {
 		web => "$repo/issues",
 	    },
-	    homepage => 'https://groups.google.com/forum/#!forum/json-parse',
         },
     },
     # All the C files are actually #included into Json3.xs so there is

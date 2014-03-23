@@ -37,6 +37,8 @@ benchmarks
 ^utf8test/.*$
 # Makefile for C random stuff
 ^randmakefile$
+# Not necessary or useful for CPAN
+^FILES$
 # Local variables:
 # comment-start: "#" 
 # End:
