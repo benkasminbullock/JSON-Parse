@@ -16,7 +16,7 @@
 static SV * json_diagnostics;
 
 /* All instances of JSON literals are pointed to the following. These
-   are initialized in "BOOT" in "json.xs". */
+   are initialized in "BOOT" in "Json3.xs". */
 
 static SV * json_true;
 static SV * json_false;
