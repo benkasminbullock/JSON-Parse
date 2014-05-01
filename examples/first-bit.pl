@@ -30,6 +30,6 @@ my $half = substr ($json, 0, length ($json)/2);
 eval {
     assert_valid_json ($half);
 };
-if (! $@ || ($@ && $@ =~ /unexpected end/i)) {
-    print "The first half of the JSON is valid.";
+if (! $@ || $@ =~ /unexpected end/i) {
+    print "The first half of the JSON is valid.\n";
 }
