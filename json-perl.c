@@ -414,7 +414,6 @@ PREFIX(literal_true) (parser_t * parser)
 	FAILLITERAL('u');
     }
     FAILLITERAL('r');
-
 }
 
 static SVPTR
@@ -443,7 +442,6 @@ PREFIX(literal_false) (parser_t * parser)
 	FAILLITERAL('l');
     }
     FAILLITERAL('a');
-
 }
 
 static SVPTR

@@ -591,18 +591,20 @@ failbadinput (parser_t * parser)
 		if (SPECIFIC(X)) {
 		    continue;
 		}
+		if (i == xin_literal) {
+		    failbug (__FILE__, __LINE__, parser,
+			     "Literal passed through \"if SPECIFIC(X)\" test");
+		}
 		if (parser->expected & X) {
 
 		    /* Check that this really is disallowed. */
 		    
-		    if (i != xin_literal) {
-			if (allowed[i][bb]) {
-			    failbug (__FILE__, __LINE__, parser,
-				     "mismatch parsing %s: got %X "
-				     "but it's allowed by %s (%d)",
-				     type_names[parser->bad_type], bb,
-				     input_expectation[i], i);
-			}
+		    if (allowed[i][bb]) {
+			failbug (__FILE__, __LINE__, parser,
+				 "mismatch parsing %s: got %X "
+				 "but it's allowed by %s (%d)",
+				 type_names[parser->bad_type], bb,
+				 input_expectation[i], i);
 		    }
 		    if (joined) {
 			string_end += snprintf (SNEND, SNSIZE, " or ");

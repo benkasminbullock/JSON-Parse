@@ -63,7 +63,7 @@ description: start of literal
 chars: t f n
 
 category: in_literal
-description: after the start of literal
+description: after the start of true, false, or null
 
 category: in_surrogate_pair
 description: the second half of a surrogate pair
