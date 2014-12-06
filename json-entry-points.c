@@ -158,7 +158,75 @@ c_validate (parser_t * parser)
     check_end (parser);
 }
 
+static void
+print_tokens (json_token_t * t)
+{
+    printf ("Start: %d End: %d: Type: %s\n", t->start, t->end,
+	    token_names[t->type]);
+    if (t->child) {
+	printf ("Children:\n");
+	print_tokens (t->child);
+    }
+    if (t->next) {
+	printf ("Next:\n");
+	print_tokens (t->next);
+    }
+}
+
 #ifndef NOPERL
+
+static json_token_t *
+c_tokenize (parser_t * parser)
+{
+    /* The currently-parsed character. */	
+						
+    char c;					
+    json_token_t * r;
+
+    SETUPPARSER;
+
+ tokenize_start:
+
+    switch (NEXTBYTE) {
+
+    case '{':
+	r = tokenize_object (parser);
+	break;
+
+    case '[':
+	r = tokenize_array (parser);
+	break;
+
+    case WHITESPACE:
+	goto tokenize_start;
+
+    default:
+	BADCHAR;
+    }
+
+    check_end (parser);
+    /*
+    printf ("TOKENS:\n");
+    print_tokens (r);
+    */
+    return r;
+}
+
+static void
+tokenize_free (json_token_t * token)
+{
+    json_token_t * next;
+    //    printf ("Freeing tokens.\n");
+    next = token->child;
+    if (next) {
+	tokenize_free (next);
+    }
+    next = token->next;
+    if (next) {
+	tokenize_free (next);
+    }
+    Safefree (token);
+}
 
 /* This is the entry point for validation. */
 
@@ -170,6 +238,16 @@ validate (SV * json)
     GETSTRING;
 
     c_validate (& parser_o);
+}
+
+static json_token_t *
+tokenize (SV * json)
+{
+    ENTRYDECL;
+
+    GETSTRING;
+
+    return c_tokenize (& parser_o);
 }
 
 #endif /* ndef NOPERL */

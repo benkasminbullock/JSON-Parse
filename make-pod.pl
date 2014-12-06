@@ -5,7 +5,7 @@ use Template;
 use FindBin;
 use lib 'blib/arch';
 use lib 'blib/lib';
-use JSON::Parse 'validate_json';
+use JSON::Parse 'assert_valid_json';
 use Table::Readable 'read_table';
 
 # Names of the input and output files containing the documentation.
@@ -47,7 +47,7 @@ for my $error (@errors) {
 	my $example = $2;
 	die if !$example;
 	eval {
-	    validate_json ($example);
+	    assert_valid_json ($example);
 	};
 	if (! $@) {
 	    warn "No error running $error";
@@ -61,7 +61,7 @@ for my $error (@errors) {
 	# Remove this file's name from the error message.
 	$out =~ s/at \.\/make-pod\.pl.*$//;
 	my $expanded = <<EOF;
-    validate_json ('$example');
+    assert_valid_json ('$example');
 
 gives output
 

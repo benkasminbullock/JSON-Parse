@@ -38,7 +38,7 @@ WriteMakefile (
     MIN_PERL_VERSION => '5.008009',
 
 # Uncomment the following to get "author tests"
-#    OPTIMIZE => '-Wall',
+#    OPTIMIZE => '-Wall -O',
 # This achieves only small speedups with GCC.
 #    OPTIMIZE => '-O3',
 );

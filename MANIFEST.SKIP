@@ -30,7 +30,7 @@ benchmarks
 # people's operating systems. People who want this kind of stuff can
 # get it from the repository.
 ^Json3-random-test\.c$
-^random-test\.c$
+^(?:json-)?random-test\.c$
 ^random-test$
 ^randomjson\.pl$
 # Don't add the UTF-8 test code to the repo:

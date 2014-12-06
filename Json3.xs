@@ -24,15 +24,21 @@ static SV * json_null;
 
 #include "unicode.h"
 #include "unicode.c"
-#include "Json3-common.c"
+#include "json-common.c"
 #define PERLING
-#include "Json3-perl.c"
+#include "json-perl.c"
 #undef PERLING
-#include "Json3-perl.c"
-#include "Json3-entry-points.c"
+#define TOKENING
+#include "json-perl.c"
+#undef TOKENING
+#include "json-perl.c"
+#include "json-entry-points.c"
 #ifdef TESTRANDOM
-#include "Json3-random-test.c"
+#include "json-random-test.c"
 #endif /* def TESTRANDOM */
+#include "json-whitespace.c"
+
+typedef json_token_t * JSON__Tokenize;
 
 MODULE=JSON::Parse PACKAGE=JSON::Parse
 
@@ -71,3 +77,28 @@ OUTPUT:
 	RETVAL
 
 #endif /* def TESTRANDOM */
+
+MODULE=JSON::Parse PACKAGE=JSON::Tokenize
+
+JSON::Tokenize tokenize_json (json)
+	SV * json;
+CODE:
+	RETVAL = tokenize (json);
+OUTPUT:
+	RETVAL
+
+void DESTROY (tokens)
+	json_token_t * tokens;
+CODE:
+	tokenize_free (tokens);
+
+MODULE=JSON::Parse PACKAGE=JSON::Whitespace
+
+SV * strip_whitespace (tokens, json)
+	JSON::Tokenize tokens;
+	SV * json;
+CODE:
+	RETVAL = strip_whitespace (tokens, json);
+OUTPUT:
+	RETVAL
+

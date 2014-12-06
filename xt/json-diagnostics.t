@@ -27,5 +27,18 @@ for (@valid) {
 #}
 #print "\n";
 is_deeply ($j->{"valid bytes"}, \@valid_bytes, "valid bytes same");
+
+$JSON::Parse::json_diagnostics = 1;
+
+my $loonie = '[1,loonie]';
+eval {
+    assert_valid_json ($loonie);
+};
+ok ($@);
+note "$@\n";
+my $j2 = parse_json ($@);
+is ($j2->{'bad byte contents'}, ord ('l'));
+is ($j2->{'bad byte position'}, 4);
+
 #note ($@);
 done_testing ();

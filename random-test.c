@@ -26,10 +26,10 @@ croak (char * format, ...);
 #define Safefree(a) free (a)
 
 #define NOPERL
-#include "Json3-common.c"
-#include "Json3-perl.c"
-#include "Json3-entry-points.c"
-#include "Json3-random-test.c"
+#include "json-common.c"
+#include "json-perl.c"
+#include "json-entry-points.c"
+#include "json-random-test.c"
 
 static void
 croak (char * format, ...)

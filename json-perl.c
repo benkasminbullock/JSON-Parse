@@ -1,5 +1,5 @@
-/* The C part is broken into three pieces, "Json3-common.c",
-   "Json3-perl.c", and "Json3-entry-points.c". This file contains the
+/* The C part is broken into three pieces, "json-common.c",
+   "json-perl.c", and "json-entry-points.c". This file contains the
    "Perl" stuff, for example if we have a string, the stuff to convert
    it into a Perl hash key or a Perl scalar is in this file. */
 
@@ -15,25 +15,38 @@
 
 #define PREFIX(x) x
 #define SVPTR SV *
-#define RETURNAGAIN(x) return x
 #define SETVALUE value = 
 
-#else /* def PERLING */
+#elif defined(TOKENING)
+
+/* We are just tokenizing the JSON. */
+
+#define PREFIX(x) tokenize_ ## x
+#define SVPTR json_token_t *
+#define SETVALUE value =
+
+#else /* not def PERLING/TOKENING */
 
 /* Turn off everything to do with creating Perl things. We don't want
    any Perl memory leaks. */
 
 #define PREFIX(x) valid_ ## x
 #define SVPTR void
-#define RETURNAGAIN(x) return;
 #define SETVALUE 
 
 #endif /* def PERLING */
 
-/*#define INT_MAX_DIGITS ((int) (log (INT_MAX) / log (10)) - 1)*/
+/*
 
-/* The maximum digits we allow an integer before throwing in the
-   towel. */
+This is what INT_MAX_DIGITS is, but #defining it like this causes huge
+amounts of unnecessary calculation, so this is commented out.
+
+#define INT_MAX_DIGITS ((int) (log (INT_MAX) / log (10)) - 1)
+
+*/
+
+/* The maximum digits we allow an integer before throwing in the towel
+   and returning a Perl string type. */
 
 #define INT_MAX_DIGITS 8
 
@@ -219,9 +232,19 @@ PREFIX(number) (parser_t * parser)
     parser->end--;
     d = strtod (start, & end);
     if ((unsigned char *) end == parser->end) {
-	RETURNAGAIN (newSVnv (d));
+	/* Success, strtod worked as planned. */
+#ifdef PERLING
+	return newSVnv (d);
+#elif defined (TOKENING)
+	return json_token_new (parser, (unsigned char *) start,
+			       parser->end - 1,
+			       json_token_number);
+#else
+	return;
+#endif
     }
     else {
+	/* Failure, strtod rejected the number. */
 	goto string_number_end;
     }
 
@@ -236,7 +259,14 @@ PREFIX(number) (parser_t * parser)
 	printf ("number debug: '%.*s': %d\n",
 		parser->end - (unsigned char *) start, start, guess);
 	*/
-	RETURNAGAIN (newSViv (guess));
+#ifdef PERLING
+	return newSViv (guess);
+#elif defined (TOKENING)
+	return json_token_new (parser, (unsigned char *) start,
+			       parser->end - 1, json_token_number);
+#else
+	return;
+#endif
     }
     else {
 	goto string_number_end;
@@ -250,7 +280,14 @@ string_number_end:
        standard doesn't explicitly disallow integers with a million
        digits. */
 
-    RETURNAGAIN (newSVpv (start, (STRLEN) ((char *) parser->end - start)));
+#ifdef PERLING
+	return newSVpv (start, (STRLEN) ((char *) parser->end - start));
+#elif defined (TOKENING)
+    return json_token_new (parser, (unsigned char *) start,
+			   parser->end - 1, json_token_number);
+#else
+    return;
+#endif
 }
 
 static SVPTR
@@ -260,9 +297,13 @@ PREFIX(string) (parser_t * parser)
 #ifdef PERLING
     SV * string;
     STRLEN len;
+#elif defined (TOKENING)
+    json_token_t * string;
+    int len;
 #else
     int len;
 #endif
+
     unsigned char * start;
 
     start = parser->end;
@@ -302,6 +343,10 @@ PREFIX(string) (parser_t * parser)
 
 #ifdef PERLING
     string = newSVpvn ((char *) start, len);
+#elif defined (TOKENING)
+    string = json_token_new (parser, start - 1,
+			     start + len,
+			     json_token_string);
 #endif
     goto string_done;
 
@@ -312,6 +357,17 @@ PREFIX(string) (parser_t * parser)
     len = get_string (parser);
 #ifdef PERLING
     string = newSVpvn ((char *) parser->buffer, len);
+#elif defined (TOKENING)
+    /* Don't use "len" here since it subtracts the escapes. */
+    /*
+    printf ("New token string : <<%.*s>> <<%c>>.\n", parser->end - start, start - 1, *(parser->end));
+    */
+    string = json_token_new (parser,
+			     /* Location of first quote. */
+			     start - 1,
+			     /* Location of last quote. */
+			     parser->end - 1,
+			     json_token_string);
 #endif
 
  string_done:
@@ -323,7 +379,11 @@ PREFIX(string) (parser_t * parser)
     }
 #endif
 
-    RETURNAGAIN (string);
+#if defined (PERLING) || defined (TOKENING)
+    return string;
+#else
+    return;
+#endif
 }
 
 #define FAILLITERAL(c)					\
@@ -345,18 +405,19 @@ PREFIX(literal_true) (parser_t * parser)
 	    if (* parser->end++ == 'e') {
 #ifdef PERLING
 		SvREFCNT_inc (json_true);
+		return json_true;
+#elif defined (TOKENING)
+		return json_token_new (parser, start, start + strlen ("true"),
+				       json_token_literal);
+#else
+		return;
 #endif
-		RETURNAGAIN (json_true);
 	    }
 	    FAILLITERAL('e');
 	}
 	FAILLITERAL('u');
     }
     FAILLITERAL('r');
-
-    /* Unreached, shut up compiler warnings. */
-
-    RETURNAGAIN (& PL_sv_undef);
 }
 
 static SVPTR
@@ -369,9 +430,14 @@ PREFIX(literal_false) (parser_t * parser)
 	    if (* parser->end++ == 's') {
 		if (* parser->end++ == 'e') {
 #ifdef PERLING
-		    SvREFCNT_inc (json_false);
+		SvREFCNT_inc (json_false);
+		return json_false;
+#elif defined (TOKENING)
+		return json_token_new (parser, start, start + strlen ("false"),
+				       json_token_literal);
+#else
+		return;
 #endif
-		    RETURNAGAIN (json_false);
 		}
 		FAILLITERAL('e');
 	    }
@@ -380,10 +446,6 @@ PREFIX(literal_false) (parser_t * parser)
 	FAILLITERAL('l');
     }
     FAILLITERAL('a');
-
-    /* Unreached, shut up compiler warnings. */
-
-    RETURNAGAIN (& PL_sv_undef);
 }
 
 static SVPTR
@@ -396,18 +458,19 @@ PREFIX(literal_null) (parser_t * parser)
 	    if (* parser->end++ == 'l') {
 #ifdef PERLING
 		SvREFCNT_inc (json_null);
+		return json_null;
+#elif defined (TOKENING)
+		return json_token_new (parser, start, start + strlen ("null"),
+				       json_token_literal);
+#else
+		return;
 #endif
-		RETURNAGAIN (json_null);
 	    }
 	    FAILLITERAL('l');
 	}
 	FAILLITERAL('l');
     }
     FAILLITERAL('u');
-
-    /* Unreached, shut up compiler warnings. */
-
-    RETURNAGAIN (& PL_sv_undef);
 }
 
 static SVPTR PREFIX(object) (parser_t * parser);
@@ -468,13 +531,24 @@ PREFIX(array) (parser_t * parser)
     unsigned char * start;
 #ifdef PERLING
     AV * av;
+<<<<<<< HEAD:Json3-perl.c
     SV * value = & PL_sv_undef;
+=======
+    SV * value;
+#elif defined (TOKENING)
+    json_token_t * av;
+    json_token_t * prev;
+    json_token_t * value;
+>>>>>>> tokenize:json-perl.c
 #endif
 
+    start = parser->end - 1;
 #ifdef PERLING
     av = newAV ();
+#elif defined (TOKENING)
+    av = json_token_new (parser, start, 0, json_token_array);
+    prev = 0;
 #endif
-    start = parser->end - 1;
 
  array_start:
 
@@ -492,6 +566,8 @@ PREFIX(array) (parser_t * parser)
 
 #ifdef PERLING
     av_push (av, value);
+#elif defined (TOKENING)
+    prev = json_token_set_child (av, value);
 #endif
 
     /* Accept either a comma or whitespace or the end of the array. */
@@ -504,6 +580,12 @@ PREFIX(array) (parser_t * parser)
 	goto array_middle;
 
     case ',':
+#ifdef TOKENING
+	value = json_token_new (parser, parser->end - 1,
+				parser->end,
+				json_token_comma);
+	prev = json_token_set_next (prev, value);
+#endif
 	goto array_next;
 
     case ']':
@@ -529,13 +611,23 @@ PREFIX(array) (parser_t * parser)
 
 #ifdef PERLING
     av_push (av, value);
+#elif defined (TOKENING)
+    prev = json_token_set_next (prev, value);
 #endif
 
     goto array_middle;
 
  array_end:
 
-    RETURNAGAIN (newRV_noinc ((SV *) av));
+#ifdef PERLING
+    return newRV_noinc ((SV *) av);
+#elif defined (TOKENING)
+    /* We didn't know where the end was until now. */
+    json_token_set_end (parser, av, parser->end - 1);
+    return av;
+#else
+    return;
+#endif
 }
 
 #define FAILOBJECT(err)				\
@@ -556,16 +648,21 @@ PREFIX(object) (parser_t * parser)
 #ifdef PERLING
     HV * hv;
     SV * value;
-#endif
-    string_t key;
     /* This is set to -1 if we want a Unicode key. See "perldoc
        perlapi" under "hv_store". */
     int uniflag;
+#elif defined (TOKENING)
+    json_token_t * hv;
+    json_token_t * value;
+    json_token_t * prev;
+#endif
+    string_t key;
     /* Start of parsing. */
     unsigned char * start;
 
     start = parser->end - 1;
 
+#ifdef PERLING
     if (parser->unicode) {
 	/* Keys are unicode. */
 	uniflag = -1;
@@ -574,9 +671,10 @@ PREFIX(object) (parser_t * parser)
 	/* Keys are not unicode. */
 	uniflag = 1;
     }
-
-#ifdef PERLING
     hv = newHV ();
+#elif defined (TOKENING)
+    hv = json_token_new (parser, start, 0, json_token_object);
+    prev = 0;
 #endif
 
  hash_start:
@@ -587,7 +685,20 @@ PREFIX(object) (parser_t * parser)
     case '}':
 	goto hash_end;
     case '"':
+#ifdef TOKENING
+	value = json_token_new (parser, parser->end - 1, 0,
+				json_token_string);
+	/* We only come past the label "hash_start" once, so we don't
+	   need to check that there is not already a child. */
+	json_token_set_child (hv, value);
+	prev = value;
+#endif
 	get_key_string (parser, & key);
+#ifdef TOKENING
+	/* We didn't know where the end of the string was until now so
+	   we wait until after "get_key_string" to set the end. */
+	json_token_set_end (parser, value, parser->end - 1);
+#endif
 	goto hash_next;
     default:
 	parser->expected = XWHITESPACE | XSTRING_START | XOBJECT_END;
@@ -602,6 +713,12 @@ PREFIX(object) (parser_t * parser)
     case '}':
 	goto hash_end;
     case ',':
+#ifdef TOKENING
+	value = json_token_new (parser, parser->end - 1,
+				parser->end,
+				json_token_comma);
+	prev = json_token_set_next (prev, value);
+#endif
 	goto hash_key;
     default:
 	parser->expected = XWHITESPACE | XCOMMA | XOBJECT_END;
@@ -614,7 +731,17 @@ PREFIX(object) (parser_t * parser)
     case WHITESPACE:
 	goto hash_key;
     case '"':
+#ifdef TOKENING
+	value = json_token_new (parser, parser->end - 1, 0,
+				json_token_string);
+	prev = json_token_set_next (prev, value);
+#endif
 	get_key_string (parser, & key);
+#ifdef TOKENING
+	/* We didn't know where the end of the string was until now so
+	   we wait until after "get_key_string" to set the end. */
+	json_token_set_end (parser, value, parser->end - 1);
+#endif
 	goto hash_next;
     default:
 	parser->expected = XWHITESPACE | XSTRING_START;
@@ -627,6 +754,12 @@ PREFIX(object) (parser_t * parser)
     case WHITESPACE:
 	goto hash_next;
     case ':':
+#ifdef TOKENING
+	value = json_token_new (parser, parser->end - 1,
+				parser->end,
+				json_token_colon);
+	prev = json_token_set_next (prev, value);
+#endif
 	goto hash_value;
     default:
 	parser->expected = XWHITESPACE | XVALUE_SEPARATOR;
@@ -654,14 +787,23 @@ PREFIX(object) (parser_t * parser)
 	(void) hv_store (hv, (char *) key.start, key.length * uniflag, value, 0);
 #endif
     }
+#if defined(TOKENING)
+    prev = json_token_set_next (prev, value);
+#endif
     goto hash_middle;
 
  hash_end:
 
-    RETURNAGAIN (newRV_noinc ((SV *) hv));
+#ifdef PERLING
+    return newRV_noinc ((SV *) hv);
+#elif defined (TOKENING)
+    json_token_set_end (parser, hv, parser->end - 1);
+    return hv;
+#else
+    return;
+#endif
 }
 
 #undef PREFIX
 #undef SVPTR
-#undef RETURNAGAIN
 #undef SETVALUE

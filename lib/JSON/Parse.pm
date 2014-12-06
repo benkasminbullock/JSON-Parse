@@ -23,9 +23,14 @@ XSLoader::load (__PACKAGE__, $VERSION);
 
 our $json_diagnostics;
 
+# JSON literals all point to these. They're set to read-only within
+# the XS.
+
 our $true;
 our $false;
 our $null;
+
+# Old names of subroutines.
 
 sub json_to_perl
 {
@@ -44,7 +49,7 @@ sub valid_json
 	return 0;
     }
     eval {
-	validate_json (@_);
+	assert_valid_json (@_);
     };
     if ($@) {
 	return 0;

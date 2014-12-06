@@ -300,6 +300,16 @@ parser_t;
 
 #define ERRORMSGBUFFERSIZE 0x1000
 
+/* Declare all bad inputs as non-returning. */
+
+#ifdef __GNUC__
+static void failbadinput_json (parser_t * parser) __attribute__ ((noreturn));
+static void failbadinput (parser_t * parser) __attribute__ ((noreturn));
+static INLINE void
+failbug (char * file, int line, parser_t * parser, const char * format, ...)
+__attribute__ ((noreturn));
+#endif
+
 /* Assert failure handler. Coming here means there is a bug in the
    code rather than in the JSON input. We still send it to Perl via
    "croak". */
@@ -376,6 +386,7 @@ http://www.cpantesters.org/cpan/report/6cde36da-6fd1-11e3-946f-2b87da5af652
 		 string_end, ERRORMSGBUFFERSIZE);			\
     }
 
+
 /* Coming in to this routine, we have checked the error for validity
    and converted at failbadinput. If this is called directly the bug
    traps won't work. */
@@ -401,7 +412,7 @@ failbadinput_json (parser_t * parser)
 	string_end += snprintf (SNEND, SNSIZE,
 				",\"bad byte position\":%d"
 				",\"bad byte contents\":%d",
-				parser->bad_byte - parser->input,
+				parser->bad_byte - parser->input + 1,
 				* parser->bad_byte);
 	EROVERFLOW;
     }
@@ -580,18 +591,20 @@ failbadinput (parser_t * parser)
 		if (SPECIFIC(X)) {
 		    continue;
 		}
+		if (i == xin_literal) {
+		    failbug (__FILE__, __LINE__, parser,
+			     "Literal passed through \"if SPECIFIC(X)\" test");
+		}
 		if (parser->expected & X) {
 
 		    /* Check that this really is disallowed. */
 		    
-		    if (i != xin_literal) {
-			if (allowed[i][bb]) {
-			    failbug (__FILE__, __LINE__, parser,
-				     "mismatch parsing %s: got %X "
-				     "but it's allowed by %s (%d)",
-				     type_names[parser->bad_type], bb,
-				     input_expectation[i], i);
-			}
+		    if (allowed[i][bb]) {
+			failbug (__FILE__, __LINE__, parser,
+				 "mismatch parsing %s: got %X "
+				 "but it's allowed by %s (%d)",
+				 type_names[parser->bad_type], bb,
+				 input_expectation[i], i);
 		    }
 		    if (joined) {
 			string_end += snprintf (SNEND, SNSIZE, " or ");
@@ -1094,4 +1107,193 @@ parser_free (parser_t * parser)
     }
 }
 
+
+typedef enum json_token_type {
+    json_token_invalid,
+    json_token_number,
+    json_token_string,
+    json_token_key,
+    json_token_literal,
+    json_token_comma,
+    json_token_colon,
+    json_token_object,
+    json_token_array,
+    n_json_tokens
+}
+json_token_type_t;
+
+const char * token_names[n_json_tokens] = {
+    "invalid",
+    "number",
+    "string",
+    "key",
+    "literal",
+    "comma",
+    "colon",
+    "object",
+    "array"
+};
+
+typedef struct json_token json_token_t;
+
+struct json_token {
+    json_token_t * child;
+    json_token_t * next;
+    unsigned int start;
+    unsigned int end;
+    json_token_type_t type;
+    unsigned int parent;
+};
+
+#define JSON_TOKEN_PARENT_INVALID 0
+
+static json_token_t *
+json_token_new (parser_t * parser, unsigned char * start,
+		unsigned char * end, json_token_type_t type)
+{
+    json_token_t * new;
+
+    /* Check the hell out of it. */
+
+    switch (type) {
+    case json_token_string:
+    case json_token_key:
+	if (* start != '"') {
+	    if (end) {
+		failbug (__FILE__, __LINE__, parser,
+			 "no quotes at start of string '%.*s'",
+			 end - start, start);
+	    }
+	    else {
+		failbug (__FILE__, __LINE__, parser,
+			 "no quotes at start of string '%.10s'",
+			 start);
+	    }
+	}
+	if (end && * end != '"') {
+	    failbug (__FILE__, __LINE__, parser,
+		     "no quotes at end of string '%.*s'",
+		     end - start, start);
+	}
+	break;
+    case json_token_number:
+	if (* start - '0' > 9 && * start != '-') {
+	    failbug (__FILE__, __LINE__, parser,
+		     "bad character %c at start of number",
+		     * start);
+	}
+	if (* end - '0' > 9) {
+	    failbug (__FILE__, __LINE__, parser,
+		     "bad character %c at end of number",
+		     * end);
+	}
+	break;
+    case json_token_object:
+	if (* start != '{' || (end && * end != '}')) {
+	    failbug (__FILE__, __LINE__, parser,
+		     "no { or } in object %.*s: char %X",
+		     end ? end - start : strlen ((char *) start),
+		     start, * start);
+	}
+	break;
+    case json_token_array:
+	if (* start != '[' || (end && * end != ']')) {
+	    failbug (__FILE__, __LINE__, parser,
+		     "no [ or ] in array");
+	}
+	break;
+    case json_token_comma:
+	if (end - start != 1 || * start != ',') {
+	    failbug (__FILE__, __LINE__, parser,
+		     "not a comma %.*s",
+		     end - start);
+	}
+	break;
+    case json_token_colon:
+	if (end - start != 1 || * start != ':') {
+	    failbug (__FILE__, __LINE__, parser,
+		     "not a colon %.*s",
+		     end - start);
+	}
+	break;
+    case json_token_literal:
+	break;
+    default:
+	croak ("%s:%d: bad type %d\n", __FILE__, __LINE__, type);
+    }
+    Newx (new, 1, json_token_t);
+    new->start = start - parser->input;
+    if (end) {
+	new->end = end - parser->input;
+    }
+    else {
+	new->end = 0;
+    }
+    new->type = type;
+    new->parent = JSON_TOKEN_PARENT_INVALID;
+    new->child = 0;
+    new->next = 0;
+    return new;
+}
+
+static void
+json_token_set_end (parser_t * parser, json_token_t * jt, unsigned char * end)
+{
+    if (jt->end != 0) {
+	fprintf (stderr, "%s:%d: attempt to set end as %d is now %d\n",
+		 __FILE__, __LINE__, end - parser->input, jt->end);
+	exit (1);
+    }
+    /* Check the hell out of it. */
+
+    switch (jt->type) {
+    case json_token_string:
+    case json_token_key:
+	if (* end != '"') {
+	    failbug (__FILE__, __LINE__, parser,
+		     "no quotes at end of string");
+	}
+	break;
+    case json_token_object:
+	if (* end != '}') {
+	    failbug (__FILE__, __LINE__, parser,
+		     "no } at end of object");
+	}
+	break;
+    case json_token_array:
+	if (* end != ']') {
+	    failbug (__FILE__, __LINE__, parser,
+		     "no ] at end of array");
+	}
+	break;
+    default:
+	failbug (__FILE__, __LINE__, parser,
+		 "set end for unknown type %d", jt->type);
+	break;
+    }
+    jt->end = end - parser->input;
+}
+
+static json_token_t *
+json_token_set_child (json_token_t * parent, json_token_t * child)
+{
+    switch (parent->type) {
+    case json_token_object:
+    case json_token_array:
+	break;
+    default:
+	fprintf (stderr, "%s:%d: bad parent type %d\n",
+		 __FILE__, __LINE__, parent->type);
+	exit (1);
+    }
+    parent->child = child;
+    return child;
+}
+
+static json_token_t *
+json_token_set_next (json_token_t * prev, json_token_t * next)
+{
+    prev->next = next;
+    return next;
+}
 

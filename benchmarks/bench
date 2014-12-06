@@ -6,6 +6,7 @@ use lib '/home/ben/projects/Json3/blib/lib';
 use lib '/home/ben/projects/Json3/blib/arch';
 
 use JSON::Parse '0.28_06', qw/parse_json valid_json/;
+use JSON::Tokenize qw/tokenize_json/;
 
 use Time::HiRes;
 use List::Util;
@@ -21,6 +22,9 @@ my %tst = (
    ],
    "JP::valid" => [
        'JSON::Parse::valid_json ($json)',
+   ],
+   "JP::tokenize" => [
+       'JSON::Tokenize::tokenize_json ($json)',
    ],
 );
 

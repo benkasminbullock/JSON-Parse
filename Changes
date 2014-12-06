@@ -1,12 +1,14 @@
 0.30_01 2014-12-06
 
-* Test release.
+* Make sure to cast to STRLEN in newSVpv(n) calls.
+* Remove reference to deleted Google Group from documentation.
 
-0.29_01 2013-12-30
+0.30 2014-03-23
 
 * Prototypes removed from functions
 * Documentation rewrites
 * Changes to compile on Darwin OS
+* Use "assert_valid_json" in DIAGNOSTICS section of pod.
 
 0.29 2013-12-25
 
