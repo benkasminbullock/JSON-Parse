@@ -531,15 +531,11 @@ PREFIX(array) (parser_t * parser)
     unsigned char * start;
 #ifdef PERLING
     AV * av;
-<<<<<<< HEAD:Json3-perl.c
     SV * value = & PL_sv_undef;
-=======
-    SV * value;
 #elif defined (TOKENING)
     json_token_t * av;
     json_token_t * prev;
     json_token_t * value;
->>>>>>> tokenize:json-perl.c
 #endif
 
     start = parser->end - 1;
@@ -567,7 +563,7 @@ PREFIX(array) (parser_t * parser)
 #ifdef PERLING
     av_push (av, value);
 #elif defined (TOKENING)
-    prev = json_token_set_child (av, value);
+    prev = json_token_set_child (parser, av, value);
 #endif
 
     /* Accept either a comma or whitespace or the end of the array. */
@@ -690,7 +686,7 @@ PREFIX(object) (parser_t * parser)
 				json_token_string);
 	/* We only come past the label "hash_start" once, so we don't
 	   need to check that there is not already a child. */
-	json_token_set_child (hv, value);
+	json_token_set_child (parser, hv, value);
 	prev = value;
 #endif
 	get_key_string (parser, & key);

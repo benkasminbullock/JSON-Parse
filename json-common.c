@@ -531,7 +531,7 @@ failbadinput (parser_t * parser)
 
 	/* Don't use "isprint" because on Windows it seems to think
 	   that 0x80 is printable:
-	   http://www.cpantesters.org/cpan/report/d6438b68-6bf4-1014-8647-737bdb05e747. */
+	   http://www.cpantesters.org/cpan/report/d6438b68-6bf4-1014-8647-737bdb05e747 */
 
 	if (bb >= 0x20 && bb < 0x7F) {
 	    /* Printable character, print the character itself. */
@@ -1105,6 +1105,7 @@ parser_free (parser_t * parser)
     if (parser->buffer) {
 	Safefree (parser->buffer);
     }
+    parser->buffer = 0;
 }
 
 
@@ -1275,16 +1276,17 @@ json_token_set_end (parser_t * parser, json_token_t * jt, unsigned char * end)
 }
 
 static json_token_t *
-json_token_set_child (json_token_t * parent, json_token_t * child)
+json_token_set_child (parser_t * parser, json_token_t * parent,
+		      json_token_t * child)
 {
     switch (parent->type) {
     case json_token_object:
     case json_token_array:
 	break;
     default:
-	fprintf (stderr, "%s:%d: bad parent type %d\n",
-		 __FILE__, __LINE__, parent->type);
-	exit (1);
+	failbug (__FILE__, __LINE__, parser,
+		 "bad parent type %d\n",
+		 parent->type);
     }
     parent->child = child;
     return child;
