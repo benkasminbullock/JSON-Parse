@@ -250,7 +250,7 @@ string_number_end:
        standard doesn't explicitly disallow integers with a million
        digits. */
 
-    RETURNAGAIN (newSVpv (start, (char *) parser->end - start));
+    RETURNAGAIN (newSVpv (start, (STRLEN) ((char *) parser->end - start)));
 }
 
 static SVPTR
@@ -259,8 +259,10 @@ PREFIX(string) (parser_t * parser)
     unsigned char c;
 #ifdef PERLING
     SV * string;
-#endif
+    STRLEN len;
+#else
     int len;
+#endif
     unsigned char * start;
 
     start = parser->end;
@@ -466,7 +468,7 @@ PREFIX(array) (parser_t * parser)
     unsigned char * start;
 #ifdef PERLING
     AV * av;
-    SV * value;
+    SV * value = & PL_sv_undef;
 #endif
 
 #ifdef PERLING

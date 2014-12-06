@@ -68,7 +68,7 @@ parse (SV * json)
 
     /* The returned object. */
 
-    SV * r;
+    SV * r = & PL_sv_undef;
 
     GETSTRING;
 

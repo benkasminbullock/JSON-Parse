@@ -385,9 +385,6 @@ failbadinput_json (parser_t * parser)
 {
     char buffer[ERRORMSGBUFFERSIZE];
     int string_end;
-    int i;
-    int l;
-    const char * format;
 
     string_end = 0;
     string_end +=
