@@ -16,7 +16,7 @@ eval {
 };
 ok (! $@, "got valid JSON error message");
 #print "$error\n";
-my @valid = ("\t", "\r", "\n", ' ', '{', '['); 
+my @valid = ("\t", "\r", "\n", ' ', '{', '[', '0'..'9', '-', '"', 't', 'f', 'n'); 
 my @valid_bytes = (0) x 256;
 for (@valid) {
 #    print ord ($_), "\n";

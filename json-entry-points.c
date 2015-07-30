@@ -49,7 +49,7 @@ static void check_end (parser_t * parser)
 #define BADCHAR								\
     parser->bad_byte = parser->end - 1;					\
     parser->bad_type = json_initial_state;				\
-    parser->expected = XARRAYOBJECTSTART | XWHITESPACE;			\
+    parser->expected = XARRAYOBJECTSTART | VALUE_START | XWHITESPACE;	\
     parser->error = json_error_unexpected_character;			\
     failbadinput (parser)
 
@@ -88,6 +88,33 @@ parse (SV * json)
 
     case '[':
 	r = array (& parser_o);
+	break;
+
+    case '-':
+    case '0':
+    case DIGIT19:
+	parser_o.top_level_value = 1;
+	r = number (& parser_o);
+	break;
+
+    case '"':
+	parser_o.top_level_value = 1;
+	r = string (& parser_o);
+	break;
+
+    case 't':
+	parser_o.top_level_value = 1;
+	r = literal_true (& parser_o);
+	break;
+
+    case 'f':
+	parser_o.top_level_value = 1;
+	r = literal_false (& parser_o);
+	break;
+
+    case 'n':
+	parser_o.top_level_value = 1;
+	r = literal_null (& parser_o);
 	break;
 
     case WHITESPACE:
@@ -146,6 +173,33 @@ c_validate (parser_t * parser)
 
     case '[':
 	valid_array (parser);
+	break;
+
+    case '-':
+    case '0':
+    case DIGIT19:
+	parser->top_level_value = 1;
+	valid_number (parser);
+	break;
+
+    case '"':
+	parser->top_level_value = 1;
+	valid_string (parser);
+	break;
+
+    case 't':
+	parser->top_level_value = 1;
+	valid_literal_true (parser);
+	break;
+
+    case 'f':
+	parser->top_level_value = 1;
+	valid_literal_false (parser);
+	break;
+
+    case 'n':
+	parser->top_level_value = 1;
+	valid_literal_null (parser);
 	break;
 
     case WHITESPACE:

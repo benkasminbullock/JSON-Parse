@@ -83,6 +83,11 @@ PREFIX(number) (parser_t * parser)
     start = (char *) parser->end;
 
 #define FAILNUMBER(err)				\
+    if (STRINGEND &&				\
+	parser->top_level_value &&		\
+	c == '\0') {				\
+	goto exp_number_end;			\
+    }						\
     parser->bad_byte = parser->end - 1;		\
     parser->error = json_error_ ## err;		\
     parser->bad_type = json_number;		\
@@ -281,7 +286,7 @@ string_number_end:
        digits. */
 
 #ifdef PERLING
-	return newSVpv (start, (STRLEN) ((char *) parser->end - start));
+    return newSVpv (start, (STRLEN) ((char *) parser->end - start));
 #elif defined (TOKENING)
     return json_token_new (parser, (unsigned char *) start,
 			   parser->end - 1, json_token_number);

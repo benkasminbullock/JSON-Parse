@@ -14,8 +14,7 @@ Convert JSON into Perl.
 
 =head1 DESCRIPTION
 
-JSON means "JavaScript Object Notation" and it is specified in L</RFC
-4627>.
+JSON means "JavaScript Object Notation" and it is specified in L</RFC 7159>.
 
 JSON::Parse converts JSON into the nearest equivalent Perl. The
 function L</parse_json> takes one argument, a string containing JSON,
@@ -127,7 +126,7 @@ JSON::Parse.
 =head2 JSON strings
 
 JSON strings become Perl strings. The JSON escape characters such as
-C<\t> for the tab character (see section 2.5 of L</RFC 4627>) are
+C<\t> for the tab character (see section 2.5 of L</RFC 7159>) are
 mapped to the equivalent ASCII character.
 
 =head3 Handling of Unicode
@@ -143,7 +142,7 @@ but
 
 [% INCLUDE "ebi.pl" | xtidy %]
 
-Escapes of the form \uXXXX (see page three of L</RFC 4627>) are mapped
+Escapes of the form \uXXXX (see page three of L</RFC 7159>) are mapped
 to ASCII if XXXX is less than 0x80, or to UTF-8 if XXXX is greater
 than or equal to 0x80.
 
@@ -231,7 +230,7 @@ This module imposes the following restrictions on its input.
 =item JSON only
 
 JSON::Parse is a strict parser. It only accepts input which exactly
-meets the criteria of L</RFC 4627>. That means, for example,
+meets the criteria of L</RFC 7159>. That means, for example,
 JSON::Parse does not accept single quotes (') instead of double quotes
 ("), or numbers with leading zeros, like 0123. JSON::Parse does not
 accept control characters (0x00 - 0x1F) in strings, missing commas
@@ -262,7 +261,7 @@ L<perluniintro>):
     open my $input, "<:encoding(UTF-16)", 'some-json-file'; 
 
 JSON::Parse does not determine the nature of the octet stream, as
-described in part 3 of L</RFC 4627>.
+described in part 3 of L</RFC 7159>.
 
 This restriction to UTF-8 applies regardless of whether Perl thinks
 that the input string is a character string or a byte
@@ -413,9 +412,11 @@ JSON::XS.
 
 =over
 
-=item RFC 4627
+=item RFC 7159
 
-JSON is specified in L<RFC 4627 "The application/json Media Type for JavaScript Object Notation (JSON)"|http://www.ietf.org/rfc/rfc4627.txt>.
+JSON is specified in L<RFC 7159 "The application/json Media Type for
+JavaScript Object Notation
+(JSON)"|http://www.ietf.org/rfc/rfc7159.txt>.
 
 =item json.org
 

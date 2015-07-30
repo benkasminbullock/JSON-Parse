@@ -1,4 +1,8 @@
-0.30_01 2014-12-06
+0.32 2015-07-29
+
+* Update to accept bare values, per RFC 7159.
+
+0.31 2014-12-07
 
 * Make sure to cast to STRLEN in newSVpv(n) calls.
 * Remove reference to deleted Google Group from documentation.

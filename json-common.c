@@ -280,6 +280,14 @@ typedef struct parser {
 
     unsigned int force_unicode : 1;
 
+    /* Top-level value? We need to know this for the case when we are
+       parsing a number and suddenly meet a '\0' byte. If it's a top
+       level value then we can assume that is just the end of the
+       JSON, but if it's not a top-level value then that is an error,
+       since the end array or end object at least are missing. */
+
+    unsigned int top_level_value : 1;
+
 #ifdef TESTRANDOM
 
     /* This is true if we are testing with random bytes. */
