@@ -102,7 +102,7 @@ is_deeply ($on4, {gusty => {breezy => {monkey => {flat => 'hog'}}, miserable => 
 
 # Array of things with escapes
 
-my $escjson = '["\\t", "bubbles\n", "\u1234"]';
+my $escjson = '["\\t", "bubbles\n", "\u1234", "\nmonkey\n", "milky\tmoggy", "mocha\tmoggy\n"]';
 
 my $aesc = parse_json ($escjson);
 
@@ -111,6 +111,9 @@ my $aesc = parse_json ($escjson);
 is ($aesc->[0], "\t");
 is ($aesc->[1], "bubbles\n");
 ok (utf8::is_utf8 ($aesc->[2]), "Unicode switched on for character escapes");
+is ($aesc->[3], "\nmonkey\n");
+is ($aesc->[4], "milky\tmoggy");
+is ($aesc->[5], "mocha\tmoggy\n");
 
 my $ao = parse_json ('[{"baby":"chops"}, {"starsky":"hutch"}]');
 ok ($ao, "Got JSON");
@@ -124,8 +127,8 @@ ok ($at);
 is ($at->[0], 1);
 
 my $afalse = parse_json ('[false]');
-ok ($afalse);
-is ($afalse->[0], 0);
+ok ($afalse, "got false value");
+is ($afalse->[0], 0, "is zero");
 done_testing ();
 
 # Local variables:

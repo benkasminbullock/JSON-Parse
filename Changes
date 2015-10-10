@@ -1,3 +1,9 @@
+0.32_01 2015-10-09
+
+* Memory leak plug
+* Minor bug about commas after bare values
+* Documentation rewritten to clarify changes in 0.32 and testing.
+
 0.32 2015-07-29
 
 * Update to accept bare values, per RFC 7159.

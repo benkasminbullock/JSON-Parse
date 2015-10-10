@@ -18,8 +18,8 @@ JSON means "JavaScript Object Notation" and it is specified in L</RFC 7159>.
 
 JSON::Parse converts JSON into the nearest equivalent Perl. The
 function L</parse_json> takes one argument, a string containing JSON,
-and returns a Perl reference. The input to C<parse_json> must be a
-complete JSON structure.
+and returns a Perl reference or scalar. The input to C<parse_json>
+must be a complete JSON structure.
 
 The module differs from the L<JSON> module by simplifying the handling
 of Unicode. If its input is marked as Unicode characters, the strings
@@ -37,7 +37,7 @@ a file, L</json_file_to_perl>.
     my $perl = parse_json ('{"x":1, "y":2}');
 
 This function converts JSON into a Perl structure, either an array
-reference or a hash reference.
+reference, a hash reference, or a scalar.
 
 If the first argument does not contain a complete valid JSON text,
 C<parse_json> throws a fatal error ("dies"). If the first argument is
@@ -45,8 +45,8 @@ the undefined value, an empty string, or a string containing only
 whitespace, C<parse_json> returns the undefined value.
 
 If the argument contains valid JSON, the return value is either a hash
-or an array reference. If the input JSON text is a serialized object,
-a hash reference is returned:
+reference, an array reference, or a scalar. If the input JSON text is
+a serialized object, a hash reference is returned:
 
 [% INCLUDE "hash.pl" | xtidy %]
 
@@ -54,6 +54,10 @@ If the input JSON text is a serialized array, an array reference is
 returned:
 
 [% INCLUDE "array.pl" | xtidy %]
+
+Otherwise a Perl scalar is returned. (The behaviour of allowing a
+scalar is new as of version 0.32 of this module, which brings it into
+line with the new specification for JSON.)
 
 =head2 json_file_to_perl
 
@@ -275,8 +279,8 @@ to be thrown.
 L</valid_json> does not produce error messages. L</parse_json> and
 L</assert_valid_json> die on encountering invalid input.
 
-Error messages have the line number and the byte number where
-appropriate of the input which caused the problem. The line number is
+Error messages have the line number, and the byte number where
+appropriate, of the input which caused the problem. The line number is
 formed simply by counting the number of "\n" (linefeed, ASCII 0x0A)
 characters in the whitespace part of the JSON.
 
@@ -319,16 +323,14 @@ these results may be system-dependent.
 
 On the other hand, JSON::XS makes better use of Perl's inbuilt string
 handling than JSON::Parse and so it's faster for some types of
-strings. The main focus of the version 0.29 release is increased
-accuracy and better handling of edge cases. I'm planning to attend to
-the speed issues in future versions.
+strings. 
 
 There is some benchmarking code in the github repository under the
 directory "benchmarks" for those wishing to test these claims. The
 script F<benchmarks/bench> is an adaptation of the similar script in
 the L<JSON::XS> distribution.
 
-The following benchmark tests used version 0.29 of JSON::Parse and
+The following benchmark tests used version 0.32_01 of JSON::Parse and
 version 3.01 of JSON::XS on the files in the "benchmarks" directory of
 JSON::Parse. "short.json" and "long.json" are the benchmarks used by
 JSON::XS.
@@ -341,9 +343,9 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     | 358487.521 |  0.0000279 |
-    JSON::Parse   | 179243.761 |  0.0000558 |
-    JSON::XS      | 156503.881 |  0.0000639 |
+    JP::valid     | 776722.963 |  0.0000129 |
+    JSON::Parse   | 257319.264 |  0.0000389 |
+    JSON::XS      | 233016.889 |  0.0000429 |
     --------------+------------+------------+
 
 
@@ -353,9 +355,9 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     |   6385.968 |  0.0015659 |
-    JSON::Parse   |   2803.492 |  0.0035670 |
-    JSON::XS      |   3506.357 |  0.0028520 |
+    JP::valid     |  12580.396 |  0.0007949 |
+    JSON::Parse   |   4679.576 |  0.0021369 |
+    JSON::XS      |   5524.636 |  0.0018101 |
     --------------+------------+------------+
 
 
@@ -365,9 +367,9 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     | 164482.510 |  0.0000608 |
-    JSON::Parse   |  22622.999 |  0.0004420 |
-    JSON::XS      |  21936.736 |  0.0004559 |
+    JP::valid     | 277768.477 |  0.0000360 |
+    JSON::Parse   |  32691.380 |  0.0003059 |
+    JSON::XS      |  31559.850 |  0.0003169 |
     --------------+------------+------------+
 
 
@@ -377,9 +379,9 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     |  88487.426 |  0.0001130 |
-    JSON::Parse   |  35726.610 |  0.0002799 |
-    JSON::XS      |  13662.228 |  0.0007319 |
+    JP::valid     | 131896.352 |  0.0000758 |
+    JSON::Parse   |  52958.384 |  0.0001888 |
+    JSON::XS      |  19963.370 |  0.0005009 |
     --------------+------------+------------+
 
 
@@ -389,9 +391,9 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     | 204600.195 |  0.0000489 |
-    JSON::Parse   |  31230.856 |  0.0003202 |
-    JSON::XS      |  17578.810 |  0.0005689 |
+    JP::valid     | 313007.761 |  0.0000319 |
+    JSON::Parse   |  48827.753 |  0.0002048 |
+    JSON::XS      |  29086.713 |  0.0003438 |
     --------------+------------+------------+
 
 
@@ -401,9 +403,9 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     |    631.187 |  0.0158432 |
-    JSON::Parse   |    132.401 |  0.0755279 |
-    JSON::XS      |    131.020 |  0.0763240 |
+    JP::valid     |   1405.457 |  0.0071151 |
+    JSON::Parse   |    214.989 |  0.0465140 |
+    JSON::XS      |    209.670 |  0.0476940 |
     --------------+------------+------------+
 
 =back
@@ -429,17 +431,18 @@ These modules allow both reading and writing of JSON. JSON::Parse
 originated as a response to the overcomplex interface of L<JSON>, in
 particular its exasperating handling of Unicode.
 
-There are also a lot of other modules for parsing and producing JSON
-on CPAN. I have found the following ones: L<JSON::DWIW>, L<JSON::Any>,
+There are a lot of other modules for parsing and producing JSON on
+CPAN. I have found the following ones: L<JSON::DWIW>, L<JSON::Any>,
 L<JSON::YAJL>, L<JSON::Util>, L<JSON::Tiny>, L<Pegex::JSON>,
-L<JSON::Streaming::Reader>, L<JSON::Syck>, L<Mojo::JSON>,
-L<JSON::SL>. Please let me know of any others I've missed.
+L<JSON::Streaming::Reader>, L<JSON::Syck>, L<Mojo::JSON>, L<JSON::SL>,
+and L<JBD::JSON>. Please let me know of any others I've missed.
 
 A fork of JSON::XS also exists as L<Cpanel::JSON::XS>. This is related
 to a disagreement about how to report bugs. Please see the module for
 details. Another module, L<JSON::XS::VersionOneAndTwo>, supports two
 different interfaces of JSON::XS. However, JSON::XS is now onto
-version 3.
+version 3. And there is also yet another module L<JSON::MaybeXS> which
+combines Cpanel::JSON::XS, JSON::XS, and the original JSON.
 
 =back
 
@@ -477,15 +480,30 @@ distribution.
 More extensive testing code is in the git repository. This is not
 supplied in the CPAN distribution. A script, F<randomjson.pl>,
 generates a set number of bytes of random JSON and checks that the
-module's bytewise validation of input is correct. This setup relies on
-a C file F<json-random-test.c> which isn't in the CPAN distribution,
-and it also requires F<Json3.xs> to be edited to make the macro
-C<TESTRANDOM> true (uncomment line 7 of the file). The testing code
-uses C setjmp/longjmp, so it's not guaranteed to work on all operating
-systems and is commented out for CPAN releases.
+module's bytewise validation of input is correct. It does this by
+taking a valid fragment, then adding each possible byte from 0 to 255
+to see whether the module correctly identifies it as valid or invalid
+at that point, then randomly picking one of the valid bytes and adding
+it to the fragment and continuing the process until a complete valid
+JSON input is formed. The module has undergone about a billion
+repetitions of this test.
+
+This setup relies on a C file F<json-random-test.c> which isn't in the
+CPAN distribution, and it also requires F<Json3.xs> to be edited to
+make the macro C<TESTRANDOM> true (uncomment line 7 of the file). The
+testing code uses C setjmp/longjmp, so it's not guaranteed to work on
+all operating systems and is commented out for CPAN releases.
 
 A pure C version called F<random-test.c> also exists. This applies
 exactly the same tests, and requires no Perl at all.
+
+If you're interested in testing your own JSON parser, the outputs
+generated by randomtest.pl are quite a good place to start. The
+default is to produce UTF-8 output, which looks pretty horrible. You
+can mess with the internals of JSON::Parse by setting MAXBYTE to 0x80,
+recompiling (you can ignore the compiler warnings), and running
+randomjson.pl again to get just ASCII random JSON things. This breaks
+the UTF-8 functionality of JSON::Parse so don't install that version!
 
 =head1 AUTHOR
 

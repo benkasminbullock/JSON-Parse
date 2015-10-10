@@ -23,9 +23,9 @@ my %tst = (
    "JP::valid" => [
        'JSON::Parse::valid_json ($json)',
    ],
-   "JP::tokenize" => [
-       'JSON::Tokenize::tokenize_json ($json)',
-   ],
+#   "JP::tokenize" => [
+#       'JSON::Tokenize::tokenize_json ($json)',
+#   ],
 );
 
 

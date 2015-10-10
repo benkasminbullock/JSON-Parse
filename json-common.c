@@ -187,6 +187,8 @@ const char * type_names[json_overflow] = {
 /* The maximum value of bytes to check for. */
 
 #define MAXBYTE 0x100
+// uncomment this when running random test to terminal otherwise ...
+//#define MAXBYTE 0x80
 
 #include "errors.c"
 
@@ -848,6 +850,7 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
 /* Handle backslash escapes. We can't use the NEXTBYTE macro here for
    the reasons outlined below. */
 
+#if 0
 #define HANDLE_ESCAPES(p,start)				\
     switch (c = * ((p)++)) {				\
 							\
@@ -887,7 +890,38 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
         parser->expected = XESCAPE;			\
 	STRINGFAIL (unexpected_character);		\
     }
-
+#else
+#define HANDLE_ESCAPES(p,start)				\
+    c = * ((p)++);					\
+/*    fprintf (stderr, "Escape to %c\n", c);		*/\
+if (c == '\\' || c == '/' || c == '"') {		\
+	*b++ = c;					\
+    }							\
+    else if (c == 'b') {				\
+	*b++ = '\b';					\
+    }							\
+    else if (c == 'f') {				\
+	*b++ = '\f';					\
+    }							\
+    else if (c == 'n') {				\
+	*b++ = '\n';					\
+    }							\
+    else if (c == 'r') {				\
+	*b++ = '\r';					\
+    }							\
+    else if (c == 't') {				\
+	*b++ = '\t';					\
+    }							\
+    else if (c == 'u') {				\
+	p = do_unicode_escape (parser, p, & b);		\
+    }							\
+    else {						\
+	parser->bad_beginning = start;			\
+	parser->bad_byte = p - 1;			\
+        parser->expected = XESCAPE;			\
+	STRINGFAIL (unexpected_character);		\
+    }
+#endif
 /* Resolve "s" by converting escapes into the appropriate things. Put
    the result into "parser->buffer". The return value is the length of
    the string. */

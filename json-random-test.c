@@ -137,6 +137,7 @@ reset_parser (parser_t * parser)
     parser->error = json_error_invalid;
     parser->bad_byte = 0;
     parser->last_byte = parser->input + parser->length;
+    parser->top_level_value = 0;
 }
 
 #define SURROPAIRFAIL					\

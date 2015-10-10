@@ -10,6 +10,7 @@ static void check_end (parser_t * parser)
 	goto end;
 
     case '\0':
+//	parser_free (parser);
 	return;
 
     default:
@@ -19,7 +20,6 @@ static void check_end (parser_t * parser)
 	parser->error = json_error_unexpected_character;
 	failbadinput (parser);
     }
-    parser_free (parser);
 }
 
 #define ENTRYDECL				\

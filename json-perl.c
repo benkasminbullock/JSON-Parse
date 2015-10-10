@@ -135,6 +135,9 @@ PREFIX(number) (parser_t * parser)
         goto int_number_end;
     default:
 	parser->expected = XDIGIT | XDOT | XEXPONENTIAL | XNUMBEREND;
+	if (parser->top_level_value) {
+	    parser->expected &= ~XCOMMA;
+	}
 	FAILNUMBER (unexpected_character);
     }
 
@@ -152,6 +155,9 @@ PREFIX(number) (parser_t * parser)
         goto int_number_end;
     default:
 	parser->expected = XDOT | XEXPONENTIAL | XNUMBEREND;
+	if (parser->top_level_value) {
+	    parser->expected &= ~XCOMMA;
+	}
 	FAILNUMBER (unexpected_character);
     }
 
@@ -192,6 +198,9 @@ PREFIX(number) (parser_t * parser)
         goto exp_number_end;
     default:
 	parser->expected = XDIGIT | XNUMBEREND | XEXPONENTIAL;
+	if (parser->top_level_value) {
+	    parser->expected &= ~XCOMMA;
+	}
 	FAILNUMBER (unexpected_character);
     }
 
@@ -230,6 +239,9 @@ PREFIX(number) (parser_t * parser)
         goto exp_number_end;
     default:
 	parser->expected = XDIGIT | XNUMBEREND;
+	if (parser->top_level_value) {
+	    parser->expected &= ~XCOMMA;
+	}
 	FAILNUMBER (unexpected_character);
     }
 
@@ -295,6 +307,95 @@ string_number_end:
 #endif
 }
 
+#ifdef PERLING
+
+#define COPYBUFFER {					\
+	if (! string) {					\
+	    string = newSVpvn ((char *) buffer, size);	\
+	}						\
+	else {						\
+	    STRLEN cur = SvCUR (string);		\
+	    if (SvLEN (string) <= cur + size) {		\
+		SvGROW (string, cur + size);		\
+	    }						\
+	    svbuf = SvPVX(string) + cur;		\
+	    memcpy (svbuf + cur, buffer, size);		\
+	    SvCUR_set (string, cur + size);		\
+	}						\
+    }
+
+static INLINE SV *
+perl_get_string (parser_t * parser, STRLEN prefixlen)
+{
+    unsigned char * b;
+    unsigned char c;
+    unsigned char * start;
+#define BUFSIZE 0x1000
+    unsigned char buffer[BUFSIZE];
+    int size;
+    char * svbuf;
+    SV * string;
+    string = 0;
+    start = parser->end;
+    b = buffer;
+
+    if (prefixlen > BUFSIZE - 0x10) {
+	prefixlen = BUFSIZE - 0x10;
+    }
+
+    memcpy (buffer, parser->end, prefixlen);
+    start += prefixlen;
+
+ string_start:
+
+    size = b - buffer;
+    if (size >= BUFSIZE - 0x10) {
+	COPYBUFFER;
+	b = buffer;
+    }
+    NEXTBYTE;
+
+    if (c < 0x20) {
+	ILLEGALBYTE;
+    }
+    else if (c >= 0x20 && c <= 0x80) {
+	if (c == '"') {
+	    goto string_end;
+	}
+	if (c == '\\') {
+	    HANDLE_ESCAPES (parser->end, start - 1);
+	    goto string_start;
+	}
+	* b++ = c;
+	goto string_start;
+    }
+    else {
+	switch (c) {
+#define ADDBYTE (* b++ = c)
+#define startofutf8string start
+#include "utf8-byte-one.c"
+	default:
+	    ILLEGALBYTE;
+	}
+    }
+
+    if (STRINGEND) {
+	STRINGFAIL (unexpected_end_of_input);
+    }
+
+ string_end:
+
+    COPYBUFFER;
+    return string;
+
+#include "utf8-next-byte.c"
+#undef ADDBYTE
+
+    goto string_end;
+}
+
+#endif /* PERLING */
+
 static SVPTR
 PREFIX(string) (parser_t * parser)
 {
@@ -302,6 +403,8 @@ PREFIX(string) (parser_t * parser)
 #ifdef PERLING
     SV * string;
     STRLEN len;
+    STRLEN prefixlen;
+    char * svbuf;
 #elif defined (TOKENING)
     json_token_t * string;
     int len;
@@ -328,12 +431,11 @@ PREFIX(string) (parser_t * parser)
 	goto string_end;
     case '\\':
 	goto contains_escapes;
-    case BADBYTES:
-	ILLEGALBYTE;
+
 #define ADDBYTE len++
 #include "utf8-byte-one.c"
 	
-    default:
+    case BADBYTES:
 	ILLEGALBYTE;
     }
     /* Parsing of the string ended due to a \0 byte flipping the
@@ -357,22 +459,57 @@ PREFIX(string) (parser_t * parser)
 
  contains_escapes:
 
-    parser->end = start;
-
-    len = get_string (parser);
 #ifdef PERLING
-    string = newSVpvn ((char *) parser->buffer, len);
+
+#if 0
+    parser->end--;
+    /* Save the length of the part without escapes. */
+    prefixlen = (STRLEN) (parser->end - start);
+    len = get_string (parser);
+    if (prefixlen > 0) {
+	string = newSV (len + prefixlen + 1);
+	svbuf = SvPVX(string);
+	memcpy (svbuf, start, prefixlen);
+	memcpy (svbuf + prefixlen, parser->buffer, len);
+	svbuf[len + prefixlen] = '\0';
+	SvPOK_only (string);
+	SvCUR_set (string, len+prefixlen);
+//	fprintf (stderr, "%d, %d: %s\n", prefixlen, len, svbuf);
+    }
+    else {
+	string = newSVpvn ((const char *) parser->buffer, len);
+    }
+#elif 0
+    parser->end = start;
+    len = get_string (parser);
+    string = newSVpvn ((const char *) parser->buffer, len);
+#else
+    parser->end = start;
+#if 0
+    len = get_string (parser);
+    string = newSVpvn ((const char *) parser->buffer, len);
+#else 
+    prefixlen = (STRLEN) (parser->end - start);
+    string = perl_get_string (parser, prefixlen);
+#endif
+#endif
+
 #elif defined (TOKENING)
     /* Don't use "len" here since it subtracts the escapes. */
     /*
     printf ("New token string : <<%.*s>> <<%c>>.\n", parser->end - start, start - 1, *(parser->end));
     */
+    parser->end = start;
+    len = get_string (parser);
     string = json_token_new (parser,
 			     /* Location of first quote. */
 			     start - 1,
 			     /* Location of last quote. */
 			     parser->end - 1,
 			     json_token_string);
+#else
+    parser->end = start;
+    len = get_string (parser);
 #endif
 
  string_done:

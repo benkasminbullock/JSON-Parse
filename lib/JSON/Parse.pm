@@ -15,7 +15,7 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.32';
+our $VERSION = '0.32_01';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 
@@ -61,7 +61,8 @@ sub json_file_to_perl
 {
     my ($file_name) = @_;
     my $json = '';
-    open my $in, "<:encoding(utf8)", $file_name or croak $!;
+    open my $in, "<:encoding(utf8)", $file_name
+        or croak "Error opening $file_name: $!";
     while (<$in>) {
 	$json .= $_;
     }
