@@ -10,7 +10,7 @@ static void check_end (parser_t * parser)
 	goto end;
 
     case '\0':
-//	parser_free (parser);
+	parser_free (parser);
 	return;
 
     default:

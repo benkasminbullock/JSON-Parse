@@ -1,4 +1,4 @@
-0.32_01 2015-10-09
+0.32_02 2015-10-09
 
 * Memory leak plug
 * Minor bug about commas after bare values
