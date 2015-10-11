@@ -6,8 +6,7 @@
 /* There are two routes through the code, the PERLING route and the
    non-PERLING route. If we go via the non-PERLING route, we never
    create or alter any Perl-related stuff, we just parse each byte and
-   possibly throw an error. This is for validation, to make the
-   validation ultra-fast. */
+   possibly throw an error. This makes validation faster. */
 
 #ifdef PERLING
 
@@ -27,8 +26,7 @@
 
 #else /* not def PERLING/TOKENING */
 
-/* Turn off everything to do with creating Perl things. We don't want
-   any Perl memory leaks. */
+/* Turn off everything to do with creating Perl things. */
 
 #define PREFIX(x) valid_ ## x
 #define SVPTR void
@@ -309,11 +307,17 @@ string_number_end:
 
 #ifdef PERLING
 
+/* This macro copies our on-stack buffer "buffer" of size "size" into
+   the end of a Perl SV called "string".  This is a macro because it's
+   used in two different places, at the start of the routine and at
+   the end of it. */
+
 #define COPYBUFFER {					\
 	if (! string) {					\
 	    string = newSVpvn ((char *) buffer, size);	\
 	}						\
 	else {						\
+	    char * svbuf;				\
 	    STRLEN cur = SvCUR (string);		\
 	    if (SvLEN (string) <= cur + size) {		\
 		SvGROW (string, cur + size);		\
@@ -324,41 +328,83 @@ string_number_end:
 	}						\
     }
 
+/* The size of the on-stack buffer. */
+
+#define BUFSIZE 0x1000
+
+/* We need a safety margin when dealing with the buffer, for example
+   if we hit a Unicode \uabcd escape which needs to be decoded, we
+   need to have enough bytes to write into the buffer. */
+
+#define MARGIN 0x10
+
+/* Speedup hack, a special "get_string" for Perl parsing which doesn't
+   use parser->buffer but its own buffer on the stack. */
+
 static INLINE SV *
 perl_get_string (parser_t * parser, STRLEN prefixlen)
 {
     unsigned char * b;
     unsigned char c;
     unsigned char * start;
-#define BUFSIZE 0x1000
     unsigned char buffer[BUFSIZE];
     int size;
-    char * svbuf;
     SV * string;
     string = 0;
     start = parser->end;
     b = buffer;
 
-    if (prefixlen > BUFSIZE - 0x10) {
-	prefixlen = BUFSIZE - 0x10;
-    }
+    if (prefixlen > 0) {
 
-    memcpy (buffer, parser->end, prefixlen);
-    start += prefixlen;
+	/* The string from parser->end to parser->end + prefixlen has
+	   already been checked and found not to contain the end of
+	   the string or any escapes, so we just copy the memory
+	   straight into the buffer. This was supposed to speed things
+	   up, but it didn't seem to. However this presumably cannot
+	   hurt either. */
+
+	if (prefixlen > BUFSIZE - MARGIN) {
+	    /* This is to account for the very unlikely case that the
+	       key of the JSON object is more than BUFSIZE - MARGIN
+	       bytes long and has an escape after more than BUFSIZE -
+	       MARGIN bytes. */
+	    prefixlen = BUFSIZE - MARGIN;
+	}
+
+	memcpy (buffer, parser->end, prefixlen);
+	start += prefixlen;
+    }
 
  string_start:
 
     size = b - buffer;
-    if (size >= BUFSIZE - 0x10) {
+    if (size >= BUFSIZE - MARGIN) {
+	/* Spot-check for an overflow. */
+	if (STRINGEND) {
+	    STRINGFAIL (unexpected_end_of_input);
+	}
+	/* "string_start" is a label for a goto which is applied until
+	   we get to the end of the string, so size keeps getting
+	   larger and larger.  Now the string being parsed has proved
+	   to be too big for our puny BUFSIZE buffer, so we copy the
+	   contents of the buffer into the nice Perl scalar. */
 	COPYBUFFER;
+	/* Set the point of copying bytes back to the beginning of
+	   buffer. We don't reset the memory in buffer. */
 	b = buffer;
     }
     NEXTBYTE;
+
+    /* "if" statements seem to compile to something marginally faster
+       than "switch" statements, for some reason. */
 
     if (c < 0x20) {
 	ILLEGALBYTE;
     }
     else if (c >= 0x20 && c <= 0x80) {
+	/* For some reason or another, putting the following "if"
+	   statements after the above one results in about 4% faster
+	   code than putting them before it. */
 	if (c == '"') {
 	    goto string_end;
 	}
@@ -370,23 +416,35 @@ perl_get_string (parser_t * parser, STRLEN prefixlen)
 	goto string_start;
     }
     else {
+
+	/* Resort to switch statements for the UTF-8 stuff. This
+	   actually also contains statements to handle ASCII but they
+	   will never be executed. */
+
 	switch (c) {
-#define ADDBYTE (* b++ = c)
+#define ADDBYTE * b = c; b++
 #define startofutf8string start
 #include "utf8-byte-one.c"
+
 	default:
+
+	    /* We have to give up, this byte is too mysterious for our
+	       weak minds. */
+
 	    ILLEGALBYTE;
 	}
     }
+
+ string_end:
 
     if (STRINGEND) {
 	STRINGFAIL (unexpected_end_of_input);
     }
 
- string_end:
-
     COPYBUFFER;
     return string;
+
+/* The rest of the UTF-8 stuff goes in here. */
 
 #include "utf8-next-byte.c"
 #undef ADDBYTE
@@ -404,7 +462,6 @@ PREFIX(string) (parser_t * parser)
     SV * string;
     STRLEN len;
     STRLEN prefixlen;
-    char * svbuf;
 #elif defined (TOKENING)
     json_token_t * string;
     int len;
@@ -449,12 +506,21 @@ PREFIX(string) (parser_t * parser)
  string_end:
 
 #ifdef PERLING
+
+    /* Our string didn't contain any escape sequences, so we can just
+       make a new SV * by copying the string from "start", the old
+       position within the thing we're parsing to start + len. */
+
     string = newSVpvn ((char *) start, len);
+
 #elif defined (TOKENING)
+
     string = json_token_new (parser, start - 1,
 			     start + len,
 			     json_token_string);
+
 #endif
+
     goto string_done;
 
  contains_escapes:
@@ -462,11 +528,15 @@ PREFIX(string) (parser_t * parser)
 #ifdef PERLING
 
 #if 0
+    /* This was an attempt at a speedup by copying the prefix part of
+       the string and the contents of parser->buffer sequentially into
+       an SV. This didn't result in a significant speedup. */
     parser->end--;
     /* Save the length of the part without escapes. */
     prefixlen = (STRLEN) (parser->end - start);
     len = get_string (parser);
     if (prefixlen > 0) {
+	char * svbuf;
 	string = newSV (len + prefixlen + 1);
 	svbuf = SvPVX(string);
 	memcpy (svbuf, start, prefixlen);
@@ -474,24 +544,25 @@ PREFIX(string) (parser_t * parser)
 	svbuf[len + prefixlen] = '\0';
 	SvPOK_only (string);
 	SvCUR_set (string, len+prefixlen);
-//	fprintf (stderr, "%d, %d: %s\n", prefixlen, len, svbuf);
     }
     else {
+	/* Have an escape as the first character so nothing to
+	   copy. */
 	string = newSVpvn ((const char *) parser->buffer, len);
     }
 #elif 0
+    /* This is the original method up to version 0.32, set the point
+       of parsing back to the first character of the string, then get
+       the string into an allocated buffer. */
     parser->end = start;
     len = get_string (parser);
     string = newSVpvn ((const char *) parser->buffer, len);
 #else
+    /* New-fangled method, use perl_get_string which keeps the buffer
+       on the stack. Results in a minor speed increase. */
     parser->end = start;
-#if 0
-    len = get_string (parser);
-    string = newSVpvn ((const char *) parser->buffer, len);
-#else 
     prefixlen = (STRLEN) (parser->end - start);
     string = perl_get_string (parser, prefixlen);
-#endif
 #endif
 
 #elif defined (TOKENING)
@@ -845,6 +916,11 @@ PREFIX(object) (parser_t * parser)
 
  hash_middle:
 
+    /* We are in the middle of a hash. We have seen a key:value pair,
+       and now we're looking for either a comma and then another
+       key-value pair, or a closing curly brace and the end of the
+       hash. */
+
     switch (NEXTBYTE) {
     case WHITESPACE:
 	goto hash_middle;
@@ -864,6 +940,9 @@ PREFIX(object) (parser_t * parser)
     }
 
  hash_key:
+
+    /* We're looking for a key in the hash, which is a string starting
+       with a double quotation mark. */
 
     switch (NEXTBYTE) {
     case WHITESPACE:
@@ -888,6 +967,8 @@ PREFIX(object) (parser_t * parser)
 
  hash_next:
 
+    /* We've seen a key, now we're looking for a colon. */
+
     switch (NEXTBYTE) {
     case WHITESPACE:
 	goto hash_next;
@@ -906,6 +987,10 @@ PREFIX(object) (parser_t * parser)
 
  hash_value:
 
+    /* We've seen a colon, now we're looking for a value, which can be
+       anything at all, including another hash. Most of the cases are
+       dealt with in the PARSE macro. */
+
     switch (NEXTBYTE) {
 	PARSE(hash_value, XOBJECT_END);
     default:
@@ -914,6 +999,11 @@ PREFIX(object) (parser_t * parser)
     }
 
     if (key.contains_escapes) {
+
+	/* The key had something like "\n" in it, so we can't just
+	   copy the value but have to process it to remove the
+	   escapes. */
+
 	int klen;
 	klen = resolve_string (parser, & key);
 #ifdef PERLING
@@ -921,6 +1011,10 @@ PREFIX(object) (parser_t * parser)
 #endif
     }
     else {
+
+	/* key.start points into the SV * that we are parsing, we
+	   don't need to copy it. */
+
 #ifdef PERLING
 	(void) hv_store (hv, (char *) key.start, key.length * uniflag, value, 0);
 #endif

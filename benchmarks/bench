@@ -5,7 +5,7 @@ use JSON::XS qw(decode_json);
 use lib '/home/ben/projects/Json3/blib/lib';
 use lib '/home/ben/projects/Json3/blib/arch';
 
-use JSON::Parse '0.28_06', qw/parse_json valid_json/;
+use JSON::Parse qw/parse_json valid_json/;
 use JSON::Tokenize qw/tokenize_json/;
 
 use Time::HiRes;
@@ -50,6 +50,8 @@ my %min;
 my $min = 1e99;
 my $count = 10;
 my $times = 100;
+#my $count = 5;
+#my $times = 5;
 
 print "Repetitions: $count x $times = ", $count * $times, "\n";
 

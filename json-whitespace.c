@@ -34,7 +34,7 @@ static void copy_whitespace (json_ws_t * ws, char * w)
     ws->q = q;
 }
 
-static int whitespace_json (json_ws_t * ws)
+static INLINE int whitespace_json (json_ws_t * ws)
 {
     /* Copy place. */
     char * c;

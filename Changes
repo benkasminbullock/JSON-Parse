@@ -1,6 +1,7 @@
-0.32_02 2015-10-09
+0.32_03 2015-10-09
 
 * Memory leak plug
+* Small speed improvements
 * Minor bug about commas after bare values
 * Documentation rewritten to clarify changes in 0.32 and testing.
 

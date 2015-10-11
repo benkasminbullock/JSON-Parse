@@ -212,7 +212,7 @@ c_validate (parser_t * parser)
     check_end (parser);
 }
 
-static void
+static INLINE void
 print_tokens (json_token_t * t)
 {
     printf ("Start: %d End: %d: Type: %s\n", t->start, t->end,

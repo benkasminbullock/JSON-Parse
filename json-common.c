@@ -851,6 +851,10 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
    the reasons outlined below. */
 
 #if 0
+
+/* I expected a switch statement to compile to faster code, but it
+   doesn't seem to. */
+
 #define HANDLE_ESCAPES(p,start)				\
     switch (c = * ((p)++)) {				\
 							\
@@ -891,9 +895,13 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
 	STRINGFAIL (unexpected_character);		\
     }
 #else
+
+/* This is identical to the above macro, but it uses if statements
+   rather than a switch statement. Using the Clang compiler, this
+   results in about 2.5% faster code, for some reason or another. */
+
 #define HANDLE_ESCAPES(p,start)				\
     c = * ((p)++);					\
-/*    fprintf (stderr, "Escape to %c\n", c);		*/\
 if (c == '\\' || c == '/' || c == '"') {		\
 	*b++ = c;					\
     }							\
