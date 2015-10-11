@@ -21,13 +21,14 @@ function L</parse_json> takes one argument, a string containing JSON,
 and returns a Perl reference or scalar. The input to C<parse_json>
 must be a complete JSON structure.
 
-The module differs from the L<JSON> module by simplifying the handling
-of Unicode. If its input is marked as Unicode characters, the strings
-in its output are also marked as Unicode characters.
+JSON::Parse accepts only UTF-8 as input. If its input is marked as
+Unicode characters, the strings in its output are also marked as
+Unicode characters. If its input contains Unicode escapes of the form
+\u3000, its output is upgraded to Unicode character strings.
 
-JSON::Parse also provides two high speed validation functions,
-L</valid_json> and L</assert_valid_json>, and a function to read JSON from
-a file, L</json_file_to_perl>.
+JSON::Parse also offers two high speed validation functions,
+L</valid_json> and L</assert_valid_json>, and a function to read JSON
+from a file, L</json_file_to_perl>.
 
 =head1 FUNCTIONS
 
@@ -82,9 +83,11 @@ not. It also returns I<0> if the input is undefined or the empty
 string.
 
 This is a high-speed validator which runs between roughly two and
-eight times faster than L</parse_json>.
+eight times faster than L</parse_json>. This speed gain is obtained by
+discarding inputs after reading them rather than storing them into
+Perl variables.
 
-C<Valid_json> does not supply the actual errors which caused
+C<valid_json> does not supply the actual errors which caused
 invalidity. Use L</assert_valid_json> to get error messages when the
 JSON is invalid.
 
@@ -244,9 +247,15 @@ non-whitespace, like the second "]" in C<["a"]]>.
 
 =item No incremental parsing
 
-JSON::Parse does not do incremental parsing. JSON::Parse only parses
-fully-formed JSON strings which include all opening and closing
-brackets.
+JSON::Parse does not parse incrementally. It only parses fully-formed
+JSON strings which include all opening and closing brackets. This is
+an inherent part of the design of the module. Incremental parsing in
+the style of L<XML::Parser> would (obviously) require some kind of
+callback structure to deal with the elements of the partially digested
+structures, but JSON::Parse was never designed to do this; it merely
+converts what it sees into a Perl structure. Claims to offer
+incremental JSON parsing in other modules' documentation should be
+diligently verified.
 
 =item UTF-8 only
 
@@ -319,21 +328,25 @@ an exponential part, like "1e09", seem to be about two or three times
 faster to parse with this module than with L<JSON::XS>. In
 JSON::Parse, parsing of exponentials is done by the system's C<strtod>
 function, but JSON::XS contains its own parser for exponentials, so
-these results may be system-dependent.
+these results may be system-dependent. 
 
-On the other hand, JSON::XS makes better use of Perl's inbuilt string
-handling than JSON::Parse and so it's faster for some types of
-strings. 
+At the moment the main place JSON::XS wins over JSON::Parse is in
+strings containing escape characters, where JSON::XS is about 10%
+faster on the module author's computer and compiler. As of version
+0.33, despite some progress in improving JSON::Parse, I haven't been
+able to fully work out the reason behind the better speed.
 
 There is some benchmarking code in the github repository under the
 directory "benchmarks" for those wishing to test these claims. The
 script F<benchmarks/bench> is an adaptation of the similar script in
-the L<JSON::XS> distribution.
+the L<JSON::XS> distribution. The script F<pub-bench.pl> runs the
+benchmarks and prints them out as POD.
 
-The following benchmark tests used version 0.32_01 of JSON::Parse and
-version 3.01 of JSON::XS on the files in the "benchmarks" directory of
-JSON::Parse. "short.json" and "long.json" are the benchmarks used by
-JSON::XS.
+The following benchmark tests used version 0.32_03 of JSON::Parse and
+version 3.01 of JSON::XS on Perl Version 18.2, compiled with Clang
+version 3.4.1 on FreeBSD 10.1. The files in the "benchmarks" directory
+of JSON::Parse. "short.json" and "long.json" are the benchmarks used
+by JSON::XS.
 
 =over
 
@@ -344,8 +357,8 @@ JSON::XS.
     module        |      1/min |        min |
     --------------|------------|------------|
     JP::valid     | 776722.963 |  0.0000129 |
-    JSON::Parse   | 251155.928 |  0.0000398 |
-    JSON::XS      | 233016.889 |  0.0000429 |
+    JSON::Parse   | 295373.521 |  0.0000339 |
+    JSON::XS      | 263792.704 |  0.0000379 |
     --------------+------------+------------+
 
 
@@ -355,9 +368,9 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     |  13569.408 |  0.0007370 |
-    JSON::Parse   |   4970.143 |  0.0020120 |
-    JSON::XS      |   5539.960 |  0.0018051 |
+    JP::valid     |  14004.354 |  0.0007141 |
+    JSON::Parse   |   5055.815 |  0.0019779 |
+    JSON::XS      |   5570.865 |  0.0017951 |
     --------------+------------+------------+
 
 
@@ -368,8 +381,8 @@ JSON::XS.
     module        |      1/min |        min |
     --------------|------------|------------|
     JP::valid     | 303935.072 |  0.0000329 |
-    JSON::Parse   |  32164.908 |  0.0003109 |
-    JSON::XS      |  31536.120 |  0.0003171 |
+    JSON::Parse   |  32793.620 |  0.0003049 |
+    JSON::XS      |  31750.977 |  0.0003150 |
     --------------+------------+------------+
 
 
@@ -379,8 +392,8 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     | 133576.561 |  0.0000749 |
-    JSON::Parse   |  52626.148 |  0.0001900 |
+    JP::valid     | 135300.129 |  0.0000739 |
+    JSON::Parse   |  52363.346 |  0.0001910 |
     JSON::XS      |  19963.370 |  0.0005009 |
     --------------+------------+------------+
 
@@ -392,8 +405,8 @@ JSON::XS.
     module        |      1/min |        min |
     --------------|------------|------------|
     JP::valid     | 303935.072 |  0.0000329 |
-    JSON::Parse   |  48545.185 |  0.0002060 |
-    JSON::XS      |  29167.622 |  0.0003428 |
+    JSON::Parse   |  47880.183 |  0.0002089 |
+    JSON::XS      |  29086.713 |  0.0003438 |
     --------------+------------+------------+
 
 
@@ -403,9 +416,9 @@ JSON::XS.
     --------------+------------+------------+
     module        |      1/min |        min |
     --------------|------------|------------|
-    JP::valid     |   1385.814 |  0.0072160 |
-    JSON::Parse   |    210.797 |  0.0474391 |
-    JSON::XS      |    209.882 |  0.0476458 |
+    JP::valid     |   1386.409 |  0.0072129 |
+    JSON::Parse   |    212.965 |  0.0469561 |
+    JSON::XS      |    209.684 |  0.0476909 |
     --------------+------------+------------+
 
 =back
@@ -428,8 +441,7 @@ Crockford.
 =item JSON, JSON::XS, and friends
 
 These modules allow both reading and writing of JSON. JSON::Parse
-originated as a response to the overcomplex interface of L<JSON>, in
-particular its exasperating handling of Unicode.
+originated as a response to the interface of L<JSON>.
 
 There are a lot of other modules for parsing and producing JSON on
 CPAN. I have found the following ones: L<JSON::DWIW>, L<JSON::Any>,
@@ -448,13 +460,7 @@ combines Cpanel::JSON::XS, JSON::XS, and the original JSON.
 
 =head1 TEST RESULTS
 
-The CPAN testers results are at the usual place. At the time of
-release of this 0.29 version of the module, apart from pre-5.8.9
-versions of Perl, there is only one CPAN testers testing machine on
-which JSON::Parse fails its tests, a Windows 5.16.3 multithreaded
-Perl. So far I have been unable to work out why these tests are
-failing on that machine. If JSON::Parse does not install on your
-machine, let me know.
+The CPAN testers results are at the usual place. 
 
 The ActiveState test results are at
 L<http://code.activestate.com/ppm/JSON-Parse/>.
@@ -500,10 +506,11 @@ exactly the same tests, and requires no Perl at all.
 If you're interested in testing your own JSON parser, the outputs
 generated by randomtest.pl are quite a good place to start. The
 default is to produce UTF-8 output, which looks pretty horrible. You
-can mess with the internals of JSON::Parse by setting MAXBYTE to 0x80,
-recompiling (you can ignore the compiler warnings), and running
-randomjson.pl again to get just ASCII random JSON things. This breaks
-the UTF-8 functionality of JSON::Parse so don't install that version!
+can mess with the internals of JSON::Parse by setting MAXBYTE in
+F<json-common.c> to 0x80, recompiling (you can ignore the compiler
+warnings), and running randomjson.pl again to get just ASCII random
+JSON things. This breaks the UTF-8 functionality of JSON::Parse so
+don't install that version!
 
 =head1 AUTHOR
 
