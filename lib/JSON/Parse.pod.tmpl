@@ -213,6 +213,25 @@ has the same result as a Perl declaration of the form
         friday => 'Gotta get down on Friday',
     };
 
+=head3 Key collisions
+
+In the event of a key collision within the JSON object, something like
+
+     my $j = '{"a":1, "a":2}';
+     my $p = parse_json ($j);
+     print $j->{a}, "\n";
+     # Prints 2.
+
+L<JSON::Parse> overwrites the first value with the second value. If
+you need special behaviour, please see the CPAN module
+L<MultiValueOrdered>.
+
+Currently there is no warning about key collisions in this module. The
+design rationale for this is that Perl doesn't give information about
+collisions when storing into hash values, and checking for collisions
+for every key will significantly degrade performance for the sake of
+an unlikely problem.
+
 =head2 null
 
 The JSON null literal is mapped to a readonly scalar
@@ -438,23 +457,41 @@ JavaScript Object Notation
 L<http://json.org> is the website for JSON, authored by Douglas
 Crockford.
 
+=item JSON::Create
+
+L<JSON::Create> is a companion module to JSON::Parse by the same
+author. As of version 0.01 it is in very early testing stages. Please
+feel free to try it out.
+
 =item JSON, JSON::XS, and friends
 
 These modules allow both reading and writing of JSON. JSON::Parse
 originated as a response to the interface of L<JSON>.
 
 There are a lot of other modules for parsing and producing JSON on
-CPAN. I have found the following ones: L<JSON::DWIW>, L<JSON::Any>,
-L<JSON::YAJL>, L<JSON::Util>, L<JSON::Tiny>, L<Pegex::JSON>,
-L<JSON::Streaming::Reader>, L<JSON::Syck>, L<Mojo::JSON>, L<JSON::SL>,
-and L<JBD::JSON>. Please let me know of any others I've missed.
+CPAN, including L<JSON::XS>, L<JSON::DWIW> ("do what I want"),
+L<JSON::Any> (subclasses modules), L<JSON::YAJL> (wraps a C library
+called yajl), L<JSON::Util> (relies on L<JSON::MaybeXS>),
+L<Pegex::JSON> (based on L<Pegex>), L<JSON::Streaming::Reader>,
+L<JSON::Streaming::Writer>, L<JSON::Syck>, L<JSON::SL>,
+L<JSON::Relaxed>, L<Inline::JSON>, L<JBD::JSON>, and L<JSON::Meth>
+(relies on L<JSON::MaybeXS>).
+
+L<Mojo::JSON>, part of L<Mojolicious>, has been forked into
+L<JSON::Tiny> which is then subclassed into L<JSON::MultiValueOrdered>
+and L<JSON::Tiny::Subclassable>. L<JSON::MultiValueOrdered> is a
+special-purpose module for JSON objects which have key collisions
+within objects. For this module's handling of key collisions, see
+L</Key collisions> in this document.
 
 A fork of JSON::XS also exists as L<Cpanel::JSON::XS>. This is related
 to a disagreement about how to report bugs. Please see the module for
 details. Another module, L<JSON::XS::VersionOneAndTwo>, supports two
 different interfaces of JSON::XS. However, JSON::XS is now onto
-version 3. And there is also yet another module L<JSON::MaybeXS> which
-combines Cpanel::JSON::XS, JSON::XS, and the original JSON.
+version 3. L<JSON::Any> combines L<JSON::DWIW>, L<JSON::XS> versions
+one and two, and L<JSON::Syck>. And there is also yet another module
+L<JSON::MaybeXS> which combines Cpanel::JSON::XS, JSON::XS, and the
+original JSON.
 
 =back
 

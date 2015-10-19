@@ -1,3 +1,8 @@
+0.34 2015-10-19
+
+* Document key collisions
+* Extend SEE ALSO section on other JSON modules on CPAN.
+
 0.33 2015-10-09
 
 * Memory leak plug

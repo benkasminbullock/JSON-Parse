@@ -1,0 +1,10 @@
+# Write more in the mini-essay about all the JSON CPAN modules.
+
+2015-10-19 09:21:49
+2015-10-19 09:33:04
+
+# Document hash key collision behaviour and more on JSON CPAN modules.
+# Write test for hash key collision behaviour.
+
+2015-10-19 09:40:19
+2015-10-19 09:56:09

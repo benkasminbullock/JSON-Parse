@@ -1,0 +1,10 @@
+Scan the string for the start and end of objects, arrays, strings,
+object keys, and other values.
+
+Return object $json
+
+Given a request for $json->{x}->{y}, look through the top object's
+keys for key "x". If it cannot be found, return undef. Then get the
+value corresponding to x if it's found, then y. Then take the start
+and end points of that and actually parse them into an SV and return
+the SV as well as storing it.
