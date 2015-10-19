@@ -39,6 +39,9 @@ benchmarks
 ^randmakefile$
 # Not necessary or useful for CPAN
 ^FILES$
+# Design document directory, no use to put on CPAN.
+^doc/.*$
+
 # Local variables:
 # comment-start: "#" 
 # End:
