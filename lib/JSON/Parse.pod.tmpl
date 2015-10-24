@@ -344,6 +344,33 @@ The following error messages are produced:
 [% END %]
 [% END # error in errors %]
 
+=head2 $json_diagnostics
+
+Experimentally, there is a global variable
+C<$JSON::Parse::json_diagnostics>, which, if true, causes errors to be
+output as JSON rather than text:
+
+    $JSON::Parse::json_diagnostics = 1;
+    assert_valid_json ("{'not':'valid'}");
+
+This outputs the following:
+
+    {"input length":15,"bad type":"object","error":"Unexpected character","bad byte position":2,"bad byte contents":39,"start of broken component":1,"valid bytes":[0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
+
+That means that, in a string of length 15 bytes, the JSON component
+which looked like an object starting from byte 1 is broken at byte 2,
+because it has a bad character there of ascii 39 (a single quote
+mark), where the bytes allowed were as described in the array of valid
+bytes. C<valid_bytes> is a 256-item array whose values are "true" for
+allowed bytes and "false" otherwise.
+
+This is intended for people who want to make, say, a "broken JSON
+repair" module, so that they can analyze errors without having to
+parse the above kinds of diagnostic string. The contents of the JSON
+diagnostics are not currently documented and are subject to change, so
+please view the source code (file F<json-common.c>) or see what the
+errors look like by adding incorrect JSON and viewing the results.
+
 =head1 PERFORMANCE
 
 On the author's computer, the module's speed of parsing is
