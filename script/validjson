@@ -4,12 +4,42 @@ use strict;
 use lib '/home/ben/projects/Json3/blib/lib';
 use lib '/home/ben/projects/Json3/blib/arch';
 use JSON::Parse 'assert_valid_json';
-use Deploy 'file_slurp';
+use Path::Tiny;
+use Getopt::Long;
+my $ok = GetOptions (
+"verbose" => \my $verbose,
+"help" => \my $help,
+);
+if (! $ok || $help) {
+    usage ();
+    exit;
+}
 for (@ARGV) {
     eval {
-	assert_valid_json (file_slurp ($_));
+	my $file = path ($_);
+	my $text = $file->slurp_utf8 ();
+	assert_valid_json ($text);
     };
     if ($@) {
 	print "$_: $@\n";
     }
+    if ($verbose) {
+	print "$_ is valid JSON.\n";
+    }
+}
+
+sub usage
+{
+    print <<EOF;
+$0: validate JSON. Default behaviour is to produce nothing except errors.
+
+Options:
+
+--verbose       Get confirmation that the files are valid.
+--help          View this message.
+
+This script requires Path::Tiny and JSON::Parse to be installed.
+EOF
+
+    exit;
 }

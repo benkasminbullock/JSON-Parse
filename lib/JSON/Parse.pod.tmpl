@@ -23,7 +23,7 @@ scalar. The input to C<parse_json> must be a complete JSON structure.
 JSON::Parse also offers two validation functions, L</valid_json>,
 which returns true or false, and L</assert_valid_json>, which produces
 a descriptive fatal error if the JSON is invalid. These act at a
-higher speed than L</parse_json>. See L</SPEED> for a comparison.
+higher speed than L</parse_json>. See L</PERFORMANCE> for a comparison.
 
 JSON::Parse also offers one convenience function to read JSON directly
 from a file, L</json_file_to_perl>.
@@ -344,7 +344,7 @@ The following error messages are produced:
 [% END %]
 [% END # error in errors %]
 
-=head1 SPEED
+=head1 PERFORMANCE
 
 On the author's computer, the module's speed of parsing is
 approximately the same as L<JSON::XS>, with small variations depending
@@ -470,8 +470,9 @@ Crockford.
 =item JSON::Create
 
 L<JSON::Create> is a companion module to JSON::Parse by the same
-author. As of version 0.01 it is in very early testing stages. Please
-feel free to try it out.
+author. As of version 0.04 it is working everywhere I have tried it,
+but should still be considered to be in a testing stage. Please feel
+free to try it out.
 
 =item Other CPAN modules for parsing and producing JSON
 
@@ -479,7 +480,7 @@ feel free to try it out.
 
 =item L<JSON>
 
-This is a master-module for L<JSON::PP> and L<JSON::XS>.
+This is actually a combination module for L<JSON::PP> and L<JSON::XS>.
 
 =item L<JSON::PP>
 
@@ -522,25 +523,23 @@ L<YAML::Syck>.
 
 =item L<JSON::SL>
 
-=item L<JSON::Relaxed>
-
-"An extension of JSON that allows for better human-readability".
-
 =item L<Inline::JSON>
+
+Relies on L<JSON>.
 
 =item L<JBD::JSON>
 
-=item L<JSON::Meth>
-
-Relies on L<JSON::MaybeXS>.
+The module is undocumented so I am not sure what it does.
 
 =item L<Glib::JSON>
 
-Uses Glib, a library of C functions for the Linux GNOME desktop project.
+Uses the JSON library from Glib, a library of C functions for the
+Linux GNOME desktop project.
 
 =item L<Mojo::JSON>
 
-Part of the L<Mojolicious> standalone web framework.
+Part of the L<Mojolicious> standalone web framework, "pure Perl" JSON
+reader/writer.
 
 =item L<JSON::Tiny>
 
@@ -575,37 +574,83 @@ booleans into JSON types.
 
 =back
 
-=item Master modules
+=item Combination modules
 
-These king-sized modules present a more consistent and improved
-interface which can rely on more than one of the above back-end
-modules at once. This protects the user from incompatible changes in
-module APIs, and by relying on more than one back-end the users are
-also protected from the personality clashes between various
-temperamental module maintainers. Most of the CPAN modules involving
-JSON are now relying on a "master module" rather than using the above
-JSON modules directly.
+These modules present a more consistent and improved interface which
+can rely on more than one of the above back-end modules at once. This
+protects the user from incompatible changes in module APIs, and by
+relying on more than one back-end the users are also protected from
+the personality clashes between various temperamental module
+maintainers. Many CPAN modules involving JSON now rely on a "master
+module" rather than using the above JSON modules directly.
 
 =over
 
 =item L<JSON::MaybeXS>
 
-A "master module", the currently fashionable choice, which combines
-L<Cpanel::JSON::XS>, L<JSON::XS>, and the original L<JSON>.
+A "combination module", the currently fashionable choice, which
+combines L<Cpanel::JSON::XS>, L<JSON::XS>, and the original L<JSON>.
 
 =item L<JSON::Any>
 
-A now-deprecated "master module" which combines L<JSON::DWIW>,
+A now-deprecated "combination module" which combines L<JSON::DWIW>,
 L<JSON::XS> versions one and two, and L<JSON::Syck>.
 
 =item L<JSON::XS::VersionOneAndTwo>
 
-A "master module" which supports two different interfaces of
+A "combination module" which supports two different interfaces of
 L<JSON::XS>. However, JSON::XS is now onto version 3.
 
 =back
 
+=item JSON extensions
+
+These modules extend JSON with comments and other things.
+
+=over
+
+=item L<JSON::Relaxed>
+
+"An extension of JSON that allows for better human-readability".
+
+=item L<JSONY>
+
+"Relaxed JSON with a little bit of YAML"
+
+=item JSON::Diffable
+
+"A relaxed and easy diffable JSON variant"
+
 =back
+
+=back
+
+=head1 SCRIPT
+
+A script "validjson" is supplied with the module. This runs
+L</assert_valid_json> on its inputs, so run it like this.
+
+     validjson *.json
+
+The default behaviour is to just do nothing if the input is valid. For
+invalid input it prints what the problem is:
+
+    validjson ids.go 
+    ids.go: JSON error at line 1, byte 1/7588: Unexpected character '/' parsing initial state: expecting whitespace: '\n', '\r', '\t', ' ' or start of string: '"' or digit: '0-9' or minus: '-' or start of an array or object: '{', '[' or start of literal: 't', 'f', 'n' at /home/ben/software/install/bin/validjson line 21.
+
+If you need confirmation, use its --verbose option:
+
+    validjson -v *.json
+
+    atoms.json is valid JSON.
+    ids.json is valid JSON.
+    kanjidic.json is valid JSON.
+    linedecomps.json is valid JSON.
+    radkfile-radicals.json is valid JSON.
+
+The script uses L<Path::Tiny> for reading files, which is not a
+dependency of this module, so if you want to use the script, you also
+need to install L<Path::Tiny>.
 
 =head1 TEST RESULTS
 
@@ -616,10 +661,10 @@ L<http://code.activestate.com/ppm/JSON-Parse/>.
 
 =head1 EXPORTS
 
-The module exports nothing by default. All of the functions,
-L</parse_json>, L</json_file_to_perl>, L</valid_json> and
-L</assert_valid_json>, as well as the old function names
-L</validate_json> and L</json_to_perl>, can be exported on request.
+The module exports nothing by default. Functions L</parse_json>,
+L</json_file_to_perl>, L</valid_json> and L</assert_valid_json>, as
+well as the old function names L</validate_json> and L</json_to_perl>,
+can be exported on request.
 
 All of the functions can be exported using the tag ':all':
 
@@ -670,40 +715,38 @@ Or "why did you make yet another JSON module?"
 
 This module started out under the name L<JSON::Argo> as a way to
 escape from having to use the other JSON modules on CPAN. Two reasons
-in particular I wanted to make my own module where that I think
+in particular I wanted to make my own module were that I think
 L</JSON> has a very, very strange interface, especially regarding
-Unicode, and I wanted to make a "strict-as-possible" parser so I
-didn't end up using an incompatible format and the mysterious bugs
-that always entails.
-
-This is still a feature of JSON::Parse. Many other CPAN modules seem
-to be keen on what seems to me to be an extremely dubious practice of
-breaking the JSON standard in various ways. Since we are using JSON to
-communicate with other computers and other computer languages which
-don't know anything about our extensions, how can this possibly be a
-good idea?
+Unicode, and I wanted to make a "strict-as-possible" parser. Many
+other CPAN modules seem to be keen on breaking the JSON standard in
+various ways. Since JSON's only use is to communicate with other
+computers and other computer languages which don't know anything about
+our extensions, how can this be a good idea?
 
 The reason it only parsed JSON was that when I started this I didn't
 know the Perl extension language XS very well, and I was not confident
 about making a JSON producer, so it only parsed JSON, which was the
 main job I needed to do. It originally used lex and yacc in the form
-of flex and bison, since discarded.
+of flex and bison, since discarded. I also found out that someone else
+had a JSON parser called Argo in Java, so to save confusion I dropped
+the name JSON::Argo and renamed this JSON::Parse, keeping the version
+numbers continuous.
 
-The module has since been completely rewritten, twice, in an attempt
-to improve its performance, after I found that JSON::XS was much
+The module has since been completely rewritten, twice, mostly in an
+attempt to improve performance, after I found that JSON::XS was much
 faster than the original JSON::Parse. (The second rewrite of the
 module was not released to CPAN). I also hoped to make something
 useful which wasn't in any existing CPAN module by offering the
 high-speed validator, L</valid_json>.
 
-=head1 AUTHOR
+I also rewrote the module due to some bugs I found, for example up to
+version 0.09 it was failing to accept whitespace after an object key
+string, so a JSON input of the form C<{ "x" : "y" }>, with whitespace
+between the C<"x"> and the colon, C<:>, would cause it to fail. That
+was one big reason I created the random testing regime described in
+L</TESTING> above. I believe that the module is now compliant with the
+JSON specification. 
 
-Ben Bullock, <bkb@cpan.org>
-
-=head1 LICENSE
-
-JSON::Parse can be used, copied, modified and redistributed under the
-same terms as Perl itself.
-
-=cut
-
+[% start_year=2013 %]
+[% INCLUDE "author" %]
+[% INCLUDE "terminology" %]
