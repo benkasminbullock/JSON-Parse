@@ -59,9 +59,10 @@ returned:
 
 [% INCLUDE "array.pl" | xtidy %]
 
-Otherwise a Perl scalar is returned. (The behaviour of allowing a
-scalar is new as of version 0.32 of this module, which brings it into
-line with the new specification for JSON.)
+Otherwise a Perl scalar is returned. 
+
+The behaviour of allowing a scalar was added in version 0.32 of this
+module. This brings it into line with the new specification for JSON.
 
 =head2 json_file_to_perl
 
@@ -84,7 +85,7 @@ the file yourself using another module if you need faster performance.
         # do something
     }
 
-C<Valid_json> returns I<1> if its argument is valid JSON and I<0> if
+C<valid_json> returns I<1> if its argument is valid JSON and I<0> if
 not. It also returns I<0> if the input is undefined or the empty
 string.
 
@@ -242,20 +243,67 @@ Note that the JSON specification says "The names within an object
 SHOULD be unique." (see L</RFC 7159>, page 5), although it's not a
 requirement.
 
-=head2 null
+=head2 Literals
+
+=head3 null
 
 The JSON null literal is mapped to a readonly scalar
-C<$JSON::Parse::null> containing the undefined value.
+C<$JSON::Parse::null> which evaluates to C<undef>.
 
-=head2 true
+=head3 true
 
-The JSON true literal is mapped to a readonly scalar
-C<$JSON::Parse::true> containing the value 1.
+The JSON true literal is mapped to a readonly scalar which evaluates
+to a true value (1).
 
-=head2 false
+=head3 false
 
-The JSON false literal is mapped to a readonly scalar
-C<$JSON::Parse::false> containing the value 0.
+The JSON false literal is mapped to a readonly scalar which evaluates
+to the empty string, or to zero in a numeric context.
+
+This behaviour changed from version 0.36 to 0.37. In versions up to
+0.36, the false literal was mapped to a readonly scalar which
+evaluated to 0 only.
+
+=head3 Modifying the values
+
+All the literals are mapped to read-only values. Because of this,
+trying to modify the keys in the hash reference returned by
+L</json_parse> may lead to unexpected errors of the form "Modification
+of a read-only value attempted":
+
+    my $in = '{"hocus":true,"pocus":false,"focus":null}';
+    my $p = json_parse ($in);
+    $p->{hocus} = 99;
+    # "Modification of a read-only value attempted" error occurs
+
+Since the hash values are read-only scalars, the above 
+C<< $p->{hocus} = 99 >> is a bit like doing the following:
+
+    undef = 99;
+
+If you need to modify the returned hash reference, then delete the
+value first:
+
+    my $in = '{"hocus":true,"pocus":false,"focus":null}';
+    my $p = json_parse ($in);
+    delete $p->{pocus};
+    $p->{pocus} = 99;
+    # OK
+
+Similarly with array references, delete the value before altering:
+
+    my $in = '[true,false,null]';
+    my $q = json_parse ($in);
+    delete $q->[1];
+    $q->[1] = 'magic';
+
+Note that the return values from parsing bare literals are not
+read-only scalars, so
+
+    my $true = JSON::Parse::json_parse ('true');
+    $true = 99;
+
+produces no error. This is because Perl copies the scalar.
 
 =head1 RESTRICTIONS
 
@@ -406,76 +454,7 @@ by JSON::XS.
 
 =over
 
-=item short.json
-
-    Repetitions: 10 x 100 = 1000
-    --------------+------------+------------+
-    module        |      1/min |        min |
-    --------------|------------|------------|
-    JP::valid     | 776722.963 |  0.0000129 |
-    JSON::Parse   | 295373.521 |  0.0000339 |
-    JSON::XS      | 263792.704 |  0.0000379 |
-    --------------+------------+------------+
-
-
-=item long.json
-
-    Repetitions: 10 x 100 = 1000
-    --------------+------------+------------+
-    module        |      1/min |        min |
-    --------------|------------|------------|
-    JP::valid     |  14004.354 |  0.0007141 |
-    JSON::Parse   |   5055.815 |  0.0019779 |
-    JSON::XS      |   5570.865 |  0.0017951 |
-    --------------+------------+------------+
-
-
-=item words-array.json
-
-    Repetitions: 10 x 100 = 1000
-    --------------+------------+------------+
-    module        |      1/min |        min |
-    --------------|------------|------------|
-    JP::valid     | 303935.072 |  0.0000329 |
-    JSON::Parse   |  32793.620 |  0.0003049 |
-    JSON::XS      |  31750.977 |  0.0003150 |
-    --------------+------------+------------+
-
-
-=item exp.json
-
-    Repetitions: 10 x 100 = 1000
-    --------------+------------+------------+
-    module        |      1/min |        min |
-    --------------|------------|------------|
-    JP::valid     | 135300.129 |  0.0000739 |
-    JSON::Parse   |  52363.346 |  0.0001910 |
-    JSON::XS      |  19963.370 |  0.0005009 |
-    --------------+------------+------------+
-
-
-=item literals.json
-
-    Repetitions: 10 x 100 = 1000
-    --------------+------------+------------+
-    module        |      1/min |        min |
-    --------------|------------|------------|
-    JP::valid     | 303935.072 |  0.0000329 |
-    JSON::Parse   |  47880.183 |  0.0002089 |
-    JSON::XS      |  29086.713 |  0.0003438 |
-    --------------+------------+------------+
-
-
-=item cpantesters.json
-
-    Repetitions: 10 x 100 = 1000
-    --------------+------------+------------+
-    module        |      1/min |        min |
-    --------------|------------|------------|
-    JP::valid     |   1386.409 |  0.0072129 |
-    JSON::Parse   |    212.965 |  0.0469561 |
-    JSON::XS      |    209.684 |  0.0476909 |
-    --------------+------------+------------+
+[% INCLUDE "/home/ben/projects/Json3/benchmarks/benchmarks-output.txt" %]
 
 =back
 
@@ -497,9 +476,9 @@ Crockford.
 =item JSON::Create
 
 L<JSON::Create> is a companion module to JSON::Parse by the same
-author. As of version 0.04 it is working everywhere I have tried it,
-but should still be considered to be in a testing stage. Please feel
-free to try it out.
+author. As of version 0.07, I'm using it everywhere, but it should
+still be considered to be in a testing stage. Please feel free to try
+it out.
 
 =item Other CPAN modules for parsing and producing JSON
 
@@ -599,6 +578,12 @@ booleans into JSON types.
 
 =item L<JSON::XS::Sugar>
 
+=item L<JSON::TypeInference>
+
+=item L<boolean>
+
+This module offers C<true> and C<false> literals similar to JSON.
+
 =back
 
 =item Combination modules
@@ -644,7 +629,7 @@ These modules extend JSON with comments and other things.
 
 "Relaxed JSON with a little bit of YAML"
 
-=item JSON::Diffable
+=item L<JSON::Diffable>
 
 "A relaxed and easy diffable JSON variant"
 
@@ -715,11 +700,12 @@ it to the fragment and continuing the process until a complete valid
 JSON input is formed. The module has undergone about a billion
 repetitions of this test.
 
-This setup relies on a C file F<json-random-test.c> which isn't in the
-CPAN distribution, and it also requires F<Json3.xs> to be edited to
-make the macro C<TESTRANDOM> true (uncomment line 7 of the file). The
-testing code uses C setjmp/longjmp, so it's not guaranteed to work on
-all operating systems and is commented out for CPAN releases.
+This setup relies on a C file, F<json-random-test.c>, which isn't in
+the CPAN distribution, and it also requires F<Json3.xs> to be edited
+to make the macro C<TESTRANDOM> true (uncomment line 7 of the
+file). The testing code uses C setjmp/longjmp, so it's not guaranteed
+to work on all operating systems and is commented out for CPAN
+releases.
 
 A pure C version called F<random-test.c> also exists. This applies
 exactly the same tests, and requires no Perl at all.
@@ -761,8 +747,9 @@ numbers continuous.
 
 The module has since been completely rewritten, twice, mostly in an
 attempt to improve performance, after I found that JSON::XS was much
-faster than the original JSON::Parse. (The second rewrite of the
-module was not released to CPAN). I also hoped to make something
+faster than the original JSON::Parse. (The first rewrite of the module
+was not released to CPAN, this is the second one, which explains why
+some files have names like F<Json3.xs>). I also hoped to make something
 useful which wasn't in any existing CPAN module by offering the
 high-speed validator, L</valid_json>.
 

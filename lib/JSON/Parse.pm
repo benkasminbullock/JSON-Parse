@@ -15,7 +15,7 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.36';
+our $VERSION = '0.37';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 
@@ -23,11 +23,10 @@ XSLoader::load (__PACKAGE__, $VERSION);
 
 our $json_diagnostics;
 
-# JSON literals all point to these. They're set to read-only within
-# the XS.
+# JSON "null" value. Although we're now using PL_sv_yes and PL_sv_no,
+# we don't use PL_sv_undef, because perldoc perlguts says it's a bad
+# idea.
 
-our $true;
-our $false;
 our $null;
 
 # Old names of subroutines.

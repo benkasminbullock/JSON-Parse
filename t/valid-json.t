@@ -196,6 +196,10 @@ run_fail ('{"baba":6-3}');
 run_fail_like ('{"baba":6.', qr/unexpected end of input parsing number/i);
 run_fail_like ("{\"baba\":6.\0", qr/unexpected character.*parsing number/i);
 
+# Bare values.
+
+run_ok ('"clive"');
+
 TODO: {
     local $TODO = 'known bugs';
 };

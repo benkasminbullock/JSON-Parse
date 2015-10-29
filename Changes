@@ -1,3 +1,7 @@
+0.37 2015-10-29
+
+* Remove $JSON::Parse::true and false, use &PL_sv_yes and &PL_sv_no instead.
+
 0.36 2015-10-24
 
 * Document and install "validjson" script.

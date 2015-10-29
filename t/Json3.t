@@ -128,7 +128,7 @@ is ($at->[0], 1);
 
 my $afalse = parse_json ('[false]');
 ok ($afalse, "got false value");
-is ($afalse->[0], 0, "is zero");
+is ($afalse->[0], '', "is empty string");
 done_testing ();
 
 # Local variables:

@@ -149,7 +149,7 @@
 typedef struct string {
 
     unsigned char * start;
-    unsigned int length;
+    STRLEN length;
 
     /* The "contains_escapes" flag is set if there are backslash escapes in
        the string like "\r", so that it needs to be cleaned up before
@@ -259,6 +259,10 @@ typedef struct parser {
     /* The end expected. */
 
     int end_expected;
+
+    /* Number of mallocs. */
+
+    int n_mallocs;
 
     /* Bytes we accept. */
 
@@ -419,17 +423,22 @@ failbadinput_json (parser_t * parser)
 		  json_errors[parser->error]);
     EROVERFLOW;
     if (parser->bad_byte) {
+	int position;
+	position = (int) (parser->bad_byte - parser->input) + 1,
+
 	string_end += snprintf (SNEND, SNSIZE,
 				",\"bad byte position\":%d"
 				",\"bad byte contents\":%d",
-				parser->bad_byte - parser->input + 1,
+				position,
 				* parser->bad_byte);
 	EROVERFLOW;
     }
     if (parser->bad_beginning) {
+	int bcstart;
+	bcstart = (int) (parser->bad_beginning - parser->input) + 1;
 	string_end +=
 	    snprintf (SNEND, SNSIZE, ",\"start of broken component\":%d",
-		      parser->bad_beginning - parser->input + 1);
+		      bcstart);
 	EROVERFLOW;
     }
     if (parser->error == json_error_unexpected_character) {
@@ -707,6 +716,7 @@ expand_buffer (parser_t * parser, int length)
 	}
 	else {
 	    Newx (parser->buffer, parser->buffer_size, unsigned char);
+	    parser->n_mallocs++;
 	}
 	if (! parser->buffer) {
 	    failresources (parser, "out of memory");
@@ -753,8 +763,7 @@ parse_hex_bytes (parser_t * parser, unsigned char * p)
 	    if (p + k - parser->input >= parser->length) {
 		UNIFAIL (unexpected_end_of_input);
 	    }
-
-	    /* Fallthrough */
+	    break;
 
 	default:
 	    parser->bad_byte = p + k;
@@ -894,6 +903,7 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
         parser->expected = XESCAPE;			\
 	STRINGFAIL (unexpected_character);		\
     }
+
 #else
 
 /* This is identical to the above macro, but it uses if statements
@@ -902,7 +912,7 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
 
 #define HANDLE_ESCAPES(p,start)				\
     c = * ((p)++);					\
-if (c == '\\' || c == '/' || c == '"') {		\
+    if (c == '\\' || c == '/' || c == '"') {		\
 	*b++ = c;					\
     }							\
     else if (c == 'b') {				\
@@ -1154,6 +1164,11 @@ parser_free (parser_t * parser)
 {
     if (parser->buffer) {
 	Safefree (parser->buffer);
+	parser->n_mallocs--;
+    }
+    if (parser->n_mallocs != 0) {
+	fprintf (stderr, "%d pieces of unfreed memory remain.\n",
+		 parser->n_mallocs);
     }
     parser->buffer = 0;
 }
@@ -1273,6 +1288,7 @@ json_token_new (parser_t * parser, unsigned char * start,
 	croak ("%s:%d: bad type %d\n", __FILE__, __LINE__, type);
     }
     Newx (new, 1, json_token_t);
+    parser->n_mallocs++;
     new->start = start - parser->input;
     if (end) {
 	new->end = end - parser->input;
@@ -1291,11 +1307,11 @@ static void
 json_token_set_end (parser_t * parser, json_token_t * jt, unsigned char * end)
 {
     if (jt->end != 0) {
+	int offset = (int) (end - parser->input);
 	fprintf (stderr, "%s:%d: attempt to set end as %d is now %d\n",
-		 __FILE__, __LINE__, end - parser->input, jt->end);
+		 __FILE__, __LINE__, offset, jt->end);
 	exit (1);
     }
-    /* Check the hell out of it. */
 
     switch (jt->type) {
     case json_token_string:

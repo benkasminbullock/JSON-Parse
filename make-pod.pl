@@ -2,17 +2,18 @@
 use warnings;
 use strict;
 use Template;
-use FindBin;
+use FindBin '$Bin';
 use lib 'blib/arch';
 use lib 'blib/lib';
 use JSON::Parse 'assert_valid_json';
 use Table::Readable 'read_table';
+use Perl::Build::Pod ':all';
 
 # Names of the input and output files containing the documentation.
 
 my $pod = 'Parse.pod';
-my $input = "$FindBin::Bin//lib/JSON/$pod.tmpl";
-my $output = "$FindBin::Bin/lib/JSON/$pod";
+my $input = "$Bin/lib/JSON/$pod.tmpl";
+my $output = "$Bin/lib/JSON/$pod";
 
 # Template toolkit variable holder
 
@@ -21,9 +22,9 @@ my %vars;
 my $tt = Template->new (
     ABSOLUTE => 1,
     INCLUDE_PATH => [
-	$FindBin::Bin,
-	'/home/ben/projects/Perl-Build/lib/Perl/Build/templates',
-	"$FindBin::Bin/examples",
+	$Bin,
+	pbtmpl (),
+	"$Bin/examples",
     ],
     ENCODING => 'UTF8',
     FILTERS => {
@@ -74,42 +75,15 @@ EOF
 	}
     }
 #    print "$d\n";
-    $tt->process (\$d, \%vars, \my $out, {binmode => 'utf8'})
+    $tt->process (\$d, \%vars, \my $out, binmode => 'utf8')
         or die '' . $tt->error ();
     $error->{description}  = $out;
 #    print "$error->{description}\n";
     $error->{error} = ucfirst ($error->{error});
 }
 $vars{errors} = \@errors;
-$tt->process ($input, \%vars, $output, {binmode => 'utf8'})
+$tt->process ($input, \%vars, $output, binmode => 'utf8')
     or die '' . $tt->error ();
 
 exit;
 
-# This removes some obvious boilerplate from the examples, to shorten
-# the documentation, and indents it to show POD that it is code.
-
-sub xtidy
-{
-    my ($text) = @_;
-
-    # Remove shebang.
-
-    $text =~ s/^#!.*$//m;
-
-    # Remove sobvious.
-
-    $text =~ s/use\s+(strict|warnings);\s+//g;
-    $text =~ s/^binmode\s+STDOUT.*?utf8.*?\s+$//gm;
-#    $text =~ s/use\s+JSON::Parse.*?;\s+//;
-
-    # Replace tabs with spaces.
-
-    $text =~ s/ {0,7}\t/        /g;
-
-    # Add indentation.
-
-    $text =~ s/^(.*)/    $1/gm;
-
-    return $text;
-}

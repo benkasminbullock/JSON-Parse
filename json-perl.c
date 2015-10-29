@@ -307,10 +307,8 @@ string_number_end:
 
 #ifdef PERLING
 
-/* This macro copies our on-stack buffer "buffer" of size "size" into
-   the end of a Perl SV called "string".  This is a macro because it's
-   used in two different places, at the start of the routine and at
-   the end of it. */
+/* This copies our on-stack buffer "buffer" of size "size" into the
+   end of a Perl SV called "string". */
 
 #define COPYBUFFER {					\
 	if (! string) {					\
@@ -348,7 +346,7 @@ perl_get_string (parser_t * parser, STRLEN prefixlen)
     unsigned char c;
     unsigned char * start;
     unsigned char buffer[BUFSIZE];
-    int size;
+    STRLEN size;
     SV * string;
     string = 0;
     start = parser->end;
@@ -617,8 +615,7 @@ PREFIX(literal_true) (parser_t * parser)
 	if (* parser->end++ == 'u') {
 	    if (* parser->end++ == 'e') {
 #ifdef PERLING
-		SvREFCNT_inc (json_true);
-		return json_true;
+		return &PL_sv_yes;
 #elif defined (TOKENING)
 		return json_token_new (parser, start, start + strlen ("true"),
 				       json_token_literal);
@@ -643,8 +640,7 @@ PREFIX(literal_false) (parser_t * parser)
 	    if (* parser->end++ == 's') {
 		if (* parser->end++ == 'e') {
 #ifdef PERLING
-		SvREFCNT_inc (json_false);
-		return json_false;
+		return &PL_sv_no;
 #elif defined (TOKENING)
 		return json_token_new (parser, start, start + strlen ("false"),
 				       json_token_literal);
