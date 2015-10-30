@@ -268,6 +268,21 @@ typedef struct parser {
 
     int valid_bytes[MAXBYTE];
 
+    /* Perl SV * pointers to copy for our true, false, and null
+       values. */
+    void * user_true;
+    void * user_false;
+    void * user_null;
+    /* If this is 1, we copy the literals into new SVs. */
+    unsigned int copy_literals : 1;
+    /* If this is 1, we don't die on errors. */
+    unsigned int warn_only : 1;
+    /* If this is 1, we check for hash collisions before inserting values. */
+    unsigned int detect_collisions : 1;
+    /* Don't warn the user about non-false false and untrue true
+       values, etc. */
+    unsigned int no_warn_literals : 1;
+
 #ifdef TESTRANDOM
 
     /* Return point for longjmp. */
@@ -302,7 +317,7 @@ typedef struct parser {
 
 #endif /* def TESTRANDOM */
 }
-parser_t;
+json_parse_t;
 
 #ifdef __GNUC__
 #define INLINE inline
@@ -317,10 +332,10 @@ parser_t;
 /* Declare all bad inputs as non-returning. */
 
 #ifdef __GNUC__
-static void failbadinput_json (parser_t * parser) __attribute__ ((noreturn));
-static void failbadinput (parser_t * parser) __attribute__ ((noreturn));
+static void failbadinput_json (json_parse_t * parser) __attribute__ ((noreturn));
+static void failbadinput (json_parse_t * parser) __attribute__ ((noreturn));
 static INLINE void
-failbug (char * file, int line, parser_t * parser, const char * format, ...)
+failbug (char * file, int line, json_parse_t * parser, const char * format, ...)
 __attribute__ ((noreturn));
 #endif
 
@@ -329,7 +344,7 @@ __attribute__ ((noreturn));
    "croak". */
 
 static INLINE void
-failbug (char * file, int line, parser_t * parser, const char * format, ...)
+failbug (char * file, int line, json_parse_t * parser, const char * format, ...)
 {
     char buffer[ERRORMSGBUFFERSIZE];
     va_list a;
@@ -353,7 +368,7 @@ failbug (char * file, int line, parser_t * parser, const char * format, ...)
 
 /* Make the list of valid bytes. */
 
-static void make_valid_bytes (parser_t * parser)
+static void make_valid_bytes (json_parse_t * parser)
 {
     int i;
     for (i = 0; i < MAXBYTE; i++) {
@@ -406,7 +421,7 @@ http://www.cpantesters.org/cpan/report/6cde36da-6fd1-11e3-946f-2b87da5af652
    traps won't work. */
 
 static void
-failbadinput_json (parser_t * parser)
+failbadinput_json (json_parse_t * parser)
 {
     char buffer[ERRORMSGBUFFERSIZE];
     int string_end;
@@ -462,7 +477,7 @@ failbadinput_json (parser_t * parser)
 }
 
 static void
-failbadinput (parser_t * parser)
+failbadinput (json_parse_t * parser)
 {
     char buffer[ERRORMSGBUFFERSIZE];
     int string_end;
@@ -690,7 +705,7 @@ failbadinput (parser_t * parser)
    to exhaustion of resources, i.e. out of memory, or file errors
    would go here if there were any C file opening things anywhere. */
 
-static INLINE void failresources (parser_t * parser, const char * format, ...)
+static INLINE void failresources (json_parse_t * parser, const char * format, ...)
 {
     char buffer[ERRORMSGBUFFERSIZE];
     va_list a;
@@ -707,7 +722,7 @@ static INLINE void failresources (parser_t * parser, const char * format, ...)
 /* Get more memory for "parser->buffer". */
 
 static void
-expand_buffer (parser_t * parser, int length)
+expand_buffer (json_parse_t * parser, int length)
 {
     if (parser->buffer_size < 2 * length + 0x100) {
 	parser->buffer_size = 2 * length + 0x100;
@@ -732,7 +747,7 @@ expand_buffer (parser_t * parser, int length)
 /* Parse the hex bit of a \uXYZA escape. */
 
 static INLINE int
-parse_hex_bytes (parser_t * parser, unsigned char * p)
+parse_hex_bytes (json_parse_t * parser, unsigned char * p)
 {
     int k;
     int unicode;
@@ -792,7 +807,7 @@ parse_hex_bytes (parser_t * parser, unsigned char * p)
     failbadinput (parser)
 
 static INLINE unsigned char *
-do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
+do_unicode_escape (json_parse_t * parser, unsigned char * p, unsigned char ** b_ptr)
 {
     int unicode;
     unsigned int plus;
@@ -945,7 +960,7 @@ do_unicode_escape (parser_t * parser, unsigned char * p, unsigned char ** b_ptr)
    the string. */
 
 static INLINE int
-resolve_string (parser_t * parser, string_t * s)
+resolve_string (json_parse_t * parser, string_t * s)
 {
     /* The pointer where we copy the string. This points into
        "parser->buffer". */
@@ -997,7 +1012,7 @@ resolve_string (parser_t * parser, string_t * s)
    escapes. */
 
 static INLINE void
-get_key_string (parser_t * parser, string_t * key)
+get_key_string (json_parse_t * parser, string_t * key)
 {
     unsigned char c;
     int i;
@@ -1104,7 +1119,7 @@ get_key_string (parser_t * parser, string_t * key)
    string. This is only called if the string has \ escapes in it. */
 
 static INLINE int
-get_string (parser_t * parser)
+get_string (json_parse_t * parser)
 {
     unsigned char * b;
     unsigned char c;
@@ -1160,7 +1175,7 @@ get_string (parser_t * parser)
 }
 
 static void
-parser_free (parser_t * parser)
+parser_free (json_parse_t * parser)
 {
     if (parser->buffer) {
 	Safefree (parser->buffer);
@@ -1214,7 +1229,7 @@ struct json_token {
 #define JSON_TOKEN_PARENT_INVALID 0
 
 static json_token_t *
-json_token_new (parser_t * parser, unsigned char * start,
+json_token_new (json_parse_t * parser, unsigned char * start,
 		unsigned char * end, json_token_type_t type)
 {
     json_token_t * new;
@@ -1304,7 +1319,7 @@ json_token_new (parser_t * parser, unsigned char * start,
 }
 
 static void
-json_token_set_end (parser_t * parser, json_token_t * jt, unsigned char * end)
+json_token_set_end (json_parse_t * parser, json_token_t * jt, unsigned char * end)
 {
     if (jt->end != 0) {
 	int offset = (int) (end - parser->input);
@@ -1342,7 +1357,7 @@ json_token_set_end (parser_t * parser, json_token_t * jt, unsigned char * end)
 }
 
 static json_token_t *
-json_token_set_child (parser_t * parser, json_token_t * parent,
+json_token_set_child (json_parse_t * parser, json_token_t * parent,
 		      json_token_t * child)
 {
     switch (parent->type) {

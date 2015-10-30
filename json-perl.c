@@ -51,7 +51,7 @@ amounts of unnecessary calculation, so this is commented out.
 #define USEDIGIT guess = guess * 10 + (c - '0')
 
 static INLINE SVPTR
-PREFIX(number) (parser_t * parser)
+PREFIX(number) (json_parse_t * parser)
 {
     /* End marker for strtod. */
 
@@ -340,7 +340,7 @@ string_number_end:
    use parser->buffer but its own buffer on the stack. */
 
 static INLINE SV *
-perl_get_string (parser_t * parser, STRLEN prefixlen)
+perl_get_string (json_parse_t * parser, STRLEN prefixlen)
 {
     unsigned char * b;
     unsigned char c;
@@ -453,7 +453,7 @@ perl_get_string (parser_t * parser, STRLEN prefixlen)
 #endif /* PERLING */
 
 static SVPTR
-PREFIX(string) (parser_t * parser)
+PREFIX(string) (json_parse_t * parser)
 {
     unsigned char c;
 #ifdef PERLING
@@ -607,7 +607,7 @@ PREFIX(string) (parser_t * parser)
     failbadinput (parser)
 
 static SVPTR
-PREFIX(literal_true) (parser_t * parser)
+PREFIX(literal_true) (json_parse_t * parser)
 {
     unsigned char * start;
     start = parser->end - 1;
@@ -615,7 +615,15 @@ PREFIX(literal_true) (parser_t * parser)
 	if (* parser->end++ == 'u') {
 	    if (* parser->end++ == 'e') {
 #ifdef PERLING
-		return &PL_sv_yes;
+		if (parser->user_true) {
+		    return newSVsv (parser->user_true);
+		}
+		else if (parser->copy_literals) {
+		    return newSVsv (&PL_sv_yes);
+		}
+		else {
+		    return &PL_sv_yes;
+		}
 #elif defined (TOKENING)
 		return json_token_new (parser, start, start + strlen ("true"),
 				       json_token_literal);
@@ -631,7 +639,7 @@ PREFIX(literal_true) (parser_t * parser)
 }
 
 static SVPTR
-PREFIX(literal_false) (parser_t * parser)
+PREFIX(literal_false) (json_parse_t * parser)
 {
     unsigned char * start;
     start = parser->end - 1;
@@ -640,7 +648,15 @@ PREFIX(literal_false) (parser_t * parser)
 	    if (* parser->end++ == 's') {
 		if (* parser->end++ == 'e') {
 #ifdef PERLING
-		return &PL_sv_no;
+		if (parser->user_false) {
+		    return newSVsv (parser->user_false);
+		}
+		else if (parser->copy_literals) {
+		    return newSVsv (&PL_sv_no);
+		}
+		else {
+		    return &PL_sv_no;
+		}
 #elif defined (TOKENING)
 		return json_token_new (parser, start, start + strlen ("false"),
 				       json_token_literal);
@@ -658,7 +674,7 @@ PREFIX(literal_false) (parser_t * parser)
 }
 
 static SVPTR
-PREFIX(literal_null) (parser_t * parser)
+PREFIX(literal_null) (json_parse_t * parser)
 {
     unsigned char * start;
     start = parser->end - 1;
@@ -666,8 +682,16 @@ PREFIX(literal_null) (parser_t * parser)
 	if (* parser->end++ == 'l') {
 	    if (* parser->end++ == 'l') {
 #ifdef PERLING
-		SvREFCNT_inc (json_null);
-		return json_null;
+		if (parser->user_null) {
+		    return newSVsv (parser->user_null);
+		}
+		else if (parser->copy_literals) {
+		    return newSVsv (&PL_sv_undef);
+		}
+		else {
+		    SvREFCNT_inc (json_null);
+		    return json_null;
+		}
 #elif defined (TOKENING)
 		return json_token_new (parser, start, start + strlen ("null"),
 				       json_token_literal);
@@ -682,7 +706,7 @@ PREFIX(literal_null) (parser_t * parser)
     FAILLITERAL('u');
 }
 
-static SVPTR PREFIX(object) (parser_t * parser);
+static SVPTR PREFIX(object) (json_parse_t * parser);
 
 /* Given one character, decide what to do next. This goes in the
    switch statement in both "object ()" and "array ()". */
@@ -734,7 +758,7 @@ static SVPTR PREFIX(object) (parser_t * parser);
    "]" of the array. */
 
 static SVPTR
-PREFIX(array) (parser_t * parser)
+PREFIX(array) (json_parse_t * parser)
 {
     unsigned char c;
     unsigned char * start;
@@ -847,7 +871,7 @@ PREFIX(array) (parser_t * parser)
    final "}" of the object. */
 
 static SVPTR
-PREFIX(object) (parser_t * parser)
+PREFIX(object) (json_parse_t * parser)
 {
     char c;
 #ifdef PERLING
@@ -1003,18 +1027,24 @@ PREFIX(object) (parser_t * parser)
 	int klen;
 	klen = resolve_string (parser, & key);
 #ifdef PERLING
-	(void) hv_store (hv, (char *) parser->buffer, klen * uniflag, value, 0);
+	key.start = parser->buffer;
+	key.length = klen;
 #endif
     }
-    else {
-
-	/* key.start points into the SV * that we are parsing, we
-	   don't need to copy it. */
-
 #ifdef PERLING
-	(void) hv_store (hv, (char *) key.start, key.length * uniflag, value, 0);
-#endif
+#if 1
+    if (parser->detect_collisions) {
+	/* Look in hv for an existing key with our values. */
+	SV ** sv_ptr;
+	sv_ptr = hv_fetch (hv, (char *) key.start, key.length * uniflag, 0);
+	if (sv_ptr) {
+	    FAILOBJECT(name_is_not_unique);
+	}
     }
+#endif /* 0 */
+    (void) hv_store (hv, (char *) key.start, key.length * uniflag, value, 0);
+#endif
+
 #if defined(TOKENING)
     prev = json_token_set_next (prev, value);
 #endif
@@ -1035,3 +1065,89 @@ PREFIX(object) (parser_t * parser)
 #undef PREFIX
 #undef SVPTR
 #undef SETVALUE
+
+#ifdef PERLING
+
+static void
+json_parse_set_true (json_parse_t * parser, SV * user_true)
+{
+    if (! SvTRUE (user_true) && ! parser->no_warn_literals) {
+	warn ("User-defined value for JSON true evaluates as false");
+    }
+    if (parser->copy_literals && ! parser->no_warn_literals) {
+	warn ("User-defined value overrules copy_literals");
+    }
+    parser->user_true = user_true;
+    SvREFCNT_inc (user_true);
+}
+
+static void
+json_parse_delete_true (json_parse_t * parser)
+{
+    if (parser->user_true) {
+	SvREFCNT_dec (parser->user_true);
+	parser->user_true = 0;
+    }
+}
+
+static void
+json_parse_set_false (json_parse_t * parser, SV * user_false)
+{
+    if (SvTRUE (user_false) && ! parser->no_warn_literals) {
+	warn ("User-defined value for JSON false evaluates as true");
+    }
+    if (parser->copy_literals && ! parser->no_warn_literals) {
+	warn ("User-defined value overrules copy_literals");
+    }
+    parser->user_false = user_false;
+    SvREFCNT_inc (user_false);
+}
+
+static void
+json_parse_delete_false (json_parse_t * parser)
+{
+    if (parser->user_false) {
+	SvREFCNT_dec (parser->user_false);
+	parser->user_false = 0;
+    }
+}
+
+static void
+json_parse_set_null (json_parse_t * parser, SV * user_null)
+{
+    if (parser->copy_literals && ! parser->no_warn_literals) {
+	warn ("User-defined value overrules copy_literals");
+    }
+    parser->user_null = user_null;
+    SvREFCNT_inc (user_null);
+}
+
+static void
+json_parse_delete_null (json_parse_t * parser)
+{
+    if (parser->user_null) {
+	SvREFCNT_dec (parser->user_null);
+	parser->user_null = 0;
+    }
+}
+
+static void
+json_parse_free (json_parse_t * parser)
+{
+    json_parse_delete_true (parser);
+    json_parse_delete_false (parser);
+    json_parse_delete_null (parser);
+    Safefree (parser);
+}
+
+static void
+json_parse_copy_literals (json_parse_t * parser, SV * onoff)
+{
+    if (! parser->no_warn_literals && 
+	(parser->user_true || parser->user_false || parser->user_null)) {
+	warn ("User-defined value overrules copy_literals");
+    }
+    parser->copy_literals = SvTRUE (onoff) ? 1 : 0;
+}
+
+#endif /* def PERLING */

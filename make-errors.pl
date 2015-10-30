@@ -4,6 +4,7 @@
 
 use warnings;
 use strict;
+use FindBin '$Bin';
 use Table::Readable 'read_table';
 
 # Input file, list of error messages like "Unexpected character".
@@ -15,7 +16,10 @@ my @labels;
 
 # Output file.
 
-my $out = 'errors.c';
+my $out = "$Bin/errors.c";
+if (-f $out) {
+    chmod 0644, $out or die $!;
+}
 open my $o, ">", $out or die $!;
 for my $e (@e) {
     my $error = $e->{error};
@@ -158,5 +162,5 @@ for my $i (0..$#arrays) {
 print $o "};\n";
 
 close $o or die $!;
-
+chmod 0444, $out or die $!;
 exit;

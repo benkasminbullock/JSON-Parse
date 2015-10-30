@@ -96,3 +96,16 @@ or undefined value. Given empty input, L</parse_json> returns an
 undefined value rather than throwing an error.
 
 %%
+
+error: name is not unique
+%%description:
+
+This error occurs when parsing JSON when the user has chosen
+L</detect_collisions>. For example an input like
+
+!{"hocus":1,"pocus":2,"hocus":3}!
+
+where the JSON object has two keys with the same name, C<hocus>. The
+terminology "name is not unique" is from the JSON specification.
+
+%%

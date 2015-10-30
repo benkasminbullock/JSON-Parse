@@ -35,6 +35,7 @@ static SV * json_null;
 #endif /* def TESTRANDOM */
 #include "json-whitespace.c"
 
+typedef json_parse_t * JSON__Parse;
 typedef json_token_t * JSON__Tokenize;
 
 MODULE=JSON::Parse PACKAGE=JSON::Parse
@@ -53,10 +54,105 @@ CODE:
 OUTPUT:
 	RETVAL
 
+SV * parse_json_safer (json)
+	SV * json;
+CODE:
+	RETVAL = parse_safe (json);
+OUTPUT:
+	RETVAL
+
 void assert_valid_json (json)
 	SV * json;
 CODE:
-	validate (json);
+	validate (json, 0);
+
+JSON::Parse
+new (char * class, ...)
+CODE:
+	Newxz (RETVAL, 1, json_parse_t);
+OUTPUT:
+	RETVAL
+
+SV * run (parser, json)
+	JSON::Parse parser
+	SV * json
+CODE:
+	RETVAL = json_parse_run (parser, json);
+OUTPUT:
+	RETVAL
+
+void
+DESTROY (parser)
+	JSON::Parse parser;
+CODE:
+	Safefree (parser);
+
+void
+set_true (parser, user_true)
+	JSON::Parse parser;
+	SV * user_true;
+CODE:
+	json_parse_set_true (parser, user_true);
+
+void
+set_false (parser, user_false)
+	JSON::Parse parser;
+	SV * user_false;
+CODE:
+	json_parse_set_false (parser, user_false);
+
+void
+set_null (parser, user_null)
+	JSON::Parse parser;
+	SV * user_null;
+CODE:
+	json_parse_set_null (parser, user_null);
+
+void
+delete_true (parser)
+	JSON::Parse parser;
+CODE:
+	json_parse_delete_true (parser);
+
+void
+delete_false (parser)
+	JSON::Parse parser;
+CODE:
+	json_parse_delete_false (parser);
+
+void
+delete_null (parser)
+	JSON::Parse parser;
+CODE:
+	json_parse_delete_null (parser);
+
+void
+copy_literals (parser, onoff)
+	JSON::Parse parser;
+	SV * onoff;
+CODE:
+	json_parse_copy_literals (parser, onoff);
+
+void
+no_warn_literals (parser, onoff)
+	JSON::Parse parser;
+	SV * onoff;
+CODE:
+	parser->no_warn_literals = SvTRUE (onoff) ? 1 : 0;
+
+void
+warn_only (parser, onoff)
+	JSON::Parse parser;
+	SV * onoff;
+CODE:
+	parser->warn_only = SvTRUE (onoff) ? 1 : 0;
+
+void
+detect_collisions (parser, onoff)
+	JSON::Parse parser;
+	SV * onoff;
+CODE:
+	parser->detect_collisions = SvTRUE (onoff) ? 1 : 0;
 
 #ifdef TESTRANDOM
 

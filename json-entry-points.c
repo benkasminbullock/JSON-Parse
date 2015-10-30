@@ -1,6 +1,6 @@
 /* Check for stray non-whitespace after the end and free memory. */
 
-static void check_end (parser_t * parser)
+static void check_end (json_parse_t * parser)
 {
     int c;
  end:
@@ -25,16 +25,16 @@ static void check_end (parser_t * parser)
 #define ENTRYDECL				\
     /* Our collection of bits and pieces. */	\
 						\
-    parser_t parser_o = {0};			\
-    parser_t * parser = & parser_o
+    json_parse_t parser_o = {0};			\
+    json_parse_t * parser = & parser_o
 
 #ifndef NOPERL
 
 /* Set up the parser. */
 
 #define GETSTRING							\
-    parser_o.end = parser_o.input =					\
-	(unsigned char *) SvPV (json, parser_o.length);			\
+    parser->end = parser->input =					\
+	(unsigned char *) SvPV (json, parser->length);			\
     parser->unicode = SvUTF8 (json) ? 1 : 0
 
 #endif /* ndef NOPERL */
@@ -55,24 +55,20 @@ static void check_end (parser_t * parser)
 
 #ifndef NOPERL
 
-/* This is the entry point for parsing. */
-
 static SV *
-parse (SV * json)
+json_parse_run (json_parse_t * parser, SV * json)
 {
     /* The currently-parsed character. */	
 						
     char c;					
 						
-    ENTRYDECL;
-
     /* The returned object. */
 
     SV * r = & PL_sv_undef;
 
     GETSTRING;
 
-    if (parser_o.length == 0) {
+    if (parser->length == 0) {
 	return & PL_sv_undef;
     }
 
@@ -83,38 +79,38 @@ parse (SV * json)
     switch (NEXTBYTE) {
 
     case '{':
-	r = object (& parser_o);
+	r = object (parser);
 	break;
 
     case '[':
-	r = array (& parser_o);
+	r = array (parser);
 	break;
 
     case '-':
     case '0':
     case DIGIT19:
-	parser_o.top_level_value = 1;
-	r = number (& parser_o);
+	parser->top_level_value = 1;
+	r = number (parser);
 	break;
 
     case '"':
-	parser_o.top_level_value = 1;
-	r = string (& parser_o);
+	parser->top_level_value = 1;
+	r = string (parser);
 	break;
 
     case 't':
-	parser_o.top_level_value = 1;
-	r = literal_true (& parser_o);
+	parser->top_level_value = 1;
+	r = literal_true (parser);
 	break;
 
     case 'f':
-	parser_o.top_level_value = 1;
-	r = literal_false (& parser_o);
+	parser->top_level_value = 1;
+	r = literal_false (parser);
 	break;
 
     case 'n':
-	parser_o.top_level_value = 1;
-	r = literal_null (& parser_o);
+	parser->top_level_value = 1;
+	r = literal_null (parser);
 	break;
 
     case WHITESPACE:
@@ -142,12 +138,39 @@ parse (SV * json)
     return r;
 }
 
+/* This is the entry point for non-object parsing. */
+
+SV *
+parse (SV * json)
+{
+    /* Make our own parser object on the stack. */
+    ENTRYDECL;
+    /* Run it. */
+    return json_parse_run (& parser_o, json);
+}
+
+
+/* This is the entry point for "safe" non-object parsing. */
+
+SV *
+parse_safe (SV * json)
+{
+    /* Make our own parser object on the stack. */
+    ENTRYDECL;
+    parser_o.detect_collisions = 1;
+    parser_o.copy_literals = 1;
+    parser_o.warn_only = 1;
+    /* Run it. */
+    return json_parse_run (& parser_o, json);
+}
+
+
 #endif /* ndef NOPERL */
 
 /* Validation without Perl structures. */
 
 static void
-c_validate (parser_t * parser)
+c_validate (json_parse_t * parser)
 {
     /* The currently-parsed character. */	
 						
@@ -230,7 +253,7 @@ print_tokens (json_token_t * t)
 #ifndef NOPERL
 
 static json_token_t *
-c_tokenize (parser_t * parser)
+c_tokenize (json_parse_t * parser)
 {
     /* The currently-parsed character. */	
 						
@@ -285,7 +308,7 @@ tokenize_free (json_token_t * token)
 /* This is the entry point for validation. */
 
 static void
-validate (SV * json)
+validate (SV * json, unsigned int flags)
 {
     ENTRYDECL;
 

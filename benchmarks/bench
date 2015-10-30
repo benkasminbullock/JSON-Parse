@@ -5,7 +5,7 @@ use JSON::XS qw(decode_json);
 use lib '/home/ben/projects/Json3/blib/lib';
 use lib '/home/ben/projects/Json3/blib/arch';
 
-use JSON::Parse qw/parse_json valid_json/;
+use JSON::Parse qw/parse_json valid_json parse_json_safe/;
 use JSON::Tokenize qw/tokenize_json/;
 
 use Time::HiRes;
@@ -20,6 +20,9 @@ my %tst = (
    "JSON::Parse" => [
        'JSON::Parse::parse_json ($json)',
    ],
+#   "JP::safe" => [
+#       'JSON::Parse::parse_json_safe ($json)',
+#   ],
    "JP::valid" => [
        'JSON::Parse::valid_json ($json)',
    ],

@@ -2,12 +2,15 @@ package JSON::Parse;
 require Exporter;
 @ISA = qw(Exporter);
 
-@EXPORT_OK = qw/parse_json
-		json_to_perl
-		valid_json
-		assert_valid_json
-		validate_json
-		json_file_to_perl/;
+@EXPORT_OK = qw/
+		   assert_valid_json
+		   json_file_to_perl
+		   json_to_perl
+		   parse_json
+		   parse_json_safe
+		   valid_json
+		   validate_json
+	       /;
 
 %EXPORT_TAGS = (
     all => \@EXPORT_OK,
@@ -15,7 +18,7 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.37';
+our $VERSION = '0.37_01';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 
@@ -28,6 +31,19 @@ our $json_diagnostics;
 # idea.
 
 our $null;
+
+sub parse_json_safe
+{
+    my $p;
+    eval {
+	$p = parse_json_safer (@_);
+    };
+    if ($@) {
+	warn "JSON::Parse::parse_json_safe: $@\n";
+	return undef;
+    }
+    return $p;
+}
 
 # Old names of subroutines.
 

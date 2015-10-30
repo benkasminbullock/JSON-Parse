@@ -48,10 +48,12 @@ for my $error (@errors) {
 	my $example = $2;
 	die if !$example;
 	eval {
-	    assert_valid_json ($example);
+	    my $p = JSON::Parse->new ();
+	    $p->detect_collisions (1);
+	    $p->run ($example);
 	};
 	if (! $@) {
-	    warn "No error running $error";
+	    warn "No error with $example running $error->{error}";
 	}
 	my $out = $@;
 	if ($out !~ /\Q$error->{error}/i) {
