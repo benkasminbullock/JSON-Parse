@@ -246,6 +246,7 @@ typedef struct parser {
     /* The byte which caused the parser to fail. */
 
     unsigned char * bad_byte;
+    unsigned bad_length;
 
     /* The type of error encountered. */
 
@@ -577,6 +578,11 @@ failbadinput (json_parse_t * parser)
 	    string_end += snprintf (SNEND, SNSIZE, " 0x%02x", bb);
 	    EROVERFLOW;
 	}
+    }
+    else if (parser->error == json_error_name_is_not_unique) {
+	string_end += snprintf (SNEND, SNSIZE, ": \"%.*s\"",
+				parser->bad_length,
+				parser->bad_byte);
     }
     /* "parser->bad_type" contains what was being parsed when the
        error occurred. This should never be undefined. */

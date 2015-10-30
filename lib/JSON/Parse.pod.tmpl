@@ -14,11 +14,11 @@ Convert JSON into Perl.
 
 =head1 DESCRIPTION
 
-JSON means "JavaScript Object Notation" and it is specified in L</RFC 7159>.
-
 JSON::Parse offers the function L</parse_json>, which takes one
 argument, a string containing JSON, and returns a Perl reference or
 scalar. The input to C<parse_json> must be a complete JSON structure.
+
+A safer version of the same function L</parse_json_safe> also exists.
 
 JSON::Parse also offers two validation functions, L</valid_json>,
 which returns true or false, and L</assert_valid_json>, which produces
@@ -28,10 +28,16 @@ higher speed than L</parse_json>. See L</PERFORMANCE> for a comparison.
 JSON::Parse also offers one convenience function to read JSON directly
 from a file, L</json_file_to_perl>.
 
+For those who need specific types of parsing there is also L</new> and
+L</run>.
+
 JSON::Parse accepts only UTF-8 as input. If its input is marked as
 Unicode characters, the strings in its output are also marked as
 Unicode characters. If its input contains Unicode escapes of the form
 C<"\u3000">, its output is upgraded to Unicode character strings.
+
+(JSON means "JavaScript Object Notation" and it is specified in L</RFC
+7159>.)
 
 =head1 FUNCTIONS
 
@@ -79,6 +85,9 @@ is returned, as if calling L</parse_json> like
     eval {
         parse_json ($json);
     };
+    if ($@) {
+        warn $@;
+    }
 
 =item Detects key collisions
 

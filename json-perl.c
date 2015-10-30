@@ -1032,16 +1032,19 @@ PREFIX(object) (json_parse_t * parser)
 #endif
     }
 #ifdef PERLING
-#if 1
     if (parser->detect_collisions) {
 	/* Look in hv for an existing key with our values. */
 	SV ** sv_ptr;
 	sv_ptr = hv_fetch (hv, (char *) key.start, key.length * uniflag, 0);
 	if (sv_ptr) {
-	    FAILOBJECT(name_is_not_unique);
+	    parser->bad_byte = key.start;
+	    parser->bad_length = key.length;
+	    parser->bad_type = json_object;
+	    parser->bad_beginning = start;
+	    parser->error = json_error_name_is_not_unique;
+	    failbadinput (parser);
 	}
     }
-#endif /* 0 */
     (void) hv_store (hv, (char *) key.start, key.length * uniflag, value, 0);
 #endif
 
