@@ -41,6 +41,8 @@ benchmarks
 ^FILES$
 # Design document directory, no use to put on CPAN.
 ^doc/.*$
+#
+^examples/.*-out\.txt$
 
 # Local variables:
 # comment-start: "#" 

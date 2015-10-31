@@ -20,7 +20,7 @@ binmode $builder->todo_output,    ":utf8";
 binmode STDOUT, ":encoding(utf8)";
 binmode STDERR, ":encoding(utf8)";
 
-use JSON::Parse '0.37_01';
+use JSON::Parse '0.37_02';
 
 #   ____                    _ _ _                 _     
 #  / ___|___  _ __  _   _  | (_) |_ ___ _ __ __ _| |___ 
@@ -71,7 +71,7 @@ my $jpub1 = $jpub->run ($stuff);
 eval {
     $jpub1->{hocus} = "bad city";
 };
-ok ($@);
+ok ($@, "got error altering literals with default JSON::Parse object");
 
 # Use the same things all the people on CPAN do, switching off the
 # warnings.

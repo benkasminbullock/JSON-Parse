@@ -28,8 +28,9 @@ higher speed than L</parse_json>. See L</PERFORMANCE> for a comparison.
 JSON::Parse also offers one convenience function to read JSON directly
 from a file, L</json_file_to_perl>.
 
-For those who need specific types of parsing there is also L</new> and
-L</run>.
+For those who need to deal with special cases, such as JSON objects
+with non-unique names, or round-trips with JSON booleans, there is
+also L</new> and L</run>.
 
 JSON::Parse accepts only UTF-8 as input. If its input is marked as
 Unicode characters, the strings in its output are also marked as
@@ -70,38 +71,8 @@ Otherwise a Perl scalar is returned.
 The behaviour of allowing a scalar was added in version 0.32 of this
 module. This brings it into line with the new specification for JSON.
 
-=head2 parse_json_safe
-
-This is almost the same thing as L</parse_json>, but has the following
-differences:
-
-=over
-
-=item Does not throw exceptions
-
-If the JSON is invalid, a warning is printed and the undefined value
-is returned, as if calling L</parse_json> like
-
-    eval {
-        parse_json ($json);
-    };
-    if ($@) {
-        warn $@;
-    }
-
-=item Detects key collisions
-
-If the JSON contains non-unique names, a warning is printed and the
-undefined value is returned.
-
-=item Booleans are not read-only
-
-This switches on L</copy_literals> so that JSON true, false and null
-values are copied.
-
-=back
-
-This function was added in version 0.38.
+The function L</parse_json_safe> offers a version of this function
+with various safety features enabled.
 
 =head2 json_file_to_perl
 
@@ -137,6 +108,10 @@ C<valid_json> does not supply the actual errors which caused
 invalidity. Use L</assert_valid_json> to get error messages when the
 JSON is invalid.
 
+This cannot detect key collisions in the JSON since it does not store
+values. See L</Key collisions> for more on this module's handling of
+non-unique names in the JSON.
+
 =head2 assert_valid_json
 
 [% INCLUDE "assert.pl" | xtidy %]
@@ -149,6 +124,44 @@ identical to L</parse_json>.
 This cannot detect key collisions in the JSON since it does not store
 values. See L</Key collisions> for more on this module's handling of
 non-unique names in the JSON.
+
+=head2 parse_json_safe
+
+This is almost the same thing as L</parse_json>, but has the following
+differences:
+
+=over
+
+=item Does not throw exceptions
+
+If the JSON is invalid, a warning is printed and the undefined value
+is returned, as if calling L</parse_json> like
+
+    eval {
+        parse_json ($json);
+    };
+    if ($@) {
+        warn $@;
+    }
+
+=item Detects key collisions
+
+This switches on L</detect_collisions>, so that if the JSON contains
+non-unique names, a warning is printed and the undefined value is
+returned.
+
+=item Booleans are not read-only
+
+This switches on L</copy_literals> so that JSON true, false and null
+values are copied. These values can be modified, but they will not be
+converted back into C<true> and C<false> by JSON::Create.
+
+=back
+
+As the name implies, this is meant to be a "safety-first" version of
+L</parse_json>.
+
+This function was added in version 0.38.
 
 =head1 OLD INTERFACE
 
@@ -291,6 +304,7 @@ hash keys, thus they cannot detect this variety of problem.
 
 =head2 Literals
 
+
 =head3 null
 
 L</parse_json> maps the JSON null literal to a readonly scalar
@@ -321,20 +335,43 @@ L</new>, you can choose either of these behaviours with
 L</copy_literals>, or you can tell JSON::Parse to put your own value
 in place of falses using the L</set_false> method.
 
+=head3 Round trips and compatibility
+
+The Perl versions of literals produced by L</parse_json> will be
+converted back to JSON literals if you use L<JSON::Create>'s
+C<create_json>. However, JSON::Parse's literals are incompatible with
+the other CPAN JSON modules. For compatibility with other CPAN
+modules, create a JSON::Parse object with L</new>, and set
+JSON::Parse's literals with L</set_true>, L</set_false>, and
+L</set_null>.
+
+This example demonstrates round-trip compatibility using L<JSON::Tiny>
+version 0.54:
+
+[% INCLUDE "json-tiny-round-trip-demo.pl" | xtidy %]
+
+The output looks like this:
+
+[% INCLUDE "json-tiny-round-trip-demo-out.txt" %]
+
+Most of the other CPAN modules use similar methods to L<JSON::Tiny>,
+so the above example can easily be adapted. See also the documentation
+of L<JSON::Create> under "Interoperability" for various examples.
+
 =head3 Modifying the values
 
 L</parse_json> maps all the literals to read-only values. Because of
-this, trying to modify the keys in the hash reference returned by
-L</parse_json> may lead to unexpected errors of the form "Modification
-of a read-only value attempted":
+this, attempting to modifying the boolean values in the hash reference
+returned by L</parse_json> will cause "Modification of a read-only
+value attempted" errors:
 
     my $in = '{"hocus":true,"pocus":false,"focus":null}';
     my $p = json_parse ($in);
     $p->{hocus} = 99;
     # "Modification of a read-only value attempted" error occurs
 
-Since the hash values are read-only scalars, the above 
-C<< $p->{hocus} = 99 >> is a bit like doing the following:
+Since the hash values are read-only scalars, 
+C<< $p->{hocus} = 99 >> is like this:
 
     undef = 99;
 
@@ -383,10 +420,22 @@ This method was added in version 0.38.
 
 =head2 copy_literals
 
-Copy literals (null, true, false), don't put read-only values into the
-output. If the user also sets user-defined literals with L</set_true>,
-L</set_false> and L</set_null>, the user-defined literals override
-these.
+    $jp->copy_literals (1);
+
+With a true value, copy JSON literal values (C<null>, C<true>, and
+C<false>) into new Perl scalar values, and don't put read-only values
+into the output. 
+
+With a false value, use read-only scalars:
+
+    $jp->copy_literals (0);
+
+The C<copy_literals (1)> behaviour is the behaviour of
+L</parse_json_safe>. The C<copy_literals (0)> behaviour is the
+behaviour of L</parse_json>.
+
+If the user also sets user-defined literals with L</set_true>,
+L</set_false> and L</set_null>, that takes precedence over this.
 
 This method was added in version 0.38.
 
@@ -401,20 +450,32 @@ This method was added in version 0.38.
 
     $jp->detect_collisions (1);
 
-Check for hash collisions. If a collision is found, an error message
-L</Name is not unique> is printed. The byte position given in the
-error message is the end of the string where the collision was found.
+This switches on a check for hash key collisions (non-unique names in
+JSON objects). If a collision is found, an error message L</Name is
+not unique> is printed, which also gives the non-unique name and the
+byte position where the start of the colliding string was found:
+
+[% INCLUDE "collide.pl" | xtidy %]
+
+produces
+
+[% INCLUDE "collide-out.txt" |xtidy %]
+
+The C<detect_collisions (1)> behaviour is the behaviour of
+L</parse_json_safe>. The C<detect_collisions (0)> behaviour is the
+behaviour of L</parse_json>.
 
 This method was added in version 0.38.
 
 =head2 Methods for manipulating literals
 
-These methods alter what happens when the parser hits a literal value,
-C<true>, C<false> or C<null> in the input JSON.
+These methods alter what is written into the Perl structure when the
+parser sees a literal value, C<true>, C<false> or C<null> in the input
+JSON.
 
-This plethora of methods is unfortunately necessary, since it's
-possible that a user might want to set_false (undef) to set false
-values to turn into undefs.
+This number of methods is unfortunately necessary, since it's possible
+that a user might want to set_false (undef) to set false values to
+turn into undefs.
 
     $jp->set_false (undef);
 
@@ -423,73 +484,82 @@ cover both setting and deleting of values.
 
 These methods were added in version 0.38.
 
-=head3 set_true
+[% BLOCK set_literal %]
 
-    $jp->set_true ("Yes, that is so true");
+=head3 set_[% literal %]
 
-When we hit a "true" literal, put the string "Yes, that is so true"
-into the hash or array, rather than the default read-only scalar. 
+    $jp->set_[% literal %] (
+[%- IF literal == 'true' -%]
+"Yes, that is so true"
+[%- ELSIF literal == 'false' -%]
+JSON::PP::Boolean::false
+[%- ELSIF literal == 'null' -%]
+0
+[%- END -%]
+);
 
-If you give this a value which is not "true", as in Perl will evaluate
-it as a false in an if statement, it prints a warning L</User-defined
-value for JSON true evaluates as false>. You can switch this warning
-off with L</no_warn_literals>.
+Supply a scalar to be used in place of the JSON C<[% literal %]> literal. 
+[% IF literal == 'true' -%]
+
+This example puts the string "Yes, that is so true" into the hash or
+array when we hit a "true" literal, rather than the default read-only
+scalar:
+
+[% INCLUDE "true-subs.pl" | xtidy %]
+
+prints
+
+[% INCLUDE "true-subs-out.txt" | xtidy %]
+
+[%- ELSIF literal == 'false' %]
+In the above example, when we hit a "false" literal, we put
+C<JSON::PP::Boolean::false> in the output, similar to L<JSON::PP> and
+other CPAN modules like L<Mojo::JSON> or L<JSON::XS>.
+[% END %]
+
+To override the previous value, call it again with a new value. To
+delete the value and revert to the default behaviour, use
+L</delete_[% literal %]>.
+
+[% IF literal == 'true' || literal == 'false' -%]
+[%- opposite = 'false' -%]
+[%- IF literal == 'false' -%]
+[%- opposite = 'true' -%]
+[%- END %]
+
+If you give this a value which is not "[% literal %]", as in Perl will
+evaluate it as a false in an if statement, it prints a warning
+L</User-defined value for JSON [% literal %] evaluates as [% opposite %]>.
+You can switch this warning off with L</no_warn_literals>.
+
+[% END %]
+
+This method was added in version 0.38.
+
+=head3 delete_[% literal %]
+
+    $jp->delete_[% literal %] ();
+
+Delete the user-defined [% literal %] value. See L</set_[% literal %]>. 
+
+This method is "safe" in that it has absolutely no effect if no
+user-defined value is in place. It does not return a value.
 
 This method was added in version 0.38.
 
-=head3 set_false
+[% END %]
 
-    $jp->set_false (JSON::PP::Boolean::false);
-
-When we hit a "false" literal, put L<JSON::PP::Boolean::false> in the
-output.
-
-If you give this a value which is not "false", Perl will evaluate it
-as true in an if statement, it prints a warning L</User-defined value
-for JSON false evaluates as true>. You can switch this warning off
-with L</no_warn_literals>.
-
-This method was added in version 0.38.
-
-=head3 set_null
-
-    $jp->set_null (0);
-
-Set a user-defined value to replace JSON 'null' with.
-
-This method was added in version 0.38.
-
-=head3 delete_true
-
-Delete the user-defined true value. See L</set_true>. 
-
-This has absolutely no effect if no user-defined value is in place.
-
-This method was added in version 0.38.
-
-=head3 delete_false
-
-Delete the user-defined false value. See L</set_false>. 
-
-This has absolutely no effect if no user-defined value is in place.
-
-This method was added in version 0.38.
-
-=head3 delete_null
-
-Delete the user-defined null value. See L</set_null>. 
-
-This has absolutely no effect if no user-defined value is in place.
-
-This method was added in version 0.38.
+[% PROCESS set_literal literal = 'true' %]
+[% PROCESS set_literal literal = 'false' %]
+[% PROCESS set_literal literal = 'null' %]
 
 =head3 no_warn_literals
 
     $jp->no_warn_literals (1);
 
-Use a true value to switch off warnings about setting boolean
-values to contradictory things. For example if you want to set JSON
-false to be the string "false",
+Use a true value to switch off warnings about setting boolean values
+to contradictory things. For example if you want to set the JSON
+C<false> literal to turn into the string "false",
 
     $jp->no_warn_literals (1);
     $jp->set_false ("false");
@@ -499,7 +569,7 @@ See also L</Contradictory values for "true" and "false">.
 This also switches off the warning L</User-defined value overrules
 copy_literals>.
 
-This warning was added in version 0.38.
+This method was added in version 0.38.
 
 =head1 RESTRICTIONS
 
@@ -672,7 +742,7 @@ script F<benchmarks/bench> is an adaptation of the similar script in
 the L<JSON::XS> distribution. The script F<pub-bench.pl> runs the
 benchmarks and prints them out as POD.
 
-The following benchmark tests used version 0.32_03 of JSON::Parse and
+The following benchmark tests used version 0.38 of JSON::Parse and
 version 3.01 of JSON::XS on Perl Version 18.2, compiled with Clang
 version 3.4.1 on FreeBSD 10.1. The files in the "benchmarks" directory
 of JSON::Parse. "short.json" and "long.json" are the benchmarks used
@@ -702,7 +772,7 @@ Crockford.
 =item JSON::Create
 
 L<JSON::Create> is a companion module to JSON::Parse by the same
-author. As of version 0.07, I'm using it everywhere, but it should
+author. As of version 0.08, I'm using it everywhere, but it should
 still be considered to be in a testing stage. Please feel free to try
 it out.
 
@@ -771,7 +841,8 @@ Linux GNOME desktop project.
 =item L<Mojo::JSON>
 
 Part of the L<Mojolicious> standalone web framework, "pure Perl" JSON
-reader/writer.
+reader/writer. As of version 6.25 of Mojolicious, this actually
+depends on L<JSON::PP>.
 
 =item L<JSON::Tiny>
 
@@ -839,6 +910,10 @@ L<JSON::XS> versions one and two, and L<JSON::Syck>.
 A "combination module" which supports two different interfaces of
 L<JSON::XS>. However, JSON::XS is now onto version 3.
 
+=item L<Mojo::JSON::MaybeXS>
+
+Pulls in L<JSON::MaybeXS> instead of L<Mojo::JSON>.
+
 =back
 
 =item JSON extensions
@@ -862,6 +937,10 @@ These modules extend JSON with comments and other things.
 =back
 
 =back
+
+There are also a lot of modules in the CPAN C<JSON::> namespace which
+use JSON as a basis for other things, but with apologies I don't try
+to cover those modules here, since there are so many of them.
 
 =head1 SCRIPT
 
@@ -986,6 +1065,11 @@ between the C<"x"> and the colon, C<:>, would cause it to fail. That
 was one big reason I created the random testing regime described in
 L</TESTING> above. I believe that the module is now compliant with the
 JSON specification. 
+
+After starting JSON::Create, I realised that some edge case handling
+in JSON::Parse needed to be improved. This resulted in the addition of
+the hash collision and literal-overriding methods introduced
+in versions 0.37 and 0.38 of this module.
 
 [% start_year=2013 %]
 [% INCLUDE "author" %]

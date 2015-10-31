@@ -1071,18 +1071,7 @@ PREFIX(object) (json_parse_t * parser)
 
 #ifdef PERLING
 
-static void
-json_parse_set_true (json_parse_t * parser, SV * user_true)
-{
-    if (! SvTRUE (user_true) && ! parser->no_warn_literals) {
-	warn ("User-defined value for JSON true evaluates as false");
-    }
-    if (parser->copy_literals && ! parser->no_warn_literals) {
-	warn ("User-defined value overrules copy_literals");
-    }
-    parser->user_true = user_true;
-    SvREFCNT_inc (user_true);
-}
+/* Set and delete user-defined literals. */
 
 static void
 json_parse_delete_true (json_parse_t * parser)
@@ -1094,16 +1083,17 @@ json_parse_delete_true (json_parse_t * parser)
 }
 
 static void
-json_parse_set_false (json_parse_t * parser, SV * user_false)
+json_parse_set_true (json_parse_t * parser, SV * user_true)
 {
-    if (SvTRUE (user_false) && ! parser->no_warn_literals) {
-	warn ("User-defined value for JSON false evaluates as true");
+    json_parse_delete_true (parser);
+    if (! SvTRUE (user_true) && ! parser->no_warn_literals) {
+	warn ("User-defined value for JSON true evaluates as false");
     }
     if (parser->copy_literals && ! parser->no_warn_literals) {
 	warn ("User-defined value overrules copy_literals");
     }
-    parser->user_false = user_false;
-    SvREFCNT_inc (user_false);
+    parser->user_true = user_true;
+    SvREFCNT_inc (user_true);
 }
 
 static void
@@ -1116,13 +1106,17 @@ json_parse_delete_false (json_parse_t * parser)
 }
 
 static void
-json_parse_set_null (json_parse_t * parser, SV * user_null)
+json_parse_set_false (json_parse_t * parser, SV * user_false)
 {
+    json_parse_delete_false (parser);
+    if (SvTRUE (user_false) && ! parser->no_warn_literals) {
+	warn ("User-defined value for JSON false evaluates as true");
+    }
     if (parser->copy_literals && ! parser->no_warn_literals) {
 	warn ("User-defined value overrules copy_literals");
     }
-    parser->user_null = user_null;
-    SvREFCNT_inc (user_null);
+    parser->user_false = user_false;
+    SvREFCNT_inc (user_false);
 }
 
 static void
@@ -1132,6 +1126,17 @@ json_parse_delete_null (json_parse_t * parser)
 	SvREFCNT_dec (parser->user_null);
 	parser->user_null = 0;
     }
+}
+
+static void
+json_parse_set_null (json_parse_t * parser, SV * user_null)
+{
+    if (parser->copy_literals && ! parser->no_warn_literals) {
+	warn ("User-defined value overrules copy_literals");
+    }
+    json_parse_delete_null (parser);
+    parser->user_null = user_null;
+    SvREFCNT_inc (user_null);
 }
 
 static void

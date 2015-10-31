@@ -68,11 +68,17 @@ is (length ($p->[2]), 2, "length is two by magic");
 
 ok (! valid_json ('["\uDE8C "]'), "invalid \uDE8C + space");
 
-# There is a small danger that the user could put non-UTF-8 bytes and
-# then get a non-UTF-8 string upgraded into Perl "utf8", because we
-# don't validate all the bytes in the input string (should do this).
+# Test of the strangely-named "surrogate pairs".
 
-TODO: {
-    local $TODO = '\u surrogate pairs not implemented';
-};
+my $jc = JSON::Parse->new ();
+my $wikipedia_1 = '"\ud801\udc37"';
+my $out_1 = $jc->run ($wikipedia_1);
+is ($out_1, "\x{10437}");
+my $wikipedia_2 = '"\ud852\udf62"';
+my $out_2 = $jc->run ($wikipedia_2);
+is ($out_2, "\x{24b62}");
+my $json_spec = '"\ud834\udd1e"';
+my $out_3 = $jc->run ($json_spec);
+is ($out_3, "\x{1D11E}");
+
 done_testing ();

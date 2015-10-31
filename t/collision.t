@@ -27,7 +27,7 @@ eval {
 };
 ok ($@);
 like ($@, qr/"hocus"/);
-use utf8;
+
 my $yodi = '{"ほかす":10,"ぽかす":20,"ほかす":30,"ふぉかす":40}';
 eval {
     $jp->run ($yodi);
