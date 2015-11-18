@@ -1031,15 +1031,9 @@ JSON::Parse, so please don't install that version.
 
 Or "why did you make yet another JSON module?"
 
-This module started out under the name L<JSON::Argo> as a way to
-escape from having to use the other JSON modules on CPAN. Two reasons
-in particular I wanted to make my own module were that I think
-L</JSON> has a very, very strange interface, especially regarding
-Unicode, and I wanted to make a "strict-as-possible" parser. Many
-other CPAN modules seem to be keen on breaking the JSON standard in
-various ways. Since JSON's only use is to communicate with other
-computers and other computer languages which don't know anything about
-our extensions, how can this be a good idea?
+This module started out under the name L<JSON::Argo>. It was
+originally a way to escape from having to use the other JSON modules
+on CPAN.
 
 The reason it only parsed JSON was that when I started this I didn't
 know the Perl extension language XS very well, and I was not confident

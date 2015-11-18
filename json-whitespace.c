@@ -149,7 +149,7 @@ static SV * strip_whitespace (json_token_t * tokens, SV * json)
     char * p;
     char * q;
     /* Original length. */
-    unsigned int l;
+    STRLEN l;
     /* Length of output. */
     unsigned int m;
     p = SvPV (json, l);

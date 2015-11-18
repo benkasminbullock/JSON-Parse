@@ -47,11 +47,21 @@ for my $error (@errors) {
 	my $text = $1;
 	my $example = $2;
 	die if !$example;
-	eval {
-	    my $p = JSON::Parse->new ();
-	    $p->detect_collisions (1);
-	    $p->run ($example);
-	};
+	my $expanded;
+	my $test;
+	if ($error->{error} =~ /not unique/) {
+	    $test = <<EOF;
+    my \$p = JSON::Parse->new ();
+    \$p->detect_collisions (1);
+    \$p->run ('$example');
+EOF
+	}
+	else {
+	    $test = <<EOF;
+    assert_valid_json ('$example');
+EOF
+	}
+	eval "$test";
 	if (! $@) {
 	    warn "No error with $example running $error->{error}";
 	}
@@ -62,9 +72,9 @@ for my $error (@errors) {
 	    warn "Did not get $error->{error} parsing $example";
 	}
 	# Remove this file's name from the error message.
-	$out =~ s/at \.\/make-pod\.pl.*$//;
-	my $expanded = <<EOF;
-    assert_valid_json ('$example');
+	$out =~ s/at \(eval.*|\.\/make-pod\.pl.*$//;
+	$expanded = <<EOF;
+$test
 
 gives output
 

@@ -1,4 +1,9 @@
-0.37_02 2015-10-30
+0.39 2015-11-18
+
+* Fix for 64 bit
+* Changed error message documentation to machine-readable
+
+0.38 2015-10-30
 
 * Add object interface for more flexible parsing.
 * Add "parse_json_safe" with no exceptions and hash collision detection.

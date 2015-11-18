@@ -33,9 +33,13 @@ static void check_end (json_parse_t * parser)
 /* Set up the parser. */
 
 #define GETSTRING							\
-    parser->end = parser->input =					\
-	(unsigned char *) SvPV (json, parser->length);			\
-    parser->unicode = SvUTF8 (json) ? 1 : 0
+    {									\
+	STRLEN length;							\
+	parser->end = parser->input =					\
+	    (unsigned char *) SvPV (json, length);			\
+	parser->length = (unsigned int) length;				\
+	parser->unicode = SvUTF8 (json) ? 1 : 0;			\
+    }
 
 #endif /* ndef NOPERL */
 
