@@ -776,7 +776,9 @@ author. As of version 0.08, I'm using it everywhere, but it should
 still be considered to be in a testing stage. Please feel free to try
 it out.
 
-=item Other CPAN modules for parsing and producing JSON
+=back
+
+=head2 Other CPAN modules for parsing and producing JSON
 
 =over
 
@@ -850,6 +852,8 @@ A fork of C<Mojo::JSON>.
 
 =back
 
+=over
+
 =item Special-purpose modules
 
 =over
@@ -868,18 +872,26 @@ collisions> in this document.)
 This offers a way to compare two different JSON strings to see if they
 refer to the same object.
 
+=item L<JSON::XS::Sugar>
+
+=item L<boolean>
+
+This module offers C<true> and C<false> literals similar to JSON.
+
+=back
+
+=item Type-related modules
+
+=over
+
 =item L<JSON::Types>
 
 This untangles the messy Perl representation of numbers, strings, and
 booleans into JSON types.
 
-=item L<JSON::XS::Sugar>
-
 =item L<JSON::TypeInference>
 
-=item L<boolean>
-
-This module offers C<true> and C<false> literals similar to JSON.
+=item L<JSON::Typist>
 
 =back
 
