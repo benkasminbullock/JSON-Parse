@@ -1,0 +1,21 @@
+all:
+
+objs: unicode.o
+
+# DO NOT DELETE
+
+unicode.o: /usr/include/stdio.h /usr/include/sys/cdefs.h
+unicode.o: /usr/include/sys/_null.h /usr/include/sys/_types.h
+unicode.o: /usr/include/machine/_types.h /usr/include/x86/_types.h
+unicode.o: /usr/include/stdlib.h /usr/include/string.h /usr/include/strings.h
+unicode.o: /usr/include/xlocale/_strings.h /usr/include/xlocale/_string.h
+unicode.o: unicode.h
+
+
+
+clean:
+	-rm -f unicode.[cho] makeitfile chuggles
+
+# Local variables:
+# mode: makefile
+# End:

@@ -7,14 +7,14 @@ Json3-/
 Json3.c
 Json3.bs
 
-lib/JSON/Parse.pod
+#lib/JSON/Parse.pod
 Parse.bs
 Parse.c
 
 MANIFEST
 README
-makeitfile
-unicode.[ch]
-errors.c
+#makeitfile
+#unicode.[ch]
+#errors.c
 
 random-test
