@@ -85,7 +85,7 @@ void
 DESTROY (parser)
 	JSON::Parse parser;
 CODE:
-	Safefree (parser);
+	json_parse_free (parser);
 
 void
 set_true (parser, user_true)
