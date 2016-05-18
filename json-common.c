@@ -597,7 +597,7 @@ failbadinput (json_parse_t * parser)
     EROVERFLOW;
     if (parser->bad_beginning) {
 	int bad_byte;
-	bad_byte = (int) parser->bad_beginning - (int) parser->input + 1;
+	bad_byte = (parser->bad_beginning - parser->input) + 1;
 	string_end += snprintf (SNEND, SNSIZE, " starting from byte %d",
 				bad_byte);
 	EROVERFLOW;
