@@ -1,3 +1,7 @@
+0.40_01 2016-06-13
+
+* Implement "warn_only"
+
 0.40 2016-05-22
 
 * Compilation warning, possible memory leaks (SHLOMIF)

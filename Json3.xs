@@ -73,7 +73,7 @@ CODE:
 OUTPUT:
 	RETVAL
 
-SV * run (parser, json)
+SV * run_internal (parser, json)
 	JSON::Parse parser
 	SV * json
 CODE:
@@ -146,6 +146,20 @@ warn_only (parser, onoff)
 	SV * onoff;
 CODE:
 	parser->warn_only = SvTRUE (onoff) ? 1 : 0;
+
+int
+get_warn_only (parser)
+	JSON::Parse parser;
+CODE:
+	if (parser->warn_only) {
+		RETVAL = 1;
+	}
+	else {
+		RETVAL = 0;
+	}
+OUTPUT:
+	RETVAL
+
 
 void
 detect_collisions (parser, onoff)
