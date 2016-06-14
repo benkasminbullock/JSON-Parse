@@ -404,7 +404,7 @@ produces no error. This is because Perl copies the scalar.
 =head1 METHODS
 
 If you need to parse JSON and you are not satisfied with the parsing
-options offered by L</parse_json> and L</parse_json_safer>, you can
+options offered by L</parse_json> and L</parse_json_safe>, you can
 create a JSON parsing object with L</new> and set various options on
 the object, then use it with L</run>. These options include the
 ability to copy JSON literals with L</copy_literals>, switch off fatal
@@ -414,7 +414,7 @@ values with the methods described under L</Methods for manipulating
 literals>.
 
 These methods only work on an object created with L</new>; they do not
-affect the behaviour of L</json_parse> or L</json_parse_safer>.
+affect the behaviour of L</parse_json> or L</parse_json_safe>.
 
 =head2 new
 
