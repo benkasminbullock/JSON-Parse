@@ -403,6 +403,19 @@ produces no error. This is because Perl copies the scalar.
 
 =head1 METHODS
 
+If you need to parse JSON and you are not satisfied with the parsing
+options offered by L</parse_json> and L</parse_json_safer>, you can
+create a JSON parsing object with L</new> and set various options on
+the object, then use it with L</run>. These options include the
+ability to copy JSON literals with L</copy_literals>, switch off fatal
+errors with L</warn_only>, detect key collisions in objects with
+L</detect_collisions>, and set the JSON literals to user defined
+values with the methods described under L</Methods for manipulating
+literals>.
+
+These methods only work on an object created with L</new>; they do not
+affect the behaviour of L</json_parse> or L</json_parse_safer>.
+
 =head2 new
 
     my $jp = JSON::Parse->new ();
@@ -447,6 +460,10 @@ This method was added in version 0.38.
 
 Warn, don't die, on error. Failed parsing returns the undefined value,
 C<undef>, and prints a warning.
+
+This can be switched off again using any false value:
+
+    $jp->warn_only ('');
 
 This method was documented in version 0.38, but only implemented in
 version 0.41.
