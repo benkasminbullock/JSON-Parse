@@ -186,9 +186,9 @@ const char * type_names[json_overflow] = {
 
 /* The maximum value of bytes to check for. */
 
-#define MAXBYTE 0x100
+#define JSON3MAXBYTE 0x100
 // uncomment this when running random test to terminal otherwise ...
-//#define MAXBYTE 0x80
+//#define JSON3MAXBYTE 0x80
 
 #include "errors.c"
 
@@ -267,7 +267,7 @@ typedef struct parser {
 
     /* Bytes we accept. */
 
-    int valid_bytes[MAXBYTE];
+    int valid_bytes[JSON3MAXBYTE];
 
     /* Perl SV * pointers to copy for our true, false, and null
        values. */
@@ -372,7 +372,7 @@ failbug (char * file, int line, json_parse_t * parser, const char * format, ...)
 static void make_valid_bytes (json_parse_t * parser)
 {
     int i;
-    for (i = 0; i < MAXBYTE; i++) {
+    for (i = 0; i < JSON3MAXBYTE; i++) {
 	parser->valid_bytes[i] = 0;
     }
     for (i = 0; i < n_expectations; i++) {
@@ -383,7 +383,7 @@ static void make_valid_bytes (json_parse_t * parser)
 	}
 	if (parser->expected & X) {
 	    int j;
-	    for (j = 0; j < MAXBYTE; j++) {
+	    for (j = 0; j < JSON3MAXBYTE; j++) {
 		parser->valid_bytes[j] |= allowed[i][j];
 	    }
 	}
@@ -464,7 +464,7 @@ failbadinput_json (json_parse_t * parser)
 	    snprintf (SNEND, SNSIZE, ",\"valid bytes\":[%d",
 		      parser->valid_bytes[0]);
 	EROVERFLOW;
-	for (j = 1; j < MAXBYTE; j++) {
+	for (j = 1; j < JSON3MAXBYTE; j++) {
 	    string_end += snprintf (SNEND, SNSIZE, ",%d",
 				    parser->valid_bytes[j]);
 	}

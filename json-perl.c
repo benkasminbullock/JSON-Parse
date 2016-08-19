@@ -320,7 +320,7 @@ string_number_end:
 	    if (SvLEN (string) <= cur + size) {		\
 		SvGROW (string, cur + size);		\
 	    }						\
-	    svbuf = SvPVX(string) + cur;		\
+	    svbuf = SvPVX(string);			\
 	    memcpy (svbuf + cur, buffer, size);		\
 	    SvCUR_set (string, cur + size);		\
 	}						\
