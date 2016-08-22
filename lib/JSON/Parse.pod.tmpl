@@ -12,6 +12,11 @@ JSON::Parse - Read JSON into a Perl variable
 
 Convert JSON into Perl.
 
+=head1 VERSION
+
+This documents version [% version %] of JSON::Parse corresponding to
+git commit [% commit.commit %] released on [% commit.date %].
+
 =head1 DESCRIPTION
 
 JSON::Parse offers the function L</parse_json>, which takes one
@@ -1101,7 +1106,9 @@ in versions 0.37 and 0.38 of this module.
 
 =head1 ACKNOWLEDGEMENTS
 
-Shlomi Fish (SHLOMIF) fixed some memory leaks in version 0.40.
+Shlomi Fish (SHLOMIF) fixed some memory leaks in version
+0.40. kolmogorov42 (https://github.com/kolmogorov42) reported a very
+serious bug which led to version 0.42.
 
 [% start_year=2013 %]
 [% INCLUDE "author" %]
