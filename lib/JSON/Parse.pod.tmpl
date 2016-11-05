@@ -992,7 +992,7 @@ The default behaviour is to just do nothing if the input is valid. For
 invalid input it prints what the problem is:
 
     validjson ids.go 
-    ids.go: JSON error at line 1, byte 1/7588: Unexpected character '/' parsing initial state: expecting whitespace: '\n', '\r', '\t', ' ' or start of string: '"' or digit: '0-9' or minus: '-' or start of an array or object: '{', '[' or start of literal: 't', 'f', 'n' at /home/ben/software/install/bin/validjson line 21.
+    ids.go: JSON error at line 1, byte 1/7588: Unexpected character '/' parsing initial state: expecting whitespace: '\n', '\r', '\t', ' ' or start of string: '"' or digit: '0-9' or minus: '-' or start of an array or object: '{', '[' or start of literal: 't', 'f', 'n'.
 
 If you need confirmation, use its --verbose option:
 
@@ -1003,10 +1003,6 @@ If you need confirmation, use its --verbose option:
     kanjidic.json is valid JSON.
     linedecomps.json is valid JSON.
     radkfile-radicals.json is valid JSON.
-
-The script uses L<Path::Tiny> for reading files, which is not a
-dependency of this module, so if you want to use the script, you also
-need to install L<Path::Tiny>.
 
 =head1 TEST RESULTS
 
