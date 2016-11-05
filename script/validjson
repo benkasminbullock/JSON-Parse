@@ -4,27 +4,46 @@ use strict;
 use lib '/home/ben/projects/Json3/blib/lib';
 use lib '/home/ben/projects/Json3/blib/arch';
 use JSON::Parse 'assert_valid_json';
-use Path::Tiny;
 use Getopt::Long;
 my $ok = GetOptions (
-"verbose" => \my $verbose,
-"help" => \my $help,
+    "verbose" => \my $verbose,
+    "help" => \my $help,
 );
 if (! $ok || $help) {
     usage ();
     exit;
 }
-for (@ARGV) {
+for my $file (@ARGV) {
     eval {
-	my $file = path ($_);
-	my $text = $file->slurp_utf8 ();
+	$SIG{__WARN__} = sub {
+	    if ($_[0] =~ /does not map to Unicode/) {
+		my $error = $_[0];
+		$error =~ s/$file: //;
+		die "$file:$.: $error\n";
+	    }
+	    CORE::warn (@_);
+	};
+	open my $in, "<:encoding(utf8)", $file or die "Can't open '$file': $!";
+	my $text;
+	while (my $line = <$in>) {
+	    $text .= $line;
+	}
+	close $in or die $!;
 	assert_valid_json ($text);
     };
     if ($@) {
-	print "$_: $@\n";
+	my $error = $@;
+	$error =~ s/\n+$//;
+	if ($error !~ /\Q$file/) {
+	    $error = "$file: $error";
+	}
+	if ($error =~ /validjson line [0-9]+\.$/) {
+	    $error =~ s/\sat\s\S+\sline.*$/\./;
+	}
+	print "$error\n";
     }
     if ($verbose) {
-	print "$_ is valid JSON.\n";
+	print "'$file' is valid JSON.\n";
     }
 }
 
@@ -38,7 +57,7 @@ Options:
 --verbose       Get confirmation that the files are valid.
 --help          View this message.
 
-This script requires Path::Tiny and JSON::Parse to be installed.
+This script requires JSON::Parse to be installed.
 EOF
 
     exit;
