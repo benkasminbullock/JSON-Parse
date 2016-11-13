@@ -10,12 +10,6 @@ use Table::Readable 'read_table';
 use Perl::Build::Pod ':all';
 use Perl::Build qw/get_version get_commit/;
 
-# Names of the input and output files containing the documentation.
-
-my $pod = 'Parse.pod';
-my $input = "$Bin/lib/JSON/$pod.tmpl";
-my $output = "$Bin/lib/JSON/$pod";
-
 # Template toolkit variable holder
 
 my %vars;
@@ -39,7 +33,31 @@ my $tt = Template->new (
     },
     STRICT => 1,
 );
+$vars{errors} = read_errors ($tt, \%vars);
 
+# Names of the input and output files containing the documentation.
+
+for my $mod (qw/Parse Tokenize/) {
+my $version = <<EOF;
+=head1 VERSION
+
+This documents version [% version %] of JSON::$mod corresponding to
+git commit [% commit.commit %] released on [% commit.date %].
+EOF
+$tt->process (\$version, \%vars, \my $tt_version, binmode => ':encoding(utf8)')
+    or die $tt->error () . '';
+$vars{version_text} = $tt_version;
+my $pod = "$mod.pod";
+my $input = "$Bin/lib/JSON/$pod.tmpl";
+my $output = "$Bin/lib/JSON/$pod";
+$tt->process ($input, \%vars, $output, binmode => 'utf8')
+    or die '' . $tt->error ();
+}
+exit;
+
+sub read_errors
+{
+    my ($tt, $vars) = @_;
 my @errors = read_table ('errormsg.txt');
 # Remove "invalid".
 
@@ -51,7 +69,7 @@ for my $error (@errors) {
     while ($d =~ /(!(.*?)!)/) {
 	my $text = $1;
 	my $example = $2;
-	die if !$example;
+	die "No example" if !$example;
 	my $expanded;
 	my $test;
 	if ($error->{error} =~ /not unique/) {
@@ -92,15 +110,11 @@ EOF
 	}
     }
 #    print "$d\n";
-    $tt->process (\$d, \%vars, \my $out, binmode => 'utf8')
+    $tt->process (\$d, $vars, \my $out, binmode => 'utf8')
         or die '' . $tt->error ();
     $error->{description}  = $out;
 #    print "$error->{description}\n";
     $error->{error} = ucfirst ($error->{error});
 }
-$vars{errors} = \@errors;
-$tt->process ($input, \%vars, $output, binmode => 'utf8')
-    or die '' . $tt->error ();
-
-exit;
-
+return \@errors;
+}

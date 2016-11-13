@@ -283,6 +283,9 @@ typedef struct parser {
     /* Don't warn the user about non-false false and untrue true
        values, etc. */
     unsigned int no_warn_literals : 1;
+    /* Are we tokenizing the input? */
+    unsigned int tokenizing : 1;
+
 
 #ifdef TESTRANDOM
 
@@ -1189,9 +1192,17 @@ parser_free (json_parse_t * parser)
 	Safefree (parser->buffer);
 	parser->n_mallocs--;
     }
+    /* There is a discrepancy between the number of things used and
+       the number freed. */
     if (parser->n_mallocs != 0) {
-	fprintf (stderr, "%d pieces of unfreed memory remain.\n",
-		 parser->n_mallocs);
+	/* The tokenizing parser is freed before the tokens themselves
+	   are freed. Whether or not the tokens are freed correctly
+	   can be checked in "tokenize_free" in
+	   "json-entry-points.c". */
+	if (! parser->tokenizing) {
+	    fprintf (stderr, "%s:%d: %d pieces of unfreed memory remain.\n",
+		     __FILE__, __LINE__, parser->n_mallocs);
+	}
     }
     parser->buffer = 0;
 }
@@ -1236,13 +1247,17 @@ struct json_token {
 
 #define JSON_TOKEN_PARENT_INVALID 0
 
+/* "start" is the first character of the thing. "end" is the last
+   character of the thing. If the thing only takes one character then
+   "start == end" should be true. */
+
 static json_token_t *
 json_token_new (json_parse_t * parser, unsigned char * start,
 		unsigned char * end, json_token_type_t type)
 {
     json_token_t * new;
 
-    /* Check the hell out of it. */
+    /* Check the token in various ways. */
 
     switch (type) {
     case json_token_string:
@@ -1261,8 +1276,8 @@ json_token_new (json_parse_t * parser, unsigned char * start,
 	}
 	if (end && * end != '"') {
 	    failbug (__FILE__, __LINE__, parser,
-		     "no quotes at end of string '%.*s'",
-		     end - start, start);
+		     "'%c' is not a quote at end of string '%.*s'",
+		     * end, end - start, start);
 	}
 	break;
     case json_token_number:
@@ -1292,14 +1307,14 @@ json_token_new (json_parse_t * parser, unsigned char * start,
 	}
 	break;
     case json_token_comma:
-	if (end - start != 1 || * start != ',') {
+	if (end - start != 0 || * start != ',') {
 	    failbug (__FILE__, __LINE__, parser,
 		     "not a comma %.*s",
 		     end - start);
 	}
 	break;
     case json_token_colon:
-	if (end - start != 1 || * start != ':') {
+	if (end - start != 0 || * start != ':') {
 	    failbug (__FILE__, __LINE__, parser,
 		     "not a colon %.*s",
 		     end - start);
@@ -1312,9 +1327,13 @@ json_token_new (json_parse_t * parser, unsigned char * start,
     }
     Newx (new, 1, json_token_t);
     parser->n_mallocs++;
+#if 0
+    fprintf (stderr, "%s:%d: parser->n_mallocs = %d\n",
+	     __FILE__, __LINE__, parser->n_mallocs);
+#endif /* 0 */
     new->start = start - parser->input;
     if (end) {
-	new->end = end - parser->input;
+	new->end = end - parser->input + 1;
     }
     else {
 	new->end = 0;
@@ -1361,7 +1380,7 @@ json_token_set_end (json_parse_t * parser, json_token_t * jt, unsigned char * en
 		 "set end for unknown type %d", jt->type);
 	break;
     }
-    jt->end = end - parser->input;
+    jt->end = end - parser->input + 1;
 }
 
 static json_token_t *

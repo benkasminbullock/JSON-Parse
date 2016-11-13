@@ -12,10 +12,7 @@ JSON::Parse - Read JSON into a Perl variable
 
 Convert JSON into Perl.
 
-=head1 VERSION
-
-This documents version [% version %] of JSON::Parse corresponding to
-git commit [% commit.commit %] released on [% commit.date %].
+[% version_text %]
 
 =head1 DESCRIPTION
 
@@ -802,6 +799,13 @@ L<JSON::Create> is a companion module to JSON::Parse by the same
 author. As of version 0.08, I'm using it everywhere, but it should
 still be considered to be in a testing stage. Please feel free to try
 it out.
+
+=item JSON::Tokenize
+
+L<JSON::Tokenize> is part of the JSON::Parse distribution, a tokenizer
+which reduces a JSON string to tokens. This makes the JSON::Parse
+tokenizer available to people who want to write their own JSON
+parsers.
 
 =back
 

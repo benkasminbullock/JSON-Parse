@@ -1,0 +1,78 @@
+[% start_year=2016 %]
+=encoding UTF-8
+
+=head1 NAME
+
+JSON::Tokenize - tokenize a string containing JSON
+
+=head1 SYNOPSIS
+
+[% INCLUDE "tokenize-synopsis.pl" | xtidy %]
+
+This outputs
+
+[% INCLUDE "tokenize-synopsis-out.txt" | xtidy %]
+
+[% version_text %]
+
+=head1 DESCRIPTION
+
+This is a module for tokenizing a JSON string. It breaks the string
+into individual tokens without creating any Perl structures. Thus it
+can be used for tasks such as picking out or searching through parts
+of a large JSON structure without storing each part of the entire
+structure as individual Perl variables in memory.
+
+This module is an experimental part of L<JSON::Parse> and its
+interface is likely to change. The tokenizing functions are currently
+written in a very primitive way.
+
+=head1 FUNCTIONS
+
+=head2 tokenize_json
+
+    my $token = tokenize_json ($json);
+
+=head2 tokenize_next
+
+    my $next = tokenize_next ($token);
+
+Walk the tree of tokens.
+
+=head2 tokenize_child
+
+    my $child = tokenize_child ($child);
+
+Walk the tree of tokens.
+
+=head2 tokenize_start
+
+    my $start = tokenize_start ($token);
+
+Get the start of the token as a byte offset from the start of the
+string. Note this is a byte offset not a character offset.
+
+=head2 tokenize_end
+
+    my $end = tokenize_end ($token);
+
+Get the end of the token as a byte offset from the start of the
+string. Note this is a byte offset not a character offset.
+
+=head2 tokenize_type
+
+    my $type = tokenize_type ($token);
+
+Get the type of the token as a string. The possible return values are
+
+    "invalid",
+    "initial state",
+    "string",
+    "number",
+    "literal",
+    "object",
+    "array",
+    "unicode escape"
+
+
+[% INCLUDE "author" %]

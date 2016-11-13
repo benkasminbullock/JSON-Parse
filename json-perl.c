@@ -252,7 +252,7 @@ PREFIX(number) (json_parse_t * parser)
 	return newSVnv (d);
 #elif defined (TOKENING)
 	return json_token_new (parser, (unsigned char *) start,
-			       parser->end - 1,
+			       parser->end,
 			       json_token_number);
 #else
 	return;
@@ -574,7 +574,7 @@ PREFIX(string) (json_parse_t * parser)
 			     /* Location of first quote. */
 			     start - 1,
 			     /* Location of last quote. */
-			     parser->end - 1,
+			     parser->end,
 			     json_token_string);
 #else
     parser->end = start;
@@ -625,7 +625,7 @@ PREFIX(literal_true) (json_parse_t * parser)
 		    return &PL_sv_yes;
 		}
 #elif defined (TOKENING)
-		return json_token_new (parser, start, start + strlen ("true"),
+		return json_token_new (parser, start, parser->end - 1,
 				       json_token_literal);
 #else
 		return;
@@ -658,7 +658,7 @@ PREFIX(literal_false) (json_parse_t * parser)
 		    return &PL_sv_no;
 		}
 #elif defined (TOKENING)
-		return json_token_new (parser, start, start + strlen ("false"),
+		return json_token_new (parser, start, parser->end - 1,
 				       json_token_literal);
 #else
 		return;
@@ -693,7 +693,7 @@ PREFIX(literal_null) (json_parse_t * parser)
 		    return json_null;
 		}
 #elif defined (TOKENING)
-		return json_token_new (parser, start, start + strlen ("null"),
+		return json_token_new (parser, start, parser-> end - 1,
 				       json_token_literal);
 #else
 		return;
@@ -811,7 +811,7 @@ PREFIX(array) (json_parse_t * parser)
     case ',':
 #ifdef TOKENING
 	value = json_token_new (parser, parser->end - 1,
-				parser->end,
+				parser->end - 1,
 				json_token_comma);
 	prev = json_token_set_next (prev, value);
 #endif
@@ -949,7 +949,7 @@ PREFIX(object) (json_parse_t * parser)
     case ',':
 #ifdef TOKENING
 	value = json_token_new (parser, parser->end - 1,
-				parser->end,
+				parser->end - 1,
 				json_token_comma);
 	prev = json_token_set_next (prev, value);
 #endif
@@ -995,7 +995,7 @@ PREFIX(object) (json_parse_t * parser)
     case ':':
 #ifdef TOKENING
 	value = json_token_new (parser, parser->end - 1,
-				parser->end,
+				parser->end - 1,
 				json_token_colon);
 	prev = json_token_set_next (prev, value);
 #endif
@@ -1159,3 +1159,4 @@ json_parse_copy_literals (json_parse_t * parser, SV * onoff)
 }
 
 #endif /* def PERLING */
+

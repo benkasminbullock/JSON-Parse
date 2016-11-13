@@ -25,7 +25,7 @@ static void check_end (json_parse_t * parser)
 #define ENTRYDECL				\
     /* Our collection of bits and pieces. */	\
 						\
-    json_parse_t parser_o = {0};			\
+    json_parse_t parser_o = {0};		\
     json_parse_t * parser = & parser_o
 
 #ifndef NOPERL
@@ -150,7 +150,7 @@ parse (SV * json)
     /* Make our own parser object on the stack. */
     ENTRYDECL;
     /* Run it. */
-    return json_parse_run (& parser_o, json);
+    return json_parse_run (parser, json);
 }
 
 
@@ -165,7 +165,7 @@ parse_safe (SV * json)
     parser_o.copy_literals = 1;
     parser_o.warn_only = 1;
     /* Run it. */
-    return json_parse_run (& parser_o, json);
+    return json_parse_run (parser, json);
 }
 
 
@@ -286,10 +286,10 @@ c_tokenize (json_parse_t * parser)
     }
 
     check_end (parser);
-    /*
+#if 0
     printf ("TOKENS:\n");
     print_tokens (r);
-    */
+#endif /* 0 */
     return r;
 }
 
@@ -297,7 +297,7 @@ static void
 tokenize_free (json_token_t * token)
 {
     json_token_t * next;
-    //    printf ("Freeing tokens.\n");
+
     next = token->child;
     if (next) {
 	tokenize_free (next);
@@ -327,6 +327,11 @@ tokenize (SV * json)
     ENTRYDECL;
 
     GETSTRING;
+
+    /* Mark this parser as being used for tokenizing to bypass the
+       checks for memory leaks when the parser is freed. */
+
+    parser_o.tokenizing = 1;
 
     return c_tokenize (& parser_o);
 }
