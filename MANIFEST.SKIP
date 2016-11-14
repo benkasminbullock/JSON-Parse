@@ -43,6 +43,8 @@ benchmarks
 ^doc/.*$
 #
 ^examples/.*-out\.txt$
+# Experimental unfinished module should not go to CPAN
+^lib/JSON/Whitespace\.pm$
 
 # Local variables:
 # comment-start: "#" 
