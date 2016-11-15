@@ -4,7 +4,7 @@
     parser->bad_byte = parser->end - 1;			\
     parser->expected = want;				\
     parser->error = json_error_unexpected_character;	\
-    failbadinput(parser)
+    failbadinput (parser)
 
  byte_last_80_bf:
 
@@ -14,7 +14,7 @@
 	ADDBYTE;
 	goto string_start;
     default:
-	FAILUTF8(XBYTES_80_BF);
+	FAILUTF8 (XBYTES_80_BF);
     }
 
  byte_penultimate_80_bf:
@@ -25,7 +25,7 @@
 	ADDBYTE;
 	goto byte_last_80_bf;
     default:
-	FAILUTF8(XBYTES_80_BF);
+	FAILUTF8 (XBYTES_80_BF);
     }
 
  byte24_90_bf:
@@ -36,7 +36,7 @@
 	ADDBYTE;
 	goto byte_penultimate_80_bf;
     default:
-	FAILUTF8(XBYTES_90_BF);
+	FAILUTF8 (XBYTES_90_BF);
     }
 
  byte23_80_9f:
@@ -47,7 +47,7 @@
 	ADDBYTE;
 	goto byte_last_80_bf;
     default:
-	FAILUTF8(XBYTES_80_9F);
+	FAILUTF8 (XBYTES_80_9F);
     }
 
  byte23_a0_bf:
@@ -58,7 +58,7 @@
 	ADDBYTE;
 	goto byte_last_80_bf;
     default:
-	FAILUTF8(XBYTES_A0_BF);
+	FAILUTF8 (XBYTES_A0_BF);
     }
 
  byte24_80_bf:
@@ -69,7 +69,7 @@
 	ADDBYTE;
 	goto byte_penultimate_80_bf;
     default:
-	FAILUTF8(XBYTES_80_BF);
+	FAILUTF8 (XBYTES_80_BF);
     }
 
  byte24_80_8f:
@@ -80,5 +80,5 @@
 	ADDBYTE;
 	goto byte_penultimate_80_bf;
     default:
-	FAILUTF8(XBYTES_80_8F);
+	FAILUTF8 (XBYTES_80_8F);
     }

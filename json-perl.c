@@ -51,7 +51,7 @@ amounts of unnecessary calculation, so this is commented out.
 #define USEDIGIT guess = guess * 10 + (c - '0')
 
 static INLINE SVPTR
-PREFIX(number) (json_parse_t * parser)
+PREFIX (number) (json_parse_t * parser)
 {
     /* End marker for strtod. */
 
@@ -320,7 +320,7 @@ string_number_end:
 	    if (SvLEN (string) <= cur + size) {		\
 		SvGROW (string, cur + size);		\
 	    }						\
-	    svbuf = SvPVX(string);			\
+	    svbuf = SvPVX (string);			\
 	    memcpy (svbuf + cur, buffer, size);		\
 	    SvCUR_set (string, cur + size);		\
 	}						\
@@ -453,7 +453,7 @@ perl_get_string (json_parse_t * parser, STRLEN prefixlen)
 #endif /* PERLING */
 
 static SVPTR
-PREFIX(string) (json_parse_t * parser)
+PREFIX (string) (json_parse_t * parser)
 {
     unsigned char c;
 #ifdef PERLING
@@ -490,6 +490,7 @@ PREFIX(string) (json_parse_t * parser)
 #define ADDBYTE len++
 #include "utf8-byte-one.c"
 	
+	/* Not a fall through. */
     case BADBYTES:
 	ILLEGALBYTE;
     }
@@ -536,7 +537,7 @@ PREFIX(string) (json_parse_t * parser)
     if (prefixlen > 0) {
 	char * svbuf;
 	string = newSV (len + prefixlen + 1);
-	svbuf = SvPVX(string);
+	svbuf = SvPVX (string);
 	memcpy (svbuf, start, prefixlen);
 	memcpy (svbuf + prefixlen, parser->buffer, len);
 	svbuf[len + prefixlen] = '\0';
@@ -607,7 +608,7 @@ PREFIX(string) (json_parse_t * parser)
     failbadinput (parser)
 
 static SVPTR
-PREFIX(literal_true) (json_parse_t * parser)
+PREFIX (literal_true) (json_parse_t * parser)
 {
     unsigned char * start;
     start = parser->end - 1;
@@ -631,15 +632,15 @@ PREFIX(literal_true) (json_parse_t * parser)
 		return;
 #endif
 	    }
-	    FAILLITERAL('e');
+	    FAILLITERAL ('e');
 	}
-	FAILLITERAL('u');
+	FAILLITERAL ('u');
     }
-    FAILLITERAL('r');
+    FAILLITERAL ('r');
 }
 
 static SVPTR
-PREFIX(literal_false) (json_parse_t * parser)
+PREFIX (literal_false) (json_parse_t * parser)
 {
     unsigned char * start;
     start = parser->end - 1;
@@ -664,17 +665,17 @@ PREFIX(literal_false) (json_parse_t * parser)
 		return;
 #endif
 		}
-		FAILLITERAL('e');
+		FAILLITERAL ('e');
 	    }
-	    FAILLITERAL('s');
+	    FAILLITERAL ('s');
 	}
-	FAILLITERAL('l');
+	FAILLITERAL ('l');
     }
-    FAILLITERAL('a');
+    FAILLITERAL ('a');
 }
 
 static SVPTR
-PREFIX(literal_null) (json_parse_t * parser)
+PREFIX (literal_null) (json_parse_t * parser)
 {
     unsigned char * start;
     start = parser->end - 1;
@@ -699,14 +700,14 @@ PREFIX(literal_null) (json_parse_t * parser)
 		return;
 #endif
 	    }
-	    FAILLITERAL('l');
+	    FAILLITERAL ('l');
 	}
-	FAILLITERAL('l');
+	FAILLITERAL ('l');
     }
-    FAILLITERAL('u');
+    FAILLITERAL ('u');
 }
 
-static SVPTR PREFIX(object) (json_parse_t * parser);
+static SVPTR PREFIX (object) (json_parse_t * parser);
 
 /* Given one character, decide what to do next. This goes in the
    switch statement in both "object ()" and "array ()". */
@@ -717,33 +718,33 @@ static SVPTR PREFIX(object) (json_parse_t * parser);
  goto start;					\
 						\
  case '"':					\
- SETVALUE PREFIX(string) (parser);		\
+ SETVALUE PREFIX (string) (parser);		\
  break;						\
 						\
  case '-':					\
  case DIGIT:					\
  parser->end_expected = expected;	        \
- SETVALUE PREFIX(number) (parser);		\
+ SETVALUE PREFIX (number) (parser);		\
  break;						\
 						\
  case '{':					\
- SETVALUE PREFIX(object) (parser);		\
+ SETVALUE PREFIX (object) (parser);		\
  break;						\
 						\
  case '[':					\
- SETVALUE PREFIX(array) (parser);		\
+ SETVALUE PREFIX (array) (parser);		\
  break;						\
 						\
  case 'f':					\
- SETVALUE PREFIX(literal_false) (parser);	\
+ SETVALUE PREFIX (literal_false) (parser);	\
  break;			                        \
 						\
  case 'n':					\
- SETVALUE PREFIX(literal_null) (parser);	\
+ SETVALUE PREFIX (literal_null) (parser);	\
  break;			                        \
 						\
  case 't':					\
- SETVALUE PREFIX(literal_true) (parser);	\
+ SETVALUE PREFIX (literal_true) (parser);	\
  break
 
 #define FAILARRAY(err)				\
@@ -758,7 +759,7 @@ static SVPTR PREFIX(object) (json_parse_t * parser);
    "]" of the array. */
 
 static SVPTR
-PREFIX(array) (json_parse_t * parser)
+PREFIX (array) (json_parse_t * parser)
 {
     unsigned char c;
     unsigned char * start;
@@ -824,18 +825,18 @@ PREFIX(array) (json_parse_t * parser)
     default:
 
 	parser->expected = XWHITESPACE | XCOMMA | XARRAY_END;
-	FAILARRAY(unexpected_character);
+	FAILARRAY (unexpected_character);
     }
 
  array_next:
 
     switch (NEXTBYTE) {
 
-	PARSE(array_next, XARRAY_END);
+	PARSE (array_next, XARRAY_END);
 
     default:
 	parser->expected = VALUE_START | XWHITESPACE;
-	FAILARRAY(unexpected_character);
+	FAILARRAY (unexpected_character);
     }
 
 #ifdef PERLING
@@ -871,7 +872,7 @@ PREFIX(array) (json_parse_t * parser)
    final "}" of the object. */
 
 static SVPTR
-PREFIX(object) (json_parse_t * parser)
+PREFIX (object) (json_parse_t * parser)
 {
     char c;
 #ifdef PERLING
@@ -931,7 +932,7 @@ PREFIX(object) (json_parse_t * parser)
 	goto hash_next;
     default:
 	parser->expected = XWHITESPACE | XSTRING_START | XOBJECT_END;
-	FAILOBJECT(unexpected_character);
+	FAILOBJECT (unexpected_character);
     }
 
  hash_middle:
@@ -956,7 +957,7 @@ PREFIX(object) (json_parse_t * parser)
 	goto hash_key;
     default:
 	parser->expected = XWHITESPACE | XCOMMA | XOBJECT_END;
-	FAILOBJECT(unexpected_character);
+	FAILOBJECT (unexpected_character);
     }
 
  hash_key:
@@ -982,7 +983,7 @@ PREFIX(object) (json_parse_t * parser)
 	goto hash_next;
     default:
 	parser->expected = XWHITESPACE | XSTRING_START;
-	FAILOBJECT(unexpected_character);
+	FAILOBJECT (unexpected_character);
     }
 
  hash_next:
@@ -1002,7 +1003,7 @@ PREFIX(object) (json_parse_t * parser)
 	goto hash_value;
     default:
 	parser->expected = XWHITESPACE | XVALUE_SEPARATOR;
-	FAILOBJECT(unexpected_character);
+	FAILOBJECT (unexpected_character);
     }
 
  hash_value:
@@ -1012,10 +1013,10 @@ PREFIX(object) (json_parse_t * parser)
        dealt with in the PARSE macro. */
 
     switch (NEXTBYTE) {
-	PARSE(hash_value, XOBJECT_END);
+	PARSE (hash_value, XOBJECT_END);
     default:
 	parser->expected = XWHITESPACE | VALUE_START;
-	FAILOBJECT(unexpected_character);
+	FAILOBJECT (unexpected_character);
     }
 
     if (key.contains_escapes) {
