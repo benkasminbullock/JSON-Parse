@@ -43,7 +43,10 @@ benchmarks
 ^doc/.*$
 #
 ^examples/.*-out\.txt$
-
+# Experimental unfinished module should not go to CPAN
+^lib/JSON/Whitespace\.pm$
+# Template for POD
+^lib/JSON/Tokenize\.pod\.tmpl$
 # Local variables:
 # comment-start: "#" 
 # End:

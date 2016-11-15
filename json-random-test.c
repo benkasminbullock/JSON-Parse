@@ -22,7 +22,7 @@
   containing a list of what bytes it considered acceptable or
   unacceptable at the point where parsing failed,
   "parser->valid_bytes". The routine "alter_one_byte" below then
-  changes the offending final byte into each byte from 0 to MAXBYTE,
+  changes the offending final byte into each byte from 0 to JSON3MAXBYTE,
   and sends the resulting string to the parser again.
 
   "Alter_one_byte" then checks that the list of valid and invalid
@@ -155,8 +155,8 @@ static int
 alter_one_byte (parser_t * parser)
 {
     int i;
-    int valid_bytes[MAXBYTE];
-    int choose[MAXBYTE];
+    int valid_bytes[JSON3MAXBYTE];
+    int choose[JSON3MAXBYTE];
     int n_choose;
     unsigned char * expected_bad_byte;
 
@@ -174,11 +174,11 @@ alter_one_byte (parser_t * parser)
        byte list in the parser will be overwritten with each
        successive call to "c_validate". */
 
-    for (i = 0; i < MAXBYTE; i++) {
+    for (i = 0; i < JSON3MAXBYTE; i++) {
 	valid_bytes[i] = parser->valid_bytes[i];
     }
 
-    for (i = 0; i < MAXBYTE; i++) {
+    for (i = 0; i < JSON3MAXBYTE; i++) {
 	if (! valid_bytes[i]) {
 #if 0
 	    /* Notify of doing an invalid byte test. */
@@ -329,7 +329,7 @@ random_json ()
 #endif
 	    if (parser_o.error == json_error_unexpected_character) {
 #if 0
-		for (j = 0; j < MAXBYTE; j++) {
+		for (j = 0; j < JSON3MAXBYTE; j++) {
 		    printf ("%d", parser_o.valid_bytes[j]);
 		    if (j % 0x40 == 0x3F) {
 			printf ("\n");
@@ -383,6 +383,6 @@ random_json ()
  end:
     parser_free (& parser_o);
     free (json);
-    return parser_o.length * MAXBYTE;
+    return parser_o.length * JSON3MAXBYTE;
 }
 

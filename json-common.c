@@ -69,10 +69,13 @@
  case '8':	\
  case '9'
 
+/* Hexadecimal, in upper and lower case. */
+
 #define UHEX  'A': case 'B': case 'C': case 'D': case 'E': case 'F'
 #define LHEX  'a': case 'b': case 'c': case 'd': case 'e': case 'f'
 
-/* UTF-8 switches. */
+/* As of version 0.45 of JSON::Parse, most of the UTF-8 switches are
+   now in "unicode.c", but the following one is JSON-specific. */
 
 /* This excludes '"' and '\'. */
 
@@ -92,54 +95,6 @@
  case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76:\
  case 0x77: case 0x78: case 0x79: case 0x7A: case 0x7B: case 0x7C: case 0x7D:\
  case 0x7E: case 0x7F
-#define BYTE_80_8F \
-      0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86:\
- case 0x87: case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D:\
- case 0x8E: case 0x8F
-#define BYTE_80_9F \
-      0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86:\
- case 0x87: case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D:\
- case 0x8E: case 0x8F: case 0x90: case 0x91: case 0x92: case 0x93: case 0x94:\
- case 0x95: case 0x96: case 0x97: case 0x98: case 0x99: case 0x9A: case 0x9B:\
- case 0x9C: case 0x9D: case 0x9E: case 0x9F
-#define BYTE_80_BF \
-      0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86:\
- case 0x87: case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D:\
- case 0x8E: case 0x8F: case 0x90: case 0x91: case 0x92: case 0x93: case 0x94:\
- case 0x95: case 0x96: case 0x97: case 0x98: case 0x99: case 0x9A: case 0x9B:\
- case 0x9C: case 0x9D: case 0x9E: case 0x9F: case 0xA0: case 0xA1: case 0xA2:\
- case 0xA3: case 0xA4: case 0xA5: case 0xA6: case 0xA7: case 0xA8: case 0xA9:\
- case 0xAA: case 0xAB: case 0xAC: case 0xAD: case 0xAE: case 0xAF: case 0xB0:\
- case 0xB1: case 0xB2: case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7:\
- case 0xB8: case 0xB9: case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE:\
- case 0xBF
-#define BYTE_90_BF \
-      0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96:\
- case 0x97: case 0x98: case 0x99: case 0x9A: case 0x9B: case 0x9C: case 0x9D:\
- case 0x9E: case 0x9F: case 0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4:\
- case 0xA5: case 0xA6: case 0xA7: case 0xA8: case 0xA9: case 0xAA: case 0xAB:\
- case 0xAC: case 0xAD: case 0xAE: case 0xAF: case 0xB0: case 0xB1: case 0xB2:\
- case 0xB3: case 0xB4: case 0xB5: case 0xB6: case 0xB7: case 0xB8: case 0xB9:\
- case 0xBA: case 0xBB: case 0xBC: case 0xBD: case 0xBE: case 0xBF
-#define BYTE_A0_BF \
-      0xA0: case 0xA1: case 0xA2: case 0xA3: case 0xA4: case 0xA5: case 0xA6:\
- case 0xA7: case 0xA8: case 0xA9: case 0xAA: case 0xAB: case 0xAC: case 0xAD:\
- case 0xAE: case 0xAF: case 0xB0: case 0xB1: case 0xB2: case 0xB3: case 0xB4:\
- case 0xB5: case 0xB6: case 0xB7: case 0xB8: case 0xB9: case 0xBA: case 0xBB:\
- case 0xBC: case 0xBD: case 0xBE: case 0xBF
-#define BYTE_C2_DF \
-      0xC2: case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7: case 0xC8:\
- case 0xC9: case 0xCA: case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF:\
- case 0xD0: case 0xD1: case 0xD2: case 0xD3: case 0xD4: case 0xD5: case 0xD6:\
- case 0xD7: case 0xD8: case 0xD9: case 0xDA: case 0xDB: case 0xDC: case 0xDD:\
- case 0xDE: case 0xDF
-#define BYTE_E1_EC \
-      0xE1: case 0xE2: case 0xE3: case 0xE4: case 0xE5: case 0xE6: case 0xE7:\
- case 0xE8: case 0xE9: case 0xEA: case 0xEB: case 0xEC
-#define BYTE_EE_EF \
-      0xEE: case 0xEF
-#define BYTE_F1_F3 \
-      0xF1: case 0xF2: case 0xF3
 
 /* A "string_t" is a pointer into the input, which lives in
    "parser->input". The "string_t" structure is used for copying
@@ -160,7 +115,8 @@ typedef struct string {
 }
 string_t;
 
-typedef enum {
+typedef enum 
+{
     json_invalid,
     json_initial_state,
     json_string,
@@ -186,9 +142,12 @@ const char * type_names[json_overflow] = {
 
 /* The maximum value of bytes to check for. */
 
-#define MAXBYTE 0x100
-// uncomment this when running random test to terminal otherwise ...
-//#define MAXBYTE 0x80
+#define JSON3MAXBYTE 0x100
+
+// uncomment this when running random test to terminal otherwise the
+// random characters will mess up the terminal.
+
+//#define JSON3MAXBYTE 0x80
 
 #include "errors.c"
 
@@ -230,8 +189,9 @@ typedef struct parser {
 
     /* Where the beginning of the series of unfortunate events
        was. For example if we are parsing an array, this points to the
-       [ at the start of the array, or if we are parsing a string,
-       this points to the byte after " at the start of the string. */
+       "[" at the start of the array, or if we are parsing a string,
+       this points to the byte after the '"' at the start of the
+       string. */
 
     unsigned char * bad_beginning;
 
@@ -267,7 +227,7 @@ typedef struct parser {
 
     /* Bytes we accept. */
 
-    int valid_bytes[MAXBYTE];
+    int valid_bytes[JSON3MAXBYTE];
 
     /* Perl SV * pointers to copy for our true, false, and null
        values. */
@@ -283,6 +243,9 @@ typedef struct parser {
     /* Don't warn the user about non-false false and untrue true
        values, etc. */
     unsigned int no_warn_literals : 1;
+    /* Are we tokenizing the input? */
+    unsigned int tokenizing : 1;
+
 
 #ifdef TESTRANDOM
 
@@ -372,23 +335,23 @@ failbug (char * file, int line, json_parse_t * parser, const char * format, ...)
 static void make_valid_bytes (json_parse_t * parser)
 {
     int i;
-    for (i = 0; i < MAXBYTE; i++) {
+    for (i = 0; i < JSON3MAXBYTE; i++) {
 	parser->valid_bytes[i] = 0;
     }
     for (i = 0; i < n_expectations; i++) {
 	int X;
 	X = 1<<i;
-	if (SPECIFIC(X)) {
+	if (SPECIFIC (X)) {
 	    continue;
 	}
 	if (parser->expected & X) {
 	    int j;
-	    for (j = 0; j < MAXBYTE; j++) {
+	    for (j = 0; j < JSON3MAXBYTE; j++) {
 		parser->valid_bytes[j] |= allowed[i][j];
 	    }
 	}
     }
-    if (SPECIFIC(parser->expected)) {
+    if (SPECIFIC (parser->expected)) {
 	parser->valid_bytes[parser->literal_char] = 1;
     }
 }
@@ -464,7 +427,7 @@ failbadinput_json (json_parse_t * parser)
 	    snprintf (SNEND, SNSIZE, ",\"valid bytes\":[%d",
 		      parser->valid_bytes[0]);
 	EROVERFLOW;
-	for (j = 1; j < MAXBYTE; j++) {
+	for (j = 1; j < JSON3MAXBYTE; j++) {
 	    string_end += snprintf (SNEND, SNSIZE, ",%d",
 				    parser->valid_bytes[j]);
 	}
@@ -619,7 +582,7 @@ failbadinput (json_parse_t * parser)
 	    EROVERFLOW;
 	    joined = 0;
 
-	    if (SPECIFIC(parser->expected)) {
+	    if (SPECIFIC (parser->expected)) {
 		if (! parser->literal_char) {
 		    failbug (__FILE__, __LINE__, parser,
 			     "expected literal character unset");
@@ -630,7 +593,7 @@ failbadinput (json_parse_t * parser)
 	    for (i = 0; i < n_expectations; i++) {
 		int X;
 		X = 1<<i;
-		if (SPECIFIC(X)) {
+		if (SPECIFIC (X)) {
 		    continue;
 		}
 		if (i == xin_literal) {
@@ -1070,12 +1033,14 @@ get_key_string (json_parse_t * parser, string_t * key)
 		else {
 		    goto unitunes;
 		}
+		/* not a fall through, we always "goto" above. */
 	    default:
 		parser->bad_beginning = parser->end - 1 - i;
 		parser->expected = XHEXADECIMAL_CHARACTER;
 		parser->bad_byte = parser->end - 1;
 		UNIFAIL (unexpected_character);
 	    }
+	    /* not a fall through, we either UNIFAIL or goto above. */
 
 	default:
 	    parser->bad_beginning = key->start - 1;
@@ -1083,6 +1048,7 @@ get_key_string (json_parse_t * parser, string_t * key)
 	    parser->bad_byte = parser->end - 1;
 	    STRINGFAIL (unexpected_character);
 	}
+	/* Not a fall through, we never arrive here. */
 
     case BADBYTES:
 
@@ -1090,11 +1056,13 @@ get_key_string (json_parse_t * parser, string_t * key)
 	parser->expected = XSTRINGCHAR;
 	parser->bad_byte = parser->end - 1;
 	STRINGFAIL (unexpected_character);
+	/* Not a fall through, STRINGFAIL does not return. */
 
 #define ADDBYTE 
 #define string_start key_string_next
 #define startofutf8string (key->start)
 #include "utf8-byte-one.c"
+	/* Not a fall through. */
     default:
 
 	parser->bad_beginning = key->start - 1;
@@ -1157,14 +1125,16 @@ get_string (json_parse_t * parser)
 	break;
 
     case '\\':
-	HANDLE_ESCAPES(parser->end, start - 1);
+	HANDLE_ESCAPES (parser->end, start - 1);
 	goto string_start;
 
 #define ADDBYTE (* b++ = c)
 #define startofutf8string start
 #include "utf8-byte-one.c"
 
+	/* Not a fall through. */
     default:
+	/* fall through */
     case BADBYTES:
 	ILLEGALBYTE;
     }
@@ -1189,9 +1159,17 @@ parser_free (json_parse_t * parser)
 	Safefree (parser->buffer);
 	parser->n_mallocs--;
     }
+    /* There is a discrepancy between the number of things used and
+       the number freed. */
     if (parser->n_mallocs != 0) {
-	fprintf (stderr, "%d pieces of unfreed memory remain.\n",
-		 parser->n_mallocs);
+	/* The tokenizing parser is freed before the tokens themselves
+	   are freed. Whether or not the tokens are freed correctly
+	   can be checked in "tokenize_free" in
+	   "json-entry-points.c". */
+	if (! parser->tokenizing) {
+	    fprintf (stderr, "%s:%d: %d pieces of unfreed memory remain.\n",
+		     __FILE__, __LINE__, parser->n_mallocs);
+	}
     }
     parser->buffer = 0;
 }
@@ -1236,13 +1214,17 @@ struct json_token {
 
 #define JSON_TOKEN_PARENT_INVALID 0
 
+/* "start" is the first character of the thing. "end" is the last
+   character of the thing. If the thing only takes one character then
+   "start == end" should be true. */
+
 static json_token_t *
 json_token_new (json_parse_t * parser, unsigned char * start,
 		unsigned char * end, json_token_type_t type)
 {
     json_token_t * new;
 
-    /* Check the hell out of it. */
+    /* Check the token in various ways. */
 
     switch (type) {
     case json_token_string:
@@ -1261,8 +1243,8 @@ json_token_new (json_parse_t * parser, unsigned char * start,
 	}
 	if (end && * end != '"') {
 	    failbug (__FILE__, __LINE__, parser,
-		     "no quotes at end of string '%.*s'",
-		     end - start, start);
+		     "'%c' is not a quote at end of string '%.*s'",
+		     * end, end - start, start);
 	}
 	break;
     case json_token_number:
@@ -1292,14 +1274,14 @@ json_token_new (json_parse_t * parser, unsigned char * start,
 	}
 	break;
     case json_token_comma:
-	if (end - start != 1 || * start != ',') {
+	if (end - start != 0 || * start != ',') {
 	    failbug (__FILE__, __LINE__, parser,
 		     "not a comma %.*s",
 		     end - start);
 	}
 	break;
     case json_token_colon:
-	if (end - start != 1 || * start != ':') {
+	if (end - start != 0 || * start != ':') {
 	    failbug (__FILE__, __LINE__, parser,
 		     "not a colon %.*s",
 		     end - start);
@@ -1312,9 +1294,13 @@ json_token_new (json_parse_t * parser, unsigned char * start,
     }
     Newx (new, 1, json_token_t);
     parser->n_mallocs++;
+#if 0
+    fprintf (stderr, "%s:%d: parser->n_mallocs = %d\n",
+	     __FILE__, __LINE__, parser->n_mallocs);
+#endif /* 0 */
     new->start = start - parser->input;
     if (end) {
-	new->end = end - parser->input;
+	new->end = end - parser->input + 1;
     }
     else {
 	new->end = 0;
@@ -1331,9 +1317,9 @@ json_token_set_end (json_parse_t * parser, json_token_t * jt, unsigned char * en
 {
     if (jt->end != 0) {
 	int offset = (int) (end - parser->input);
-	fprintf (stderr, "%s:%d: attempt to set end as %d is now %d\n",
-		 __FILE__, __LINE__, offset, jt->end);
-	exit (1);
+	failbug (__FILE__, __LINE__, parser,
+		 "attempt to set end as %d is now %d\n",
+		 offset, jt->end);
     }
 
     switch (jt->type) {
@@ -1361,7 +1347,7 @@ json_token_set_end (json_parse_t * parser, json_token_t * jt, unsigned char * en
 		 "set end for unknown type %d", jt->type);
 	break;
     }
-    jt->end = end - parser->input;
+    jt->end = end - parser->input + 1;
 }
 
 static json_token_t *

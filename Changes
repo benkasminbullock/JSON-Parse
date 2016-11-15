@@ -1,3 +1,30 @@
+0.45 2016-11-15
+
+* Remove non-functioning JSON::Whitespace module from CPAN distribution
+
+0.44 2016-11-13
+
+* Add a primitive interface to JSON::Tokenize
+* Document the JSON::Tokenize interface
+
+0.43 2016-11-05
+
+* Remove validjson dependence on Path::Tiny.
+* Produce better outputs from validjson script
+
+0.42 2016-08-22
+
+* Long string copying bug fixed.
+
+0.41 2016-06-14
+
+* Implement "warn_only"
+* Documentation clarifications
+
+0.40 2016-05-22
+
+* Compilation warning, possible memory leaks (SHLOMIF)
+
 0.39 2015-11-18
 
 * Fix for 64 bit

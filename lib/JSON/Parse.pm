@@ -17,7 +17,7 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.39';
+our $VERSION = '0.45';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 
@@ -82,6 +82,24 @@ sub json_file_to_perl
     }
     close $in or croak $!;
     return parse_json ($json);
+}
+
+sub run
+{
+    my ($parser, $json) = @_;
+    if ($parser->get_warn_only ()) {
+	my $out;
+	eval {
+	    $out = $parser->run_internal ($json);
+	};
+	if ($@) {
+	    warn "$@";
+	}
+	return $out;
+    }
+    else {
+	return $parser->run_internal ($json);
+    }
 }
 
 1;

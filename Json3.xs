@@ -69,11 +69,14 @@ CODE:
 JSON::Parse
 new (char * class, ...)
 CODE:
+	if (! class) {
+	    croak ("no class");
+	}
 	Newxz (RETVAL, 1, json_parse_t);
 OUTPUT:
 	RETVAL
 
-SV * run (parser, json)
+SV * run_internal (parser, json)
 	JSON::Parse parser
 	SV * json
 CODE:
@@ -147,6 +150,20 @@ warn_only (parser, onoff)
 CODE:
 	parser->warn_only = SvTRUE (onoff) ? 1 : 0;
 
+int
+get_warn_only (parser)
+	JSON::Parse parser;
+CODE:
+	if (parser->warn_only) {
+		RETVAL = 1;
+	}
+	else {
+		RETVAL = 0;
+	}
+OUTPUT:
+	RETVAL
+
+
 void
 detect_collisions (parser, onoff)
 	JSON::Parse parser;
@@ -166,10 +183,90 @@ OUTPUT:
 
 MODULE=JSON::Parse PACKAGE=JSON::Tokenize
 
-JSON::Tokenize tokenize_json (json)
+SV * tokenize_json (json)
 	SV * json;
 CODE:
-	RETVAL = tokenize (json);
+	RETVAL = newSViv ((IV) tokenize (json));
+OUTPUT:
+	RETVAL
+
+SV * tokenize_child (svtoken)
+ 	SV * svtoken
+PREINIT:
+	json_token_t * token;
+CODE:
+	token = (json_token_t *) SvIV (svtoken);
+	if (token && token->child) {
+	    RETVAL = newSViv ((IV) token->child);
+	}
+	else {
+	    RETVAL = & PL_sv_undef;
+	}
+OUTPUT:
+    	RETVAL
+
+SV * tokenize_next (svtoken)
+ 	SV * svtoken
+PREINIT:
+	json_token_t * token;
+CODE:
+	token = (json_token_t *) SvIV (svtoken);
+	if (token && token->next) {
+	    RETVAL = newSViv ((IV) token->next);
+	}
+	else {
+	    RETVAL = & PL_sv_undef;
+	}
+OUTPUT:
+    	RETVAL
+
+SV * tokenize_start (svtoken)
+ 	SV * svtoken
+PREINIT:
+	json_token_t * token;
+CODE:
+	token = (json_token_t *) SvIV (svtoken);
+	if (token) {
+		RETVAL = newSViv (token->start);
+	}
+	else {
+	    RETVAL = & PL_sv_undef;
+	}
+OUTPUT:
+    	RETVAL
+
+SV * tokenize_end (svtoken)
+ 	SV * svtoken
+PREINIT:
+	json_token_t * token;
+CODE:
+	token = (json_token_t *) SvIV (svtoken);
+	if (token) {
+		RETVAL = newSViv (token->end);
+	}
+	else {
+	    RETVAL = & PL_sv_undef;
+	}
+OUTPUT:
+    	RETVAL
+
+SV * tokenize_type (svtoken)
+ 	SV * svtoken
+PREINIT:
+	json_token_t * token;
+CODE:
+	token = (json_token_t *) SvIV (svtoken);
+	/* Only set this to the real value if everything is OK. */
+	RETVAL = & PL_sv_undef;
+        if (token) {
+	    if (token->type > json_token_invalid &&
+		token->type < n_json_tokens) {
+		RETVAL = newSVpv (token_names[token->type], 0);
+	    }
+	    else {
+		warn ("Invalid JSON token type %d", token->type);
+	    }
+	}
 OUTPUT:
 	RETVAL
 

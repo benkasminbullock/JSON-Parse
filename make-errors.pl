@@ -154,7 +154,7 @@ print $o "};\n";
 
 # Print all of the expectations as one giant array.
 
-print $o "unsigned char allowed[n_expectations][MAXBYTE] = {\n";
+print $o "unsigned char allowed[n_expectations][JSON3MAXBYTE] = {\n";
 for my $i (0..$#arrays) {
     print $o "/* $exs[$i] */\n";
     print $o "$arrays[$i]\n";

@@ -12,25 +12,29 @@ JSON::Parse - Read JSON into a Perl variable
 
 Convert JSON into Perl.
 
+[% version_text %]
+
 =head1 DESCRIPTION
 
 JSON::Parse offers the function L</parse_json>, which takes one
 argument, a string containing JSON, and returns a Perl reference or
-scalar. The input to C<parse_json> must be a complete JSON structure.
+scalar. The input to C<parse_json> must be a complete JSON
+structure. 
 
-A safer version of the same function L</parse_json_safe> also exists.
-
-JSON::Parse also offers two validation functions, L</valid_json>,
-which returns true or false, and L</assert_valid_json>, which produces
-a descriptive fatal error if the JSON is invalid. These act at a
-higher speed than L</parse_json>. See L</PERFORMANCE> for a comparison.
+JSON::Parse also offers two high-speed validation functions,
+L</valid_json>, which returns true or false, and
+L</assert_valid_json>, which produces a descriptive fatal error if the
+JSON is invalid. These are much faster than L</parse_json>. See
+L</PERFORMANCE> for a comparison.
 
 JSON::Parse also offers one convenience function to read JSON directly
-from a file, L</json_file_to_perl>.
+from a file, L</json_file_to_perl>, and a safer version of
+L</parse_json> called L</parse_json_safe> which doesn't throw
+exceptions.
 
-For those who need to deal with special cases, such as JSON objects
-with non-unique names, or round-trips with JSON booleans, there is
-also L</new> and L</run>.
+For special cases, such as JSON objects with non-unique names (key
+collisions), or round-trips with JSON booleans, there are also L</new>
+and L</run>, which create a JSON parsing object and run it on text.
 
 JSON::Parse accepts only UTF-8 as input. If its input is marked as
 Unicode characters, the strings in its output are also marked as
@@ -154,7 +158,7 @@ returned.
 
 This switches on L</copy_literals> so that JSON true, false and null
 values are copied. These values can be modified, but they will not be
-converted back into C<true> and C<false> by JSON::Create.
+converted back into C<true> and C<false> by L<JSON::Create>.
 
 =back
 
@@ -187,11 +191,11 @@ JSON numbers become Perl numbers, either integers or double-precision
 floating point numbers, or possibly strings containing the number if
 parsing of a number by the usual methods fails somehow.
 
-JSON does not allow leading zeros, or leading plus signs, so numbers
-like I<+100> or I<0123> cause an L</Unexpected character> error. JSON
-also does not allow numbers of the form I<1.> but it does allow things
-like I<0e0> or I<1E999999>. As far as possible these are accepted by
-JSON::Parse.
+JSON does not allow leading zeros, like I<0123>, or leading plus
+signs, like I<+100>, in numbers, so these cause an L</Unexpected
+character> error. JSON also does not allow numbers of the form I<1.>,
+but it does allow things like I<0e0> or I<1E999999>. As far as
+possible these are accepted by JSON::Parse.
 
 =head2 JSON strings
 
@@ -401,6 +405,19 @@ produces no error. This is because Perl copies the scalar.
 
 =head1 METHODS
 
+If you need to parse JSON and you are not satisfied with the parsing
+options offered by L</parse_json> and L</parse_json_safe>, you can
+create a JSON parsing object with L</new> and set various options on
+the object, then use it with L</run>. These options include the
+ability to copy JSON literals with L</copy_literals>, switch off fatal
+errors with L</warn_only>, detect key collisions in objects with
+L</detect_collisions>, and set the JSON literals to user defined
+values with the methods described under L</Methods for manipulating
+literals>.
+
+These methods only work on an object created with L</new>; they do not
+affect the behaviour of L</parse_json> or L</parse_json_safe>.
+
 =head2 new
 
     my $jp = JSON::Parse->new ();
@@ -441,10 +458,17 @@ This method was added in version 0.38.
 
 =head2 warn_only
 
+    $jp->warn_only (1);
+
 Warn, don't die, on error. Failed parsing returns the undefined value,
 C<undef>, and prints a warning.
 
-This method was added in version 0.38.
+This can be switched off again using any false value:
+
+    $jp->warn_only ('');
+
+This method was documented in version 0.38, but only implemented in
+version 0.41.
 
 =head2 detect_collisions
 
@@ -776,6 +800,13 @@ author. As of version 0.08, I'm using it everywhere, but it should
 still be considered to be in a testing stage. Please feel free to try
 it out.
 
+=item JSON::Tokenize
+
+L<JSON::Tokenize> is part of the JSON::Parse distribution, a tokenizer
+which reduces a JSON string to tokens. This makes the JSON::Parse
+tokenizer available to people who want to write their own JSON
+parsers.
+
 =back
 
 =head2 Other CPAN modules for parsing and producing JSON
@@ -965,7 +996,7 @@ The default behaviour is to just do nothing if the input is valid. For
 invalid input it prints what the problem is:
 
     validjson ids.go 
-    ids.go: JSON error at line 1, byte 1/7588: Unexpected character '/' parsing initial state: expecting whitespace: '\n', '\r', '\t', ' ' or start of string: '"' or digit: '0-9' or minus: '-' or start of an array or object: '{', '[' or start of literal: 't', 'f', 'n' at /home/ben/software/install/bin/validjson line 21.
+    ids.go: JSON error at line 1, byte 1/7588: Unexpected character '/' parsing initial state: expecting whitespace: '\n', '\r', '\t', ' ' or start of string: '"' or digit: '0-9' or minus: '-' or start of an array or object: '{', '[' or start of literal: 't', 'f', 'n'.
 
 If you need confirmation, use its --verbose option:
 
@@ -976,10 +1007,6 @@ If you need confirmation, use its --verbose option:
     kanjidic.json is valid JSON.
     linedecomps.json is valid JSON.
     radkfile-radicals.json is valid JSON.
-
-The script uses L<Path::Tiny> for reading files, which is not a
-dependency of this module, so if you want to use the script, you also
-need to install L<Path::Tiny>.
 
 =head1 TEST RESULTS
 
@@ -1076,6 +1103,12 @@ After starting JSON::Create, I realised that some edge case handling
 in JSON::Parse needed to be improved. This resulted in the addition of
 the hash collision and literal-overriding methods introduced
 in versions 0.37 and 0.38 of this module.
+
+=head1 ACKNOWLEDGEMENTS
+
+Shlomi Fish (SHLOMIF) fixed some memory leaks in version
+0.40. kolmogorov42 (https://github.com/kolmogorov42) reported a very
+serious bug which led to version 0.42.
 
 [% start_year=2013 %]
 [% INCLUDE "author" %]
