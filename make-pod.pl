@@ -10,6 +10,8 @@ use Table::Readable 'read_table';
 use Perl::Build::Pod ':all';
 use Perl::Build qw/get_version get_commit/;
 
+make_examples ("$Bin/examples", undef, undef);
+
 # Template toolkit variable holder
 
 my %vars;
@@ -42,7 +44,10 @@ my $version = <<EOF;
 =head1 VERSION
 
 This documents version [% version %] of JSON::$mod corresponding to
-git commit [% commit.commit %] released on [% commit.date %].
+L<git commit [% commit.commit
+%]|https://github.com/benkasminbullock/JSON-Parse/commit/[%
+commit.commit %]> released on [% commit.date %].
+
 EOF
 $tt->process (\$version, \%vars, \my $tt_version, binmode => ':encoding(utf8)')
     or die $tt->error () . '';
@@ -58,63 +63,63 @@ exit;
 sub read_errors
 {
     my ($tt, $vars) = @_;
-my @errors = read_table ('errormsg.txt');
-# Remove "invalid".
+    my @errors = read_table ('errormsg.txt');
+    # Remove "invalid".
 
-shift @errors;
+    shift @errors;
 
-for my $error (@errors) {
-    my $d = $error->{description};
-    my $count = 0;
-    while ($d =~ /(!(.*?)!)/) {
-	my $text = $1;
-	my $example = $2;
-	die "No example" if !$example;
-	my $expanded;
-	my $test;
-	if ($error->{error} =~ /not unique/) {
-	    $test = <<EOF;
+    for my $error (@errors) {
+	my $d = $error->{description};
+	my $count = 0;
+	while ($d =~ /(!(.*?)!)/) {
+	    my $text = $1;
+	    my $example = $2;
+	    die "No example" if !$example;
+	    my $expanded;
+	    my $test;
+	    if ($error->{error} =~ /not unique/) {
+		$test = <<EOF;
     my \$p = JSON::Parse->new ();
     \$p->detect_collisions (1);
     \$p->run ('$example');
 EOF
-	}
-	else {
-	    $test = <<EOF;
+	    }
+	    else {
+		$test = <<EOF;
     assert_valid_json ('$example');
 EOF
-	}
-	eval "$test";
-	if (! $@) {
-	    warn "No error with $example running $error->{error}";
-	}
-	my $out = $@;
-	if ($out !~ /\Q$error->{error}/i) {
-	    # Don't die here since if module is faulty this can
-	    # happen, then a circular problem occurs.
-	    warn "Did not get $error->{error} parsing $example";
-	}
-	# Remove this file's name from the error message.
-	$out =~ s/at \(eval.*|\.\/make-pod\.pl.*$//;
-	$expanded = <<EOF;
+	    }
+	    eval "$test";
+	    if (! $@) {
+		warn "No error with $example running $error->{error}";
+	    }
+	    my $out = $@;
+	    if ($out !~ /\Q$error->{error}/i) {
+		# Don't die here since if module is faulty this can
+		# happen, then a circular problem occurs.
+		warn "Did not get $error->{error} parsing $example";
+	    }
+	    # Remove this file's name from the error message.
+	    $out =~ s/at \(eval.*|\.\/make-pod\.pl.*$//;
+	    $expanded = <<EOF;
 $test
 
 gives output
 
     $out
 EOF
-	$d =~ s/\Q$text/$expanded/;
-	$count++;
-	if ($count > 19) {
-	    die "$count over";
+	    $d =~ s/\Q$text/$expanded/;
+	    $count++;
+	    if ($count > 19) {
+		die "$count over";
+	    }
 	}
-    }
-#    print "$d\n";
-    $tt->process (\$d, $vars, \my $out, binmode => 'utf8')
+	#    print "$d\n";
+	$tt->process (\$d, $vars, \my $out, binmode => 'utf8')
         or die '' . $tt->error ();
-    $error->{description}  = $out;
-#    print "$error->{description}\n";
-    $error->{error} = ucfirst ($error->{error});
-}
-return \@errors;
+	$error->{description}  = $out;
+	#    print "$error->{description}\n";
+	$error->{error} = ucfirst ($error->{error});
+    }
+    return \@errors;
 }

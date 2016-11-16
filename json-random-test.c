@@ -114,7 +114,7 @@ print_json_char (unsigned char c)
 /* Print out the JSON in "parser". */
 
 static void
-print_json (parser_t * parser)
+print_json (json_parse_t * parser)
 {
     int i;
     unsigned char * json;
@@ -129,7 +129,7 @@ print_json (parser_t * parser)
 /* Reset the parser to the initial state. */
 
 static void
-reset_parser (parser_t * parser)
+reset_parser (json_parse_t * parser)
 {
     /* Reset the parser to start from the beginning. */
     parser->end = parser->input;
@@ -152,7 +152,7 @@ reset_parser (parser_t * parser)
    produced. */
 
 static int
-alter_one_byte (parser_t * parser)
+alter_one_byte (json_parse_t * parser)
 {
     int i;
     int valid_bytes[JSON3MAXBYTE];
@@ -289,8 +289,8 @@ random_json ()
     int json_size;
     int json_length;
     int i;
-    parser_t parser_o = {0};
-    parser_t * parser;
+    json_parse_t parser_o = {0};
+    json_parse_t * parser;
 
     parser = & parser_o;
     json_size = INITIALLENGTH;

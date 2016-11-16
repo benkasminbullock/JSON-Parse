@@ -1,3 +1,14 @@
+[% MACRO example(file) BLOCK %]
+[%- pl = file _ ".pl" -%]
+[%- out = file _ "-out.txt" -%]
+[% INCLUDE $pl | xtidy %]
+
+produces output
+
+[% INCLUDE $out | xtidy %]
+
+(This example is included as L<F<[% pl %]>|https://api.metacpan.org/source/BKB/JSON-Parse-[% version %]/examples/[% pl %]> in the distribution.)
+[% END %]
 =pod
 
 =encoding UTF-8
@@ -16,33 +27,24 @@ Convert JSON into Perl.
 
 =head1 DESCRIPTION
 
-JSON::Parse offers the function L</parse_json>, which takes one
-argument, a string containing JSON, and returns a Perl reference or
-scalar. The input to C<parse_json> must be a complete JSON
-structure. 
+A module for parsing JSON. (JSON means "JavaScript Object Notation"
+and it is specified in L</RFC 7159>.)
 
-JSON::Parse also offers two high-speed validation functions,
-L</valid_json>, which returns true or false, and
+JSON::Parse offers the function L</parse_json>, which takes a string
+containing JSON, and returns an equivalent Perl structure. It also
+offers validation of JSON via L</valid_json>, which returns true or
+false depending on whether the JSON is correct or not, and
 L</assert_valid_json>, which produces a descriptive fatal error if the
-JSON is invalid. These are much faster than L</parse_json>. See
-L</PERFORMANCE> for a comparison.
+JSON is invalid. A function L</json_file_to_perl> reads JSON from a
+file, and there is a safer version of L</parse_json> called
+L</parse_json_safe> which doesn't throw exceptions.
 
-JSON::Parse also offers one convenience function to read JSON directly
-from a file, L</json_file_to_perl>, and a safer version of
-L</parse_json> called L</parse_json_safe> which doesn't throw
-exceptions.
+For special cases of parsing, there are also methods L</new> and
+L</run>, which create a JSON parsing object and run it on text. See
+L</METHODS>.
 
-For special cases, such as JSON objects with non-unique names (key
-collisions), or round-trips with JSON booleans, there are also L</new>
-and L</run>, which create a JSON parsing object and run it on text.
-
-JSON::Parse accepts only UTF-8 as input. If its input is marked as
-Unicode characters, the strings in its output are also marked as
-Unicode characters. If its input contains Unicode escapes of the form
-C<"\u3000">, its output is upgraded to Unicode character strings.
-
-(JSON means "JavaScript Object Notation" and it is specified in L</RFC
-7159>.)
+JSON::Parse accepts only UTF-8 as input. See L</UTF-8 only> and
+L</Handling of Unicode>.
 
 =head1 FUNCTIONS
 
@@ -63,12 +65,12 @@ If the argument contains valid JSON, the return value is either a hash
 reference, an array reference, or a scalar. If the input JSON text is
 a serialized object, a hash reference is returned:
 
-[% INCLUDE "hash.pl" | xtidy %]
+[% example("hash") %]
 
 If the input JSON text is a serialized array, an array reference is
 returned:
 
-[% INCLUDE "array.pl" | xtidy %]
+[% example("array") %]
 
 Otherwise a Perl scalar is returned. 
 
@@ -118,7 +120,7 @@ non-unique names in the JSON.
 
 =head2 assert_valid_json
 
-[% INCLUDE "assert.pl" | xtidy %]
+[% example("assert") %]
 
 This is the underlying function for L</valid_json>. It runs at the
 same high speed, but throws an error if the JSON is wrong, rather than
@@ -145,7 +147,7 @@ is returned, as if calling L</parse_json> like
         parse_json ($json);
     };
     if ($@) {
-        warn $@;
+        carp $@;
     }
 
 =item Detects key collisions
@@ -282,13 +284,11 @@ has the same result as a Perl declaration of the form
 
 =head3 Key collisions
 
-In the event of a key collision within the JSON object, something like
+A key collision is something like the following.
 
-     my $j = '{"a":1, "a":2}';
-     my $p = parse_json ($j);
-     print $j->{a}, "\n";
-     # Prints 2.
+[% example("key-collision") %]
 
+Here the key "a" could be either 1 or 2. As seen in the example,
 L</parse_json> overwrites the first value with the second
 value. L</parse_json_safe> halts and prints a warning. If you use
 L</new> you can switch key collision on and off with the
@@ -352,11 +352,7 @@ L</set_null>.
 This example demonstrates round-trip compatibility using L<JSON::Tiny>
 version 0.54:
 
-[% INCLUDE "json-tiny-round-trip-demo.pl" | xtidy %]
-
-The output looks like this:
-
-[% INCLUDE "json-tiny-round-trip-demo-out.txt" %]
+[% example("json-tiny-round-trip-demo") %]
 
 Most of the other CPAN modules use similar methods to L<JSON::Tiny>,
 so the above example can easily be adapted. See also the documentation
@@ -479,17 +475,29 @@ JSON objects). If a collision is found, an error message L</Name is
 not unique> is printed, which also gives the non-unique name and the
 byte position where the start of the colliding string was found:
 
-[% INCLUDE "collide.pl" | xtidy %]
-
-produces
-
-[% INCLUDE "collide-out.txt" |xtidy %]
+[% example("collide") %]
 
 The C<detect_collisions (1)> behaviour is the behaviour of
 L</parse_json_safe>. The C<detect_collisions (0)> behaviour is the
 behaviour of L</parse_json>.
 
 This method was added in version 0.38.
+
+=head2 diagnostics_hash
+
+    $jp->diagnostics_hash (1);
+
+This changes diagnostics produced by errors from a simple string into
+a hash reference containing various fields. This is experimental and
+subject to change. This is incompatible with L</warn_only>.
+
+This replaces the previous experimental global variable
+C<$json_diagnostics>, which was removed from the module. The hash keys
+and values are identical to those provided in the object returned by
+C<$json_diagnostics>, with the addition of a key C<error as string>
+which returns the usual error.
+
+This method was added in version 0.46.
 
 =head2 Methods for manipulating literals
 
@@ -645,8 +653,7 @@ described in part 3 of L</RFC 7159>.
 
 This restriction to UTF-8 applies regardless of whether Perl thinks
 that the input string is a character string or a byte
-string. Non-UTF-8 input will cause an L</Unexpected character> error
-to be thrown.
+string. Non-UTF-8 input will cause an L</Unexpected character> error.
 
 =back
 
@@ -681,33 +688,6 @@ The following error messages are produced:
 
 [% END %]
 [% END # error in errors %]
-
-=head2 $json_diagnostics
-
-Experimentally, there is a global variable
-C<$JSON::Parse::json_diagnostics>, which, if true, causes errors to be
-output as JSON rather than text:
-
-    $JSON::Parse::json_diagnostics = 1;
-    assert_valid_json ("{'not':'valid'}");
-
-This outputs the following:
-
-    {"input length":15,"bad type":"object","error":"Unexpected character","bad byte position":2,"bad byte contents":39,"start of broken component":1,"valid bytes":[0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}
-
-That means that, in a string of length 15 bytes, the JSON component
-which looked like an object starting from byte 1 is broken at byte 2,
-because it has a bad character there of ascii 39 (a single quote
-mark), where the bytes allowed were as described in the array of valid
-bytes. C<valid_bytes> is a 256-item array whose values are "true" for
-allowed bytes and "false" otherwise.
-
-This is intended for people who want to make, say, a "broken JSON
-repair" module, so that they can analyze errors without having to
-parse the above kinds of diagnostic string. The contents of the JSON
-diagnostics are not currently documented and are subject to change, so
-please view the source code (file F<json-common.c>) or see what the
-errors look like by adding incorrect JSON and viewing the results.
 
 =head2 Contradictory values for "true" and "false"
 
@@ -1068,7 +1048,7 @@ JSON::Parse, so please don't install that version.
 
 =head1 HISTORY
 
-Or "why did you make yet another JSON module?"
+See F<Changes> in the distribution for a full list of changes.
 
 This module started out under the name L<JSON::Argo>. It was
 originally a way to escape from having to use the other JSON modules
@@ -1112,4 +1092,3 @@ serious bug which led to version 0.42.
 
 [% start_year=2013 %]
 [% INCLUDE "author" %]
-[% INCLUDE "terminology" %]

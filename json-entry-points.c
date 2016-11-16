@@ -164,6 +164,7 @@ parse_safe (SV * json)
     parser_o.detect_collisions = 1;
     parser_o.copy_literals = 1;
     parser_o.warn_only = 1;
+    parser_o.diagnostics_hash = 1;
     /* Run it. */
     return json_parse_run (parser, json);
 }
@@ -334,6 +335,49 @@ tokenize (SV * json)
     parser_o.tokenizing = 1;
 
     return c_tokenize (& parser_o);
+}
+
+/* Make a hash containing a diagnostic error from the parser. */
+
+static SV * error_to_hash (json_parse_t * parser, char * error_as_string)
+{
+    HV * error;
+    error = newHV ();
+
+#ifdef HK
+#warn "Redefinition of macro HK"
+#endif /* def HK */
+#undef HK
+#define HK(x, val) (void) hv_store (error, x, strlen (x), val, 0)
+
+    HK("length", newSViv (parser->length));
+    HK("bad type", newSVpv (type_names[parser->bad_type], 0));
+    HK("error", newSVpv (json_errors[parser->error], 0));
+    HK("error as string", newSVpv (error_as_string, 0));
+    if (parser->bad_byte) {
+	int position;
+	position = (int) (parser->bad_byte - parser->input) + 1;
+	HK("bad byte position", newSViv (position));
+	HK("bad byte contents", newSViv (* parser->bad_byte));
+    }
+    if (parser->bad_beginning) {
+	int bcstart;
+	bcstart = (int) (parser->bad_beginning - parser->input) + 1;
+	HK("start of broken component", newSViv (bcstart));
+    }
+    if (parser->error == json_error_unexpected_character) {
+	int j;
+	AV * valid_bytes;
+	valid_bytes = newAV ();
+	make_valid_bytes (parser);
+	for (j = 0; j < JSON3MAXBYTE; j++) {
+	    av_push (valid_bytes, newSViv (parser->valid_bytes[j]));
+	}
+	HK("valid bytes", newRV_inc ((SV *) valid_bytes));
+    }
+    return newRV_inc ((SV *) error);
+
+#undef HK
 }
 
 #endif /* ndef NOPERL */

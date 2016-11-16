@@ -104,8 +104,11 @@
 typedef struct string {
 
     unsigned char * start;
+#ifdef NOPERL
+    int length;
+#else /* def NOPERL */
     STRLEN length;
-
+#endif /* def NOPERL */
     /* The "contains_escapes" flag is set if there are backslash escapes in
        the string like "\r", so that it needs to be cleaned up before
        using it. That means we use "parser->buffer". This is to speed
@@ -273,6 +276,10 @@ typedef struct parser {
 
     unsigned int top_level_value : 1;
 
+    /* Produce diagnostics as a hash rather than a string. */
+
+    unsigned int diagnostics_hash : 1;
+
 #ifdef TESTRANDOM
 
     /* This is true if we are testing with random bytes. */
@@ -282,6 +289,10 @@ typedef struct parser {
 #endif /* def TESTRANDOM */
 }
 json_parse_t;
+
+#ifndef NOPERL
+static SV * error_to_hash (json_parse_t * parser, char * error_as_string);
+#endif /* ndef NOPERL */
 
 #ifdef __GNUC__
 #define INLINE inline
@@ -296,7 +307,9 @@ json_parse_t;
 /* Declare all bad inputs as non-returning. */
 
 #ifdef __GNUC__
+#if 0
 static void failbadinput_json (json_parse_t * parser) __attribute__ ((noreturn));
+#endif /* 0 */
 static void failbadinput (json_parse_t * parser) __attribute__ ((noreturn));
 static INLINE void
 failbug (char * file, int line, json_parse_t * parser, const char * format, ...)
@@ -380,6 +393,8 @@ http://www.cpantesters.org/cpan/report/6cde36da-6fd1-11e3-946f-2b87da5af652
     }
 
 
+#if 0
+
 /* Coming in to this routine, we have checked the error for validity
    and converted at failbadinput. If this is called directly the bug
    traps won't work. */
@@ -440,6 +455,8 @@ failbadinput_json (json_parse_t * parser)
     croak (buffer);
 }
 
+#endif /* 0 */
+
 static void
 failbadinput (json_parse_t * parser)
 {
@@ -472,21 +489,6 @@ failbadinput (json_parse_t * parser)
 	failbug (__FILE__, __LINE__, parser,
 		 "Bad value for parser->error: %d\n", parser->error);
     }
-
-#ifndef NOPERL
-
-    /* Make an error in JSON format. */
-
-    json_diagnostics = get_sv ("JSON::Parse::json_diagnostics", 0);
-    if (! json_diagnostics) {
-	failbug (__FILE__, __LINE__, parser,
-		 "$JSON::Parse::json_diagnostics variable does not exist");
-    }
-    if (SvTRUE (json_diagnostics)) {
-	failbadinput_json (parser);
-    }
-
-#endif
 
     format = json_errors[parser->error];
     l = strlen (format);
@@ -648,6 +650,12 @@ failbadinput (json_parse_t * parser)
     }
 
 #endif /* def TESTRANDOM */
+
+#ifndef NOPERL
+    if (parser->diagnostics_hash) {
+	croak_sv (error_to_hash (parser, buffer));
+    }
+#endif /* ndef NOPERL */
 
     if (parser->length > 0) {
 	if (parser->end - parser->input > parser->length) {
@@ -1172,6 +1180,7 @@ parser_free (json_parse_t * parser)
 	}
     }
     parser->buffer = 0;
+    parser->buffer_size = 0;
 }
 
 

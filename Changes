@@ -1,3 +1,11 @@
+0.46 2016-11-16
+
+* Remove experimental feature $json_diagnostics
+* Add diagnostics_hash method as a replacement for $json_diagnostics
+* Better warnings for parse_json_safe
+* Add the examples directory files to the CPAN distribution
+* Documentation rewrites
+
 0.45 2016-11-15
 
 * Remove non-functioning JSON::Whitespace module from CPAN distribution

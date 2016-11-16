@@ -20,7 +20,7 @@ binmode $builder->todo_output,    ":utf8";
 binmode STDOUT, ":encoding(utf8)";
 binmode STDERR, ":encoding(utf8)";
 
-use JSON::Parse '0.37_02';
+use JSON::Parse;
 
 #   ____                    _ _ _                 _     
 #  / ___|___  _ __  _   _  | (_) |_ ___ _ __ __ _| |___ 
@@ -198,5 +198,19 @@ eval {
     $jp3->run ($stuff3);
 };
 ok (!$@, "Did not detect collision after reset to 0");
+
+#  ____  _                             _   _        _               _     
+# |  _ \(_) __ _  __ _ _ __   ___  ___| |_(_) ___  | |__   __ _ ___| |__  
+# | | | | |/ _` |/ _` | '_ \ / _ \/ __| __| |/ __| | '_ \ / _` / __| '_ \ 
+# | |_| | | (_| | (_| | | | | (_) \__ \ |_| | (__  | | | | (_| \__ \ | | |
+# |____/|_|\__,_|\__, |_| |_|\___/|___/\__|_|\___| |_| |_|\__,_|___/_| |_|
+#                |___/                                                    
+
+my $jp4 = JSON::Parse->new ();
+$jp4->diagnostics_hash (1);
+eval {
+$jp4->run ("{{{{{");
+};
+ok (ref $@ eq 'HASH', "Got hash diagnostics");
 
 done_testing ();

@@ -11,10 +11,6 @@
 #include <setjmp.h>
 #endif /* def TESTRANDOM */
 
-/* Experimental. */
-
-static SV * json_diagnostics;
-
 static SV * json_null;
 
 /* Code starts here. */
@@ -34,6 +30,9 @@ static SV * json_null;
 #include "json-random-test.c"
 #endif /* def TESTRANDOM */
 #include "json-whitespace.c"
+#ifdef NOPERL
+#error "Cannot define NOPERL error when compiling Perl version"
+#endif /* def NOPERL */
 
 typedef json_parse_t * JSON__Parse;
 typedef json_token_t * JSON__Tokenize;
@@ -142,6 +141,13 @@ no_warn_literals (parser, onoff)
 	SV * onoff;
 CODE:
 	parser->no_warn_literals = SvTRUE (onoff) ? 1 : 0;
+
+void
+diagnostics_hash (parser, onoff)
+	JSON::Parse parser;
+	SV * onoff;
+CODE:
+	parser->diagnostics_hash = SvTRUE (onoff) ? 1 : 0;
 
 void
 warn_only (parser, onoff)

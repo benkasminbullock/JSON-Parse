@@ -12,7 +12,11 @@
 #include <time.h>
 
 static void
-croak (char * format, ...);
+croak (char * format, ...)
+#ifdef __GNUC__
+__attribute__ ((noreturn));
+#endif /* def __GNUC__ */
+;
 
 #include "unicode.h"
 #include "unicode.c"

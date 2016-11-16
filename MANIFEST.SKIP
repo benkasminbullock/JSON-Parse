@@ -23,8 +23,8 @@ benchmarks
 ^.*\.core$
 ^a\.out$
 # There aren't any files I plan to distribute with these file types.
-^.*\.pl$
-^.*\.txt$
+^[^/]*\.pl$
+^[^/]*\.txt$
 # Don't put the "torture test" code into the CPAN distribution. It
 # contains bad stuff like "setjmp" which is incompatible with many
 # people's operating systems. People who want this kind of stuff can

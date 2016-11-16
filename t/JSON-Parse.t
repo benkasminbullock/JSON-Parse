@@ -1,7 +1,7 @@
 use warnings;
 use strict;
 use Test::More;
-use JSON::Parse qw/parse_json valid_json/;
+use JSON::Parse qw/parse_json valid_json parse_json_safe/;
 use utf8;
 
 binmode STDOUT, ":utf8";
@@ -17,10 +17,15 @@ EOF
 my $x = parse_json ($jason);
 note ($x->{guff}->{t}->[2]);
 cmp_ok (abs ($x->{guff}->{t}->[2] - 2.3), '<', 0.00001, "Two point three");
+my $xs = parse_json_safe ($jason);
+note ($xs->{guff}->{t}->[2]);
+cmp_ok (abs ($xs->{guff}->{t}->[2] - 2.3), '<', 0.00001, "Two point three");
 
 my $fleece = '{"凄い":"技", "tickle":"baby"}';
 my $y = parse_json ($fleece);
 ok ($y->{tickle} eq 'baby', "Parse hash");
+my $ys = parse_json_safe ($fleece);
+ok ($ys->{tickle} eq 'baby', "Parse hash");
 
 ok (valid_json ($fleece), "Valid OK JSON");
 
@@ -28,6 +33,9 @@ my $argonauts = '{"medea":{"magic":true,"nice":false}}';
 my $z = parse_json ($argonauts);
 ok ($z->{medea}->{magic}, "Parse true literal.");
 ok (! ($z->{medea}->{nice}), "Parse false literal.");
+my $zs = parse_json_safe ($argonauts);
+ok ($zs->{medea}->{magic}, "Parse true literal.");
+ok (! ($zs->{medea}->{nice}), "Parse false literal.");
 
 ok (valid_json ($argonauts), "Valid OK JSON");
 
@@ -45,9 +53,6 @@ ok (! defined $Q, "Empty string returns undef");
 my $S = parse_json ('    ');
 ok (! defined $S, "whitespace as input returns undef");
 ok (! valid_json (''), "! Valid empty string");
-eval {
-    my $T = parse_json ();
-};
 
 my $n;
 eval {
@@ -55,6 +60,17 @@ eval {
     my $nar = parse_json ($n);
 };
 ok ($@, "found error");
+{
+    my $warning;
+    local $SIG{__WARN__} = sub { $warning = $_[0]; };
+    eval {
+	$n = '{"骪":"\u9aaa"';
+	my $nar = parse_json_safe ($n);
+    };
+    ok (! $@, "no exception with parse_json_safe");
+    unlike ($warning, qr/\n.+/, "no newlines in middle of error");
+    like ($warning, qr/JSON-Parse\.t/, "right file name for error");
+}
 
 ok (! valid_json ($n), "! Not valid missing end }");
 

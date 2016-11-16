@@ -17,7 +17,7 @@ require Exporter;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.45';
+our $VERSION = '0.46';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 
@@ -38,7 +38,15 @@ sub parse_json_safe
 	$p = parse_json_safer (@_);
     };
     if ($@) {
-	warn "JSON::Parse::parse_json_safe: $@\n";
+	my $error = $@;
+	if (ref $error eq 'HASH') {
+	    my $error_as_string = $error->{"error as string"};
+	    carp "JSON::Parse::parse_json_safe: $error_as_string";
+	}
+	else {
+	    $error =~ s/at\s\S+\.pm\s+line\s+[0-9]+\.\s*$//;
+	    carp "JSON::Parse::parse_json_safe: $error";
+	}
 	return undef;
     }
     return $p;
