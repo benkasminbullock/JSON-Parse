@@ -62,7 +62,9 @@ eval {
 ok ($@, "found error");
 {
     my $warning;
-    local $SIG{__WARN__} = sub { $warning = $_[0]; };
+    local $SIG{__WARN__} = sub {
+	$warning = $_[0];
+    };
     eval {
 	$n = '{"骪":"\u9aaa"';
 	my $nar = parse_json_safe ($n);

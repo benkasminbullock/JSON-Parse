@@ -1,3 +1,7 @@
+0.46_01 2016-11-16
+
+* Try to fix bug with 5.12 or earlier Perls
+
 0.46 2016-11-16
 
 * Remove experimental feature $json_diagnostics

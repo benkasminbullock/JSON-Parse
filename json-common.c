@@ -653,7 +653,9 @@ failbadinput (json_parse_t * parser)
 
 #ifndef NOPERL
     if (parser->diagnostics_hash) {
+#if PERL_VERSION > 12
 	croak_sv (error_to_hash (parser, buffer));
+#endif /* PERL_VERSION > 12 */
     }
 #endif /* ndef NOPERL */
 

@@ -147,7 +147,12 @@ diagnostics_hash (parser, onoff)
 	JSON::Parse parser;
 	SV * onoff;
 CODE:
+#if PERL_VERSION > 12
 	parser->diagnostics_hash = SvTRUE (onoff) ? 1 : 0;
+#else
+        vwarn ("diagnostics_hash () requires Perl 5.14 or later; this is 5.%d",
+	       PERL_VERSION);
+#endif
 
 void
 warn_only (parser, onoff)
