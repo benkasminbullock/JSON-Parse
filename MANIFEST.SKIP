@@ -47,6 +47,8 @@ benchmarks
 ^lib/JSON/Whitespace\.pm$
 # Template for POD
 ^lib/JSON/Tokenize\.pod\.tmpl$
+# Obsolete files
+^obsolete/.*$
 # Local variables:
 # comment-start: "#" 
 # End:
