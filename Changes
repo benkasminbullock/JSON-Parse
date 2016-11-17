@@ -1,6 +1,6 @@
-0.46_02 2016-11-16
+0.47 2016-11-16
 
-* Try to fix bug with 5.12 or earlier Perls
+* Bug fixes for Perl 12 and earlier regarding diagnostics_hash method
 
 0.46 2016-11-16
 
