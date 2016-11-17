@@ -141,26 +141,33 @@ differences:
 =item Does not throw exceptions
 
 If the JSON is invalid, a warning is printed and the undefined value
-is returned, as if calling L</parse_json> like
+is returned, as if calling L</parse_json> like this:
 
     eval {
-        parse_json ($json);
+        $out = parse_json ($json);
     };
     if ($@) {
         carp $@;
+	$out = undef;
     }
 
 =item Detects key collisions
 
 This switches on L</detect_collisions>, so that if the JSON contains
 non-unique names, a warning is printed and the undefined value is
-returned.
+returned. See L</Key collisions> for an explanation of what a key
+collision is.
 
 =item Booleans are not read-only
 
 This switches on L</copy_literals> so that JSON true, false and null
 values are copied. These values can be modified, but they will not be
 converted back into C<true> and C<false> by L<JSON::Create>.
+
+=item Errors are reported by carp
+
+Parsing errors are reported by L<Carp/carp>, so the error line number
+refers to the caller's line.
 
 =back
 
@@ -342,10 +349,10 @@ in place of falses using the L</set_false> method.
 =head3 Round trips and compatibility
 
 The Perl versions of literals produced by L</parse_json> will be
-converted back to JSON literals if you use L<JSON::Create>'s
-C<create_json>. However, JSON::Parse's literals are incompatible with
-the other CPAN JSON modules. For compatibility with other CPAN
-modules, create a JSON::Parse object with L</new>, and set
+converted back to JSON literals if you use
+L<JSON::Create/create_json>. However, JSON::Parse's literals are
+incompatible with the other CPAN JSON modules. For compatibility with
+other CPAN modules, create a JSON::Parse object with L</new>, and set
 JSON::Parse's literals with L</set_true>, L</set_false>, and
 L</set_null>.
 
@@ -355,8 +362,8 @@ version 0.54:
 [% example("json-tiny-round-trip-demo") %]
 
 Most of the other CPAN modules use similar methods to L<JSON::Tiny>,
-so the above example can easily be adapted. See also the documentation
-of L<JSON::Create> under "Interoperability" for various examples.
+so the above example can easily be adapted. See also
+L<JSON::Create/Interoperability> for various examples.
 
 =head3 Modifying the values
 
@@ -496,6 +503,8 @@ C<$json_diagnostics>, which was removed from the module. The hash keys
 and values are identical to those provided in the object returned by
 C<$json_diagnostics>, with the addition of a key C<error as string>
 which returns the usual error.
+
+This requires Perl version 5.14 or later.
 
 This method was added in version 0.46.
 
@@ -660,15 +669,18 @@ string. Non-UTF-8 input will cause an L</Unexpected character> error.
 =head1 DIAGNOSTICS
 
 L</valid_json> does not produce error messages. L</parse_json> and
-L</assert_valid_json> die on encountering invalid input.
+L</assert_valid_json> die on encountering invalid
+input. L</parse_json_safe> uses L<Carp/carp> to pass error messages as
+warnings.
 
 Error messages have the line number, and the byte number where
 appropriate, of the input which caused the problem. The line number is
 formed simply by counting the number of "\n" (linefeed, ASCII 0x0A)
 characters in the whitespace part of the JSON.
 
-Parsing errors are fatal, so to continue after an error occurs, put
-the parsing into an C<eval> block:
+In L</parse_json> and L</assert_valid_json>, parsing errors are fatal,
+so to continue after an error occurs, put the parsing into an C<eval>
+block:
 
     my $p;                       
     eval {                       
@@ -746,9 +758,9 @@ script F<benchmarks/bench> is an adaptation of the similar script in
 the L<JSON::XS> distribution. The script F<pub-bench.pl> runs the
 benchmarks and prints them out as POD.
 
-The following benchmark tests used version 0.38 of JSON::Parse and
-version 3.01 of JSON::XS on Perl Version 18.2, compiled with Clang
-version 3.4.1 on FreeBSD 10.1. The files in the "benchmarks" directory
+The following benchmark tests used version 0.47 of JSON::Parse and
+version 3.03 of JSON::XS on Perl Version 18.2, compiled with Clang
+version 3.4.1 on FreeBSD 10.3. The files in the "benchmarks" directory
 of JSON::Parse. "short.json" and "long.json" are the benchmarks used
 by JSON::XS.
 
