@@ -84,6 +84,13 @@ OUTPUT:
 	RETVAL
 
 void
+check (parser, json)
+	JSON::Parse parser
+	SV * json
+CODE:
+	check (parser, json);
+
+void
 DESTROY (parser)
 	JSON::Parse parser;
 CODE:

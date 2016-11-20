@@ -322,6 +322,13 @@ validate (SV * json, unsigned int flags)
     c_validate (& parser_o);
 }
 
+static void
+check (json_parse_t * parser, SV * json)
+{
+    GETSTRING;
+    c_validate (parser);
+}
+
 static json_token_t *
 tokenize (SV * json)
 {

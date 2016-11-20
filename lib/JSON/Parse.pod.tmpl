@@ -433,10 +433,23 @@ This method was added in version 0.38.
 
     my $out = $jp->run ($json);
 
-Exactly the same thing as L</parse_json>, except its behaviour can be
-modified using the following methods.
+This does the same thing as L</parse_json>, except its behaviour can
+be modified using the methods below.
 
 This method was added in version 0.38.
+
+=head2 check
+
+    eval {
+        $jp->check ($json);
+    };
+
+This does the same thing as L</assert_valid_json>, except its
+behaviour can be modified using the methods below. Only the
+L</diagnostics_hash> method will actually affect this.
+
+This method was added in version 0.48, for the benefit of
+L<JSON::Repair>.
 
 =head2 copy_literals
 
@@ -1045,6 +1058,8 @@ These modules extend JSON with comments and other things.
 =item L<JSON::Streaming::Reader> and L<JSON::Streaming::Writer>
 
 =item L<JSON::SL>
+
+=item L<JSON::Meth>
 
 =back
 

@@ -1,3 +1,7 @@
+0.48 2016-11-20
+
+* Add "check" method for the benefit of JSON::Repair
+
 0.47 2016-11-16
 
 * Bug fixes for Perl 12 and earlier regarding diagnostics_hash method
