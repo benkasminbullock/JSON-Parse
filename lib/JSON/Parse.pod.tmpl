@@ -799,30 +799,42 @@ which reduces a JSON string to tokens. This makes the JSON::Parse
 tokenizer available to people who want to write their own JSON
 parsers.
 
+=item JSON::Repair
+
+L<JSON::Repair> is an example module which demonstrates using
+JSON::Parse to apply some kinds of heuristics to repair "relaxed JSON"
+or otherwise broken JSON into compliant JSON.
+
 =back
 
 =head2 Other CPAN modules for parsing and producing JSON
 
 =over
 
+=item Reading and writing JSON
+
+=over
+
 =item L<JSON>
 
-This is actually a combination module for L<JSON::PP> and L<JSON::XS>.
+This calls on either L<JSON::PP> or L<JSON::XS>.
 
 =item L<JSON::PP>
 
-Part of the Perl core. JSON in Perl-only without the XS (C-based)
-parsing. This is slower but may be necessary if you cannot install
-modules requiring a C compiler.
+This is part of the Perl core, installed when you install Perl. "PP"
+stands for "Pure Perl", which means it is in Perl-only without the XS
+(C-based) parsing. This is slower but may be necessary if you cannot
+install modules requiring a C compiler.
 
 =item L<JSON::XS>
 
-All-purpose JSON module in XS (requires a C compiler to install).
+This is an all-purpose JSON module in XS, which means it requires a C
+compiler to install.
 
 =item L<Cpanel::JSON::XS>
 
-Fork of L<JSON::XS> related to a disagreement about how to report
-bugs. Please see the module for details.
+This is a fork of L<JSON::XS> related to a disagreement about how to
+report bugs. Please see the module for details.
 
 =item L<JSON::DWIW>
 
@@ -840,23 +852,15 @@ Relies on L<JSON::MaybeXS>.
 
 Based on L<Pegex>.
 
-=item L<JSON::Streaming::Reader> and L<JSON::Streaming::Writer>
-
 =item L<JSON::Syck>
 
 Takes advantage of a similarity between YAML (yet another markup
 language) and JSON to provide a JSON parser/producer using
 L<YAML::Syck>.
 
-=item L<JSON::SL>
-
 =item L<Inline::JSON>
 
 Relies on L<JSON>.
-
-=item L<JBD::JSON>
-
-The module is undocumented so I am not sure what it does.
 
 =item L<Glib::JSON>
 
@@ -875,8 +879,6 @@ A fork of C<Mojo::JSON>.
 
 =back
 
-=over
-
 =item Special-purpose modules
 
 =over
@@ -890,55 +892,98 @@ C<{"a":1,"a":2}>) within objects.
 (JSON::Parse's handling of key collisions is discussed in L</Key
 collisions> in this document.)
 
+=item L<boolean>
+
+This module offers C<true> and C<false> literals similar to JSON.
+
+=item L<Devel::JSON>
+
+For one-liners.
+
+=item L<App::JSON::to>
+
+Convert JSON data to other formats
+
+=item L<JSON::Color>
+
+This module generates JSON, colorized with ANSI escape sequences.
+
+=item L<Config::JSON>
+
+Configuration files in JSON
+
+=item L<JSON::String>
+
+Automatically change a JSON string when a data structure changes
+
+=item L<JSON::Builder>
+
+create JSON under memory limitations
+
+=item L<JSON::Pointer>
+
+Extract parts of a JSON string
+
+=item L<Inline::JSON>
+
+Include JSON in a Perl program
+
+=item L<JSON::Path>
+
+Search nested hashref/arrayref structures using JSONPath
+
+=back
+
+=item Test-related modules
+
+=over
+
 =item L<Test::JSON>
 
 This offers a way to compare two different JSON strings to see if they
 refer to the same object.
 
-=item L<JSON::XS::Sugar>
+=item L<Test::JSON::More>
 
-=item L<boolean>
+JSON Test Utility
 
-This module offers C<true> and C<false> literals similar to JSON.
+=item L<Test::Deep::JSON>
+
+Compare JSON with L<Test::Deep>.
 
 =back
 
 =item Type-related modules
 
+These untangle numbers, strings, and booleans into JSON types.
+
 =over
 
 =item L<JSON::Types>
-
-This untangles the messy Perl representation of numbers, strings, and
-booleans into JSON types.
 
 =item L<JSON::TypeInference>
 
 =item L<JSON::Typist>
 
+=item L<JSON::Types::Flexible>
+
 =back
 
 =item Combination modules
 
-These modules present a more consistent and improved interface which
-can rely on more than one of the above back-end modules at once. This
-protects the user from incompatible changes in module APIs, and by
-relying on more than one back-end the users are also protected from
-the personality clashes between various temperamental module
-maintainers. Many CPAN modules involving JSON now rely on a "master
-module" rather than using the above JSON modules directly.
+These modules rely on more than one back-end module.
 
 =over
 
 =item L<JSON::MaybeXS>
 
-A "combination module", the currently fashionable choice, which
-combines L<Cpanel::JSON::XS>, L<JSON::XS>, and the original L<JSON>.
+A module which combines L<Cpanel::JSON::XS>, L<JSON::XS>, and
+L<JSON::PP>.
 
 =item L<JSON::Any>
 
-A now-deprecated "combination module" which combines L<JSON::DWIW>,
-L<JSON::XS> versions one and two, and L<JSON::Syck>.
+Combines L<JSON::DWIW>, L<JSON::XS> versions one and two, and
+L<JSON::Syck>.
 
 =item L<JSON::XS::VersionOneAndTwo>
 
@@ -971,11 +1016,35 @@ These modules extend JSON with comments and other things.
 
 =back
 
+=item Other modules
+
+=over
+
+=item L<JSON::XS::Sugar>
+
+=item L<JSON::ON>
+
+=item L<Eve::Json>
+
+=item L<JBD::JSON>
+
+=item L<JSON::JS>
+
+=item L<Silki::JSON>
+
+=item L<Haineko::JSON>
+
+=item L<App::JSON::Tools>
+
+=item L<JSON::XS::ByteString>
+
+=item L<JSON::Streaming::Reader> and L<JSON::Streaming::Writer>
+
+=item L<JSON::SL>
+
 =back
 
-There are also a lot of modules in the CPAN C<JSON::> namespace which
-use JSON as a basis for other things, but with apologies I don't try
-to cover those modules here, since there are so many of them.
+=back
 
 =head1 SCRIPT
 
