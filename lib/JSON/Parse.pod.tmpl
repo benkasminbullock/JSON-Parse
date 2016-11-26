@@ -62,9 +62,7 @@ reference, a hash reference, or a scalar.
 
 If the first argument does not contain a complete valid JSON text, is
 the undefined value, an empty string, or a string containing only
-whitespace C<parse_json> throws a fatal error ("dies"). (This
-behaviour was altered from version 0.48 to 0.49. See L</JSON Parsing
-Test Suite>.)
+whitespace C<parse_json> throws a fatal error ("dies").
 
 If the argument contains valid JSON, the return value is either a hash
 reference, an array reference, or a scalar. If the input JSON text is
