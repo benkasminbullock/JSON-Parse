@@ -250,8 +250,19 @@ This is modelled on the behaviour of Perl's C<chr>:
 
 [% INCLUDE "chr.pl" | xtidy %]
 
-Since every byte of input is validated as UTF-8 (see L</UTF-8 only>),
-this hopefully will not upgrade invalid strings.
+However, JSON::Parse also upgrades the remaining part of the string
+into a character string, even when it's not marked as a character
+string. For example,
+
+[% example("unicode-details") %]
+
+Although in general the above would be an unsafe practice, JSON::Parse
+can do things this way because JSON is a text-only, Unicode-only
+format. To ensure that invalid inputs are never upgraded, JSON::Parse
+checks each input byte to make sure that it forms UTF-8. See also
+L</UTF-8 only>. Doing things this way, rather than the way that Perl
+does it, was one of the original motivations for writing this
+module. See also L</HISTORY>.
 
 Surrogate pairs in the form C<\uD834\uDD1E> are also handled. If the
 second half of the surrogate pair is missing, an L</Unexpected
@@ -312,11 +323,9 @@ L</detect_collisions> method.
 The rationale for L</parse_json> not to give warnings is that Perl
 doesn't give information about collisions when storing into hash
 values, and checking for collisions for every key will degrade
-performance for the sake of an unlikely occurrence.
-
-Note that the JSON specification says "The names within an object
-SHOULD be unique." (see L</RFC 7159>, page 5), although it's not a
-requirement.
+performance for the sake of an unlikely occurrence. The JSON
+specification says "The names within an object SHOULD be unique." (see
+L</RFC 7159>, page 5), although it's not a requirement.
 
 For performance, L</valid_json> and L</assert_valid_json> do not store
 hash keys, thus they cannot detect this variety of problem.
@@ -1194,18 +1203,24 @@ any code is uploaded to CPAN.
 
 See [% repo("Changes") %] in the distribution for a full list of changes.
 
-This module started out under the name L<JSON::Argo>. It was
+This module started out under the name C<JSON::Argo>. It was
 originally a way to escape from having to use the other JSON modules
-on CPAN.
+on CPAN. The biggest issue that I had with the other modules was the
+way that Unicode was handled. Insisting on the pure Perl method of
+dealing with JSON strings, which are required to be in Unicode anyway,
+seems to me little more than superstition, something like telling
+programmers not to step on cracks in the pavement. This module
+completely bypasses that. See L</Handling of Unicode> for the details
+of how this module differs from the other modules.
 
 The reason it only parsed JSON was that when I started this I didn't
-know the Perl extension language XS very well, and I was not confident
-about making a JSON producer, so it only parsed JSON, which was the
-main job I needed to do. It originally used lex and yacc in the form
-of flex and bison, since discarded. I also found out that someone else
-had a JSON parser called Argo in Java, so to save confusion I dropped
-the name JSON::Argo and renamed this JSON::Parse, keeping the version
-numbers continuous.
+know the Perl extension language XS very well (I still don't know it
+very well), and I was not confident about making a JSON producer, so
+it only parsed JSON, which was the main job I needed to do. It
+originally used lex and yacc in the form of flex and bison, since
+discarded. I also found out that someone else had a JSON parser called
+Argo in Java, so to save confusion I dropped the name JSON::Argo and
+renamed this JSON::Parse, keeping the version numbers continuous.
 
 The module has since been completely rewritten, twice, mostly in an
 attempt to improve performance, after I found that JSON::XS was much
@@ -1232,9 +1247,9 @@ Version 0.42 fixed a very serious bug where long strings could
 overflow an internal buffer, and could cause a segmentation fault.
 
 Version 0.48 removed an experimental feature called
-C<$json_diagnostics> which would produce errors in JSON, and replaced
-it with the current L</diagnostics_hash> method, for the benefit of
-L</JSON::Repair>.
+C<$json_diagnostics> which made the module's errors be produced in
+JSON format, and replaced it with the current L</diagnostics_hash>
+method, for the benefit of L</JSON::Repair>.
 
 Version 0.49 brought the module into conformance with the L</JSON
 Parsing Test Suite>.
