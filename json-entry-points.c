@@ -1,3 +1,12 @@
+/* Empty input was provided. */
+
+static void fail_empty (json_parse_t * parser)
+{
+    parser->bad_type = json_initial_state;
+    parser->error = json_error_empty_input;
+    failbadinput (parser);
+}
+
 /* Check for stray non-whitespace after the end and free memory. */
 
 static void check_end (json_parse_t * parser)
@@ -73,7 +82,7 @@ json_parse_run (json_parse_t * parser, SV * json)
     GETSTRING;
 
     if (parser->length == 0) {
-	return & PL_sv_undef;
+	fail_empty (parser);
     }
 
     SETUPPARSER;
@@ -124,12 +133,7 @@ json_parse_run (json_parse_t * parser, SV * json)
 
 	/* We have an empty string. */
 
-	r = & PL_sv_undef;
-
-	/* So there is no point checking that the string doesn't
-	   contain junk characters after its end. */
-
-	goto noendcheck;
+	fail_empty (parser);
 
     default:
 	BADCHAR;
@@ -184,9 +188,7 @@ c_validate (json_parse_t * parser)
     /* If the string is empty, throw an exception. */
 
     if (parser->length == 0) {
-	parser->bad_type = json_initial_state;
-	parser->error = json_error_empty_input;
-	failbadinput (parser);
+	fail_empty (parser);
     }
 
     SETUPPARSER;
@@ -319,6 +321,9 @@ validate (SV * json, unsigned int flags)
 
     GETSTRING;
 
+    if (parser->length == 0) {
+	fail_empty (parser);
+    }
     c_validate (& parser_o);
 }
 

@@ -15,16 +15,8 @@ if (! $ok || $help) {
 }
 for my $file (@ARGV) {
     eval {
-	$SIG{__WARN__} = sub {
-	    if ($_[0] =~ /does not map to Unicode/) {
-		my $error = $_[0];
-		$error =~ s/$file: //;
-		die "$file:$.: $error\n";
-	    }
-	    CORE::warn (@_);
-	};
-	open my $in, "<:encoding(utf8)", $file or die "Can't open '$file': $!";
-	my $text;
+	open my $in, "<:raw", $file or die "Can't open '$file': $!";
+	my $text = '';
 	while (my $line = <$in>) {
 	    $text .= $line;
 	}
@@ -42,8 +34,10 @@ for my $file (@ARGV) {
 	}
 	print "$error\n";
     }
-    if ($verbose) {
-	print "'$file' is valid JSON.\n";
+    else {
+	if ($verbose) {
+	    print "'$file' is valid JSON.\n";
+	}
     }
 }
 

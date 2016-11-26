@@ -42,17 +42,23 @@ ok (valid_json ($argonauts), "Valid OK JSON");
 # Test that empty inputs result in an undefined return value, and no
 # error message.
 
-my $Q = parse_json ('');
-ok (! defined $Q, "Empty string returns undef");
-{
+eval {
+    my $Q = parse_json ('');
+};
+ok ($@, "Empty string makes error");
+ok ($@ =~ /empty input/i, "Empty input error for empty input");
+eval {
     # Switch off uninitialized value warning for this test.
     no warnings;
     my $R = parse_json (undef);
-    ok (! defined $R, "undefined value as input returns undef");
-}
+};
+ok ($@, "Empty string makes error");
+ok ($@ =~ /empty input/i, "Empty input error for empty input");
+eval {
 my $S = parse_json ('    ');
-ok (! defined $S, "whitespace as input returns undef");
-ok (! valid_json (''), "! Valid empty string");
+};
+ok ($@, "Empty string makes error");
+ok ($@ =~ /empty input/i, "Empty input error for empty input");
 
 my $n;
 eval {

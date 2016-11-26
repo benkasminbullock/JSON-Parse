@@ -56,10 +56,11 @@ L</Handling of Unicode>.
 This function converts JSON into a Perl structure, either an array
 reference, a hash reference, or a scalar.
 
-If the first argument does not contain a complete valid JSON text,
-C<parse_json> throws a fatal error ("dies"). If the first argument is
+If the first argument does not contain a complete valid JSON text, is
 the undefined value, an empty string, or a string containing only
-whitespace, C<parse_json> returns the undefined value.
+whitespace C<parse_json> throws a fatal error ("dies"). (This
+behaviour was altered from version 0.48 to 0.49. See L</JSON Parsing
+Test Suite>.)
 
 If the argument contains valid JSON, the return value is either a hash
 reference, an array reference, or a scalar. If the input JSON text is
@@ -75,7 +76,9 @@ returned:
 Otherwise a Perl scalar is returned. 
 
 The behaviour of allowing a scalar was added in version 0.32 of this
-module. This brings it into line with the new specification for JSON.
+module. This brings it into line with the new specification for
+JSON. The behaviour of disallowing empty inputs was changed in version
+0.49. This makes it conform to the L</JSON Parsing Test Suite>.
 
 The function L</parse_json_safe> offers a version of this function
 with various safety features enabled.
@@ -131,6 +134,10 @@ This cannot detect key collisions in the JSON since it does not store
 values. See L</Key collisions> for more on this module's handling of
 non-unique names in the JSON.
 
+The behaviour of disallowing empty inputs was changed in version
+0.49. This makes it conform to the L</JSON Parsing Test Suite>, and
+also makes it give identical results to L</valid_json>.
+
 =head2 parse_json_safe
 
 This is almost the same thing as L</parse_json>, but has the following
@@ -172,7 +179,9 @@ refers to the caller's line.
 =back
 
 As the name implies, this is meant to be a "safety-first" version of
-L</parse_json>.
+L</parse_json>. This function does not pass all of the tests of the
+L</JSON Parsing Test Suite>, because it creates an error for duplicate
+keys in objects, which is legal JSON. See L<t/jpts.t> for details.
 
 This function was added in version 0.38.
 
@@ -873,7 +882,7 @@ L<YAML::Syck>.
 
 =item L<Inline::JSON>
 
-Relies on L<JSON>.
+Relies on L</JSON>.
 
 =item L<Glib::JSON>
 
@@ -884,15 +893,16 @@ Linux GNOME desktop project.
 
 Part of the L<Mojolicious> standalone web framework, "pure Perl" JSON
 reader/writer. As of version 6.25 of Mojolicious, this actually
-depends on L<JSON::PP>.
+depends on L</JSON::PP>.
 
 =item L<JSON::Tiny>
 
-A fork of C<Mojo::JSON>.
+This is a fork of L</Mojo::JSON>.
 
 =item L<File::JSON::Slurper>
 
-Slurp a JSON file into a data structure, and the reverse
+Slurp a JSON file into a data structure, and the reverse. It relies on
+L</JSON::MaybeXS>.
 
 =back
 
@@ -919,7 +929,7 @@ For one-liners.
 
 =item L<App::JSON::to>
 
-Convert JSON data to other formats
+Convert JSON data to other formats.
 
 =item L<JSON::Color>
 
@@ -931,23 +941,23 @@ Configuration files in JSON
 
 =item L<JSON::String>
 
-Automatically change a JSON string when a data structure changes
+Automatically change a JSON string when a data structure changes.
 
 =item L<JSON::Builder>
 
-create JSON under memory limitations
+Create JSON under memory limitations.
 
 =item L<JSON::Pointer>
 
-Extract parts of a JSON string
+Extract parts of a JSON string.
 
 =item L<Inline::JSON>
 
-Include JSON in a Perl program
+Include JSON in a Perl program.
 
 =item L<JSON::Path>
 
-Search nested hashref/arrayref structures using JSONPath
+Search nested hashref/arrayref structures using JSONPath.
 
 =back
 
@@ -958,15 +968,17 @@ Search nested hashref/arrayref structures using JSONPath
 =item L<Test::JSON>
 
 This offers a way to compare two different JSON strings to see if they
-refer to the same object.
+refer to the same object. As of version 0.11, it relies on
+L</JSON::Any>.
 
 =item L<Test::JSON::More>
 
-JSON Test Utility
+JSON Test Utility. As of version 0.02, it relies on L</JSON>.
 
 =item L<Test::Deep::JSON>
 
-Compare JSON with L<Test::Deep>.
+Compare JSON with L<Test::Deep>. As of version 0.03, it relies on
+L</JSON>.
 
 =back
 
@@ -994,22 +1006,23 @@ These modules rely on more than one back-end module.
 
 =item L<JSON::MaybeXS>
 
-A module which combines L<Cpanel::JSON::XS>, L<JSON::XS>, and
-L<JSON::PP>.
+A module which combines L</Cpanel::JSON::XS>, L</JSON::XS>, and
+L</JSON::PP>. The original L</JSON> combines L</JSON::XS> and
+L</JSON::PP>, so this prioritizes L</Cpanel::JSON::XS>.
 
 =item L<JSON::Any>
 
-Combines L<JSON::DWIW>, L<JSON::XS> versions one and two, and
-L<JSON::Syck>.
+This module combines L</JSON::DWIW>, L</JSON::XS> versions one and
+two, and L</JSON::Syck>.
 
 =item L<JSON::XS::VersionOneAndTwo>
 
 A "combination module" which supports two different interfaces of
-L<JSON::XS>. However, JSON::XS is now onto version 3.
+L</JSON::XS>. However, JSON::XS is now onto version 3.
 
 =item L<Mojo::JSON::MaybeXS>
 
-Pulls in L<JSON::MaybeXS> instead of L<Mojo::JSON>.
+This pulls in L</JSON::MaybeXS> instead of L</Mojo::JSON>.
 
 =back
 
@@ -1108,6 +1121,8 @@ All of the functions can be exported using the tag ':all':
 
 =head1 TESTING
 
+=head2 Internal testing code
+
 The module incorporates extensive testing related to the production of
 error messages and validation of input. Some of the testing code is
 supplied with the module in the F</t/> subdirectory of the
@@ -1145,6 +1160,23 @@ MAXBYTE in F<json-common.c> to 0x80, recompiling (you can ignore the
 compiler warnings), and running F<randomjson.pl> again to get just
 ASCII random JSON things. This breaks the UTF-8 functionality of
 JSON::Parse, so please don't install that version.
+
+=head2 JSON Parsing Test Suite
+
+Version 0.48 passed all but two of the yes/no tests of the L<JSON
+Parsing Test Suite|https://github.com/nst/JSONTestSuite>; it failed
+two cases. First, L</assert_valid_json> did not mark L<a completely
+empty
+file|https://github.com/nst/JSONTestSuite/blob/master/test_parsing/n_structure_no_data.json>
+as invalid JSON, and second, L</parse_json> did not mark L<a file
+containing a single space
+character|https://github.com/nst/JSONTestSuite/blob/master/test_parsing/n_single_space.json>
+as invalid json. The tests also revealed an inconsistency between
+L</assert_valid_json> and L</valid_json>, which was reporting the
+completely empty file as invalid. Running these tests also revealed
+several bugs in the script L<validjson|/SCRIPT>. All of these errors have
+been amended in version 0.49. The JSON Parsing Test Suite tests have
+also been incorporated in the module's tests.
 
 =head1 HISTORY
 
