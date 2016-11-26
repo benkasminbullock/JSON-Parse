@@ -14,8 +14,8 @@ binmode STDERR, ":encoding(utf8)";
 
 my $script = "$Bin/../script/validjson";
 my $lib = "-I $Bin/../blib/lib -I $Bin/../blib/auto";
-my @y = <$Bin/../t/jpts/y_*>;
-my @n = <$Bin/../t/jpts/n_*>;
+my @y = <$Bin/jpts/y_*>;
+my @n = <$Bin/jpts/n_*>;
 for my $y (@y) {
     run3 ("perl $lib $script $y -v", undef, \my $out, \my $error);
     ok (! $error, "no errors");

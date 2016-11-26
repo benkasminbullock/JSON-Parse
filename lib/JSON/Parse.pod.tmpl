@@ -105,17 +105,12 @@ the file yourself using another module if you need faster performance.
     }
 
 C<valid_json> returns I<1> if its argument is valid JSON and I<0> if
-not. It also returns I<0> if the input is undefined or the empty
-string.
+not. It runs several times faster than L</parse_json>. This gain in
+speed is obtained because it discards the input data after reading it,
+rather than storing it into Perl variables.
 
-This is a high-speed validator which runs between roughly two and
-eight times faster than L</parse_json>. This speed gain is obtained by
-discarding inputs after reading them rather than storing them into
-Perl variables.
-
-C<valid_json> does not supply the actual errors which caused
-invalidity. Use L</assert_valid_json> to get error messages when the
-JSON is invalid.
+This does not supply the actual errors which caused invalidity. Use
+L</assert_valid_json> to get error messages when the JSON is invalid.
 
 This cannot detect key collisions in the JSON since it does not store
 values. See L</Key collisions> for more on this module's handling of
@@ -126,7 +121,7 @@ non-unique names in the JSON.
 [% example("assert") %]
 
 This is the underlying function for L</valid_json>. It runs at the
-same high speed, but throws an error if the JSON is wrong, rather than
+same speed, but it throws an error if the JSON is wrong, rather than
 returning 1 or 0. See L</DIAGNOSTICS> for the error format, which is
 identical to L</parse_json>.
 
@@ -1174,9 +1169,19 @@ character|https://github.com/nst/JSONTestSuite/blob/master/test_parsing/n_single
 as invalid json. The tests also revealed an inconsistency between
 L</assert_valid_json> and L</valid_json>, which was reporting the
 completely empty file as invalid. Running these tests also revealed
-several bugs in the script L<validjson|/SCRIPT>. All of these errors have
-been amended in version 0.49. The JSON Parsing Test Suite tests have
-also been incorporated in the module's tests.
+several bugs in the script L<validjson|/SCRIPT>. All of these errors
+were amended in version 0.49. 
+
+I attempted to include the JSON Parsing Test Suite tests in the
+module's tests, but some of the files (like 100,000 open arrays)
+actually L<cause crashes on some versions of Perl on some
+machines|http://fast-matrix.cpantesters.org/?dist=JSON-Parse%200.48_01>,
+so they're not really suitable for distribution. The tests are found,
+however, in the repository under F<xt/jpts.t> and the subdirectory
+F<xt/jpts/>, so please copy that and try it. There is also a test for
+the L<validjson|/SCRIPT> script as F<xt/validjson.t> in the
+repository. These are author tests, so you may need to install extra
+modules to run them.
 
 =head1 HISTORY
 
@@ -1215,6 +1220,17 @@ After starting JSON::Create, I realised that some edge case handling
 in JSON::Parse needed to be improved. This resulted in the addition of
 the hash collision and literal-overriding methods introduced
 in versions 0.37 and 0.38 of this module.
+
+Version 0.42 fixed a very serious bug where long strings could
+overflow an internal buffer, and could cause a segmentation fault.
+
+Version 0.48 removed an experimental feature called
+C<$json_diagnostics> which would produce errors in JSON, and replaced
+it with the current L</diagnostics_hash> method, for the benefit of
+L</JSON::Repair>.
+
+Version 0.49 brought the module into conformance with the L</JSON
+Parsing Test Suite>.
 
 =head1 ACKNOWLEDGEMENTS
 

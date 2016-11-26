@@ -74,7 +74,7 @@ sub read_errors
 	while ($d =~ /(!(.*?)!)/) {
 	    my $text = $1;
 	    my $example = $2;
-	    die "No example" if !$example;
+#	    die "No example" if !$example;
 	    my $expanded;
 	    my $test;
 	    if ($error->{error} =~ /not unique/) {

@@ -1,6 +1,6 @@
-0.48_01 2016-11-26
+0.48_02 2016-11-26
 
-* The behaviour on empty inputs (undefined, whitespace-only) was altered
+* Behaviour for undefined, whitespace-only inputs was altered
 * JSON Parsing Test Suite incorporated into module tests
 
 0.48 2016-11-20
