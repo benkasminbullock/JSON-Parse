@@ -94,7 +94,7 @@ error: empty input
 This error occurs for an input which is an empty (no length or
 whitespace only) or an undefined value. Prior to version 0.49, this
 error was produced by L</assert_valid_json> only, but it is now also
-produced by L</parse_json>. See L<JSON Parsing Test Suite>.
+produced by L</parse_json>. See L</JSON Parsing Test Suite>.
 
 %%
 

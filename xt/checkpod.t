@@ -16,6 +16,11 @@ for my $filepath ("$Bin/../lib/JSON/Parse.pod",
     ok (@$errors == 0, "No errors");
     my $linkerrors = pod_link_checker ($filepath);
     ok (@$linkerrors == 0, "No link errors");
+    if (@$linkerrors) {
+	for my $le (@$linkerrors) {
+	    note ($le);
+	}
+    }
 }
 
 done_testing ();

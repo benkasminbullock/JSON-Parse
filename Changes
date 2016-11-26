@@ -1,3 +1,8 @@
+0.48_01 2016-11-26
+
+* The behaviour on empty inputs (undefined, whitespace-only) was altered
+* JSON Parsing Test Suite incorporated into module tests
+
 0.48 2016-11-20
 
 * Add "check" method for the benefit of JSON::Repair

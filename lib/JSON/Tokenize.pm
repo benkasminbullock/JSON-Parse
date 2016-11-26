@@ -9,5 +9,5 @@ use JSON::Parse;
 our @EXPORT_OK = qw/tokenize_json tokenize_start tokenize_next tokenize_start tokenize_end tokenize_type tokenize_child/;
 our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
 use Carp;
-our $VERSION='0.48';
+our $VERSION = '0.48_01';
 1;
