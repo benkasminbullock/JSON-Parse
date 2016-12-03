@@ -5,9 +5,8 @@ error: unexpected character
 
 An unexpected character (byte) was encountered in the input. For
 example, when looking at the beginning of a string supposedly
-containing JSON, there are six possible characters, the four JSON
-whitespace characters plus "[" and "{". If the module encounters a
-plus sign, it will give an error like this:
+containing JSON, if the module encounters a plus sign, it will give an
+error like this:
 
 !+!
 
