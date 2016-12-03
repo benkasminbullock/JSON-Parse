@@ -40,7 +40,7 @@ $vars{errors} = read_errors ($tt, \%vars);
 # Names of the input and output files containing the documentation.
 
 for my $mod (qw/Parse Tokenize/) {
-my $version = <<EOF;
+    my $version = <<EOF;
 =head1 VERSION
 
 This documents version [% version %] of JSON::$mod corresponding to
@@ -49,14 +49,14 @@ L<git commit [% commit.commit
 commit.commit %]> released on [% commit.date %].
 
 EOF
-$tt->process (\$version, \%vars, \my $tt_version, binmode => ':encoding(utf8)')
-    or die $tt->error () . '';
-$vars{version_text} = $tt_version;
-my $pod = "$mod.pod";
-my $input = "$Bin/lib/JSON/$pod.tmpl";
-my $output = "$Bin/lib/JSON/$pod";
-$tt->process ($input, \%vars, $output, binmode => 'utf8')
-    or die '' . $tt->error ();
+    $tt->process (\$version, \%vars, \my $tt_version, binmode => ':encoding(utf8)')
+        or die $tt->error () . '';
+    $vars{version_text} = $tt_version;
+    my $pod = "$mod.pod";
+    my $input = "$Bin/lib/JSON/$pod.tmpl";
+    my $output = "$Bin/lib/JSON/$pod";
+    $tt->process ($input, \%vars, $output, binmode => 'utf8')
+        or die '' . $tt->error ();
 }
 exit;
 
