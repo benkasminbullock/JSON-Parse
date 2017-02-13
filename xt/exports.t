@@ -6,7 +6,7 @@ use warnings;
 use strict;
 use JSON::Parse;
 use Pod::Select;
-use FindBin;
+use FindBin '$Bin';
 use Test::More;
 
 # Find out what is really exported from the module by poking our nose
@@ -18,7 +18,7 @@ my %reallyexports;
 
 # The Master Pod File:
 
-my $pod = "$FindBin::Bin/../lib/JSON/Parse.pod";
+my $pod = "$Bin/../lib/JSON/Parse.pod";
 die "no $pod found" if ! -f $pod;
 
 # Pod text goes in here.

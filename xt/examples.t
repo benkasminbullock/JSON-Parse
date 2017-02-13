@@ -2,16 +2,16 @@ use warnings;
 use strict;
 use Test::More;
 use Deploy qw/file_slurp do_system/;
-use FindBin;
-my $efile = "$FindBin::Bin/errors";
-my $ofile = "$FindBin::Bin/output";
-my @examples = <$FindBin::Bin/../examples/*.pl>;
+use FindBin '$Bin';
+my $efile = "$Bin/errors";
+my $ofile = "$Bin/output";
+my @examples = <$Bin/../examples/*.pl>;
 rmfiles ($efile, $ofile);
 for my $example (@examples) {
     my $perl = file_slurp ($example);
     if ($perl =~ /#\s*prints\s*"([^"]+)"/i) {
 	my $prints = $1;
-	do_system ("perl -I $FindBin::Bin/../blib/lib -I $FindBin::Bin/../blib/arch $example > $ofile 2> $efile");
+	do_system ("perl -I $Bin/../blib/lib -I $Bin/../blib/arch $example > $ofile 2> $efile");
 	ok (-f $ofile, "Made $ofile");
 	ok (! -s $efile, "Didn't make $efile");
 	if (-s $efile) {

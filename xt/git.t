@@ -9,5 +9,6 @@ use Perl::Build::Git ':all';
 for my $dir ($Bin, '/home/ben/projects/unicode-c') {
     ok (no_uncommited_changes ($dir), "$dir: no uncommited changes");
     ok (branch_is_master ($dir), "$dir: branch is master");
+    ok (up_to_date ($dir), "no unpushed changes");
 }
 done_testing ();
