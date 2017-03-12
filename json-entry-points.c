@@ -141,8 +141,6 @@ json_parse_run (json_parse_t * parser, SV * json)
 
     check_end (parser);
 
- noendcheck:
-
     return r;
 }
 
