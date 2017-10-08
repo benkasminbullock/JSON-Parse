@@ -75,4 +75,13 @@ Get the type of the token as a string. The possible return values are
     "unicode escape"
 
 
+=head2 tokenize_text
+
+    my $text = tokenize_text ($json, $token);
+
+Given a token C<$token> from this parsing and the JSON in C<$json>,
+return the text which corresponds to the token. This is a convenience
+function written in Perl which uses L</tokenize_start> and
+L</tokenize_end> and substr to get the string from C<$json>.
+
 [% INCLUDE "author" %]

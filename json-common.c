@@ -1223,6 +1223,7 @@ struct json_token {
     unsigned int end;
     json_token_type_t type;
     unsigned int parent;
+    unsigned blessed : 1;
 };
 
 #define JSON_TOKEN_PARENT_INVALID 0

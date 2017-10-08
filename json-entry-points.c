@@ -298,14 +298,19 @@ static void
 tokenize_free (json_token_t * token)
 {
     json_token_t * next;
-
     next = token->child;
     if (next) {
-	tokenize_free (next);
+	if (! next->blessed) {
+	    tokenize_free (next);
+	}
+	token->child = 0;
     }
     next = token->next;
     if (next) {
-	tokenize_free (next);
+	if (! next->blessed) {
+	    tokenize_free (next);
+	}
+	token->next = 0;
     }
     Safefree (token);
 }

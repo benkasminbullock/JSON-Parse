@@ -4,6 +4,7 @@ our @EXPORT_OK = qw/json_no_space/;
 use warnings;
 use strict;
 use Carp;
+our $VERSION = '0.50';
 
 use JSON::Tokenize 'tokenize_json';
 
@@ -16,20 +17,20 @@ sub json_no_space
 }
 
 my %values = (
-array_indent => '    ',
-object_indent => '    ',
-before_comma => '',
-after_comma => "\n",
-before_colon => '',
-after_colon => ' ',
-before_object_start => '',
-after_object_start => "\n",
-before_array_start => '',
-after_array_start => "\n",
-before_literal => '',
-after_literal => '',
-before_number => '',
-after_number => '',
+    array_indent => '    ',
+    object_indent => '    ',
+    before_comma => '',
+    after_comma => "\n",
+    before_colon => '',
+    after_colon => ' ',
+    before_object_start => '',
+    after_object_start => "\n",
+    before_array_start => '',
+    after_array_start => "\n",
+    before_literal => '',
+    after_literal => '',
+    before_number => '',
+    after_number => '',
 );
 
 # my %whitespace = (
@@ -60,6 +61,8 @@ after_number => '',
 sub new
 {
 my ($class, %options) = @_;
+return bless {}, $class;
+}
 
 
 1;
