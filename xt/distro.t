@@ -2,7 +2,7 @@ use warnings;
 use strict;
 use Test::More;
 use FindBin '$Bin';
-use Perl::Build qw/get_version/;
+use Perl::Build qw/get_info $badfiles/;
 
 # Check that the OPTIMIZE flag is not set in Makefile.PL. This causes
 # errors on various other people's systems when compiling.
@@ -20,19 +20,32 @@ close $in or die $!;
 # were not included up to version 0.45 due to regex errors in
 # MANIFEST.SKIP).
 
-my $version = get_version (base => "$Bin/..");
-my $distrofile = "$Bin/../JSON-Parse-$version.tar.gz";
+my $info = get_info (base => "$Bin/..");
+my $name = $info->{name};
+my $version = $info->{version};
+my $distrofile = "$Bin/../$name-$version.tar.gz";
 if (! -f $distrofile) {
     die "No $distrofile";
 }
 my @tgz = `tar tfz $distrofile`;
 my $has_collide_pl;
+my %badfiles;
+my %files;
 for (@tgz) {
     if (/collide\.pl/) {
 	$has_collide_pl = 1;
     }
+    if (/$badfiles/) {
+	$files{$1} = 1;
+	$badfiles{$1} = 1;
+    }
 }
 ok ($has_collide_pl, "collide.pl example is in tar file");
+ok (! $files{".tmpl"}, "no templates in distro");
+ok (! $files{"-out.txt"}, "no out.txt in distro");
+ok (! $files{"make-pod.pl"}, "no make-pod.pl in distro");
+ok (! $files{"build.pl"}, "no build.pl in distro");
+ok (keys %badfiles == 0, "no bad files");
 
 
 done_testing ();

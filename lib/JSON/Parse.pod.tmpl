@@ -11,7 +11,7 @@ produces output
 
 [% INCLUDE $out | xtidy %]
 
-(This example is included as L<F<[% pl %]>|https://api.metacpan.org/source/BKB/JSON-Parse-[% version %]/examples/[% pl %]> in the distribution.)
+(This example is included as L<F<[% pl %]>|https://fastapi.metacpan.org/source/BKB/JSON-Parse-[% version %]/examples/[% pl %]> in the distribution.)
 [% END %]
 =pod
 
@@ -1059,31 +1059,33 @@ These modules extend JSON with comments and other things.
 
 =over
 
-=item L<JSON::XS::Sugar>
+=item L<App::JSON::Tools>
 
-=item L<JSON::ON>
+=item L<App::JSONPretty>
 
 =item L<Eve::Json>
+
+=item L<Haineko::JSON>
 
 =item L<JBD::JSON>
 
 =item L<JSON::JS>
 
-=item L<Silki::JSON>
+=item L<JSON::Meth>
 
-=item L<Haineko::JSON>
-
-=item L<App::JSON::Tools>
-
-=item L<JSON::XS::ByteString>
-
-=item L<JSON::Streaming::Reader> and L<JSON::Streaming::Writer>
+=item L<JSON::ON>
 
 =item L<JSON::SL>
 
-=item L<JSON::Meth>
+=item L<JSON::Streaming::Reader> and L<JSON::Streaming::Writer>
 
-=item L<App::JSONPretty>
+=item L<JSON::XS::ByteString>
+
+=item L<JSON::XS::Sugar>
+
+=item L<Silki::JSON>
+
+=item L<Text::JSON::Nibble>
 
 =back
 
@@ -1118,6 +1120,14 @@ The CPAN testers results are at the usual place.
 
 The ActiveState test results are at
 L<http://code.activestate.com/ppm/JSON-Parse/>.
+
+=head1 DEPENDENCIES
+
+=over
+
+=item L<Carp>
+
+=back
 
 =head1 EXPORTS
 

@@ -788,7 +788,8 @@ parse_hex_bytes (json_parse_t * parser, unsigned char * p)
     failbadinput (parser)
 
 static INLINE unsigned char *
-do_unicode_escape (json_parse_t * parser, unsigned char * p, unsigned char ** b_ptr)
+do_unicode_escape (json_parse_t * parser, unsigned char * p,
+		   unsigned char ** b_ptr)
 {
     int unicode;
     unsigned int plus;
@@ -797,7 +798,8 @@ do_unicode_escape (json_parse_t * parser, unsigned char * p, unsigned char ** b_
     unicode = parse_hex_bytes (parser, p);
     p += 4;
     plus = ucs2_to_utf8 (unicode, *b_ptr);
-    if (plus == UNICODE_BAD_INPUT) {
+    if (plus == UTF8_BAD_LEADING_BYTE ||
+	plus == UTF8_BAD_CONTINUATION_BYTE) {
 	failbug (__FILE__, __LINE__, parser,
 		 "Failed to parse unicode input %.4s", start);
     }

@@ -3,13 +3,18 @@
 #include "XSUB.h"
 
 /* TESTRANDOM should never be defined in the code released to
-   CPAN. This is tested in "xt/testrandom-invalid.t". */
+   CPAN. That this is not defined is tested in
+   "xt/testrandom-invalid.t". */
 
 //#define TESTRANDOM
 
 #ifdef TESTRANDOM
 #include <setjmp.h>
 #endif /* def TESTRANDOM */
+
+/* A structure representing the "null" in JSON. Although we're now
+   using PL_sv_yes and PL_sv_no, we don't use PL_sv_undef, because
+   perldoc perlguts says it's a bad idea. */
 
 static SV * json_null;
 
