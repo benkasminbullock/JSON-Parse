@@ -298,6 +298,7 @@ static void
 tokenize_free (json_token_t * token)
 {
     json_token_t * next;
+//    static int nfree;
     next = token->child;
     if (next) {
 	if (! next->blessed) {
@@ -312,6 +313,8 @@ tokenize_free (json_token_t * token)
 	}
 	token->next = 0;
     }
+//    nfree++;
+//    fprintf (stderr, "Free %d %p\n", nfree, token);
     Safefree (token);
 }
 

@@ -16,22 +16,22 @@ sub json_no_space
     return $nospace;
 }
 
-my %values = (
-    array_indent => '    ',
-    object_indent => '    ',
-    before_comma => '',
-    after_comma => "\n",
-    before_colon => '',
-    after_colon => ' ',
-    before_object_start => '',
-    after_object_start => "\n",
-    before_array_start => '',
-    after_array_start => "\n",
-    before_literal => '',
-    after_literal => '',
-    before_number => '',
-    after_number => '',
-);
+# my %values = (
+#     array_indent => '    ',
+#     object_indent => '    ',
+#     before_comma => '',
+#     after_comma => "\n",
+#     before_colon => '',
+#     after_colon => ' ',
+#     before_object_start => '',
+#     after_object_start => "\n",
+#     before_array_start => '',
+#     after_array_start => "\n",
+#     before_literal => '',
+#     after_literal => '',
+#     before_number => '',
+#     after_number => '',
+# );
 
 # my %whitespace = (
 # object_indent => "\t",
