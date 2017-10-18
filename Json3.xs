@@ -1,5 +1,6 @@
 #include "EXTERN.h"
 #include "perl.h"
+#include <stdint.h>
 #include "XSUB.h"
 
 /* TESTRANDOM should never be defined in the code released to
