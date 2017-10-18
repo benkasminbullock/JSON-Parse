@@ -1,3 +1,7 @@
+0.51 2017-10-18
+
+* Removed unnecessary test
+
 0.50 2017-10-18
 
 * tokenize_text method added to JSON::Tokenize
