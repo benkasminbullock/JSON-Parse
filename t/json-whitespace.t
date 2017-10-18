@@ -9,9 +9,16 @@ binmode $builder->failure_output, ":utf8";
 binmode $builder->todo_output,    ":utf8";
 binmode STDOUT, ":encoding(utf8)";
 binmode STDERR, ":encoding(utf8)";
-use JSON::Whitespace 'json_no_space';
+
+BEGIN {
+    eval {
+		require JSON::Whitespace;
+	} or do {
+        plan skip_all => "I can't find JSON::Whitespace";
+    };
+}
 
 my $json = '  { "key" : "value", "monkeys"  : 999 }  ';
-my $out = json_no_space ($json);
+my $out = JSON::Whitespace::json_no_space ($json);
 is ($out, '{"key":"value","monkeys":999}', "Correctly stripped whitespace");
 done_testing ();
