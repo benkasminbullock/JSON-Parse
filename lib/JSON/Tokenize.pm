@@ -1,5 +1,3 @@
-# This does only one job, exporting the functions below.
-
 package JSON::Tokenize;
 use warnings;
 use strict;
@@ -30,8 +28,8 @@ sub tokenize_text
 	utf8::decode ($text);
     }
     else {
-	 $text = substr ($input, $start, $length);
-     }
+	$text = substr ($input, $start, $length);
+    }
     return $text;
 }
 
