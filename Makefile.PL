@@ -54,4 +54,6 @@ WriteMakefile (
 #    OPTIMIZE => '-Wall -O',
 # This achieves only small speedups with GCC.
 #    OPTIMIZE => '-O3',
+
+#    CC => 'gcc',
 );
