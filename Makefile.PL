@@ -2,10 +2,6 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
-if ($^O =~ /solaris|sunos/i) {
-    exit;
-}
-
 my $pm = 'lib/JSON/Parse.pm';
 my $pod = 'lib/JSON/Parse.pod';
 my $github = 'github.com/benkasminbullock/JSON-Parse';
