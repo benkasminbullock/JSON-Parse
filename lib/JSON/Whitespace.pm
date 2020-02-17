@@ -4,7 +4,7 @@ our @EXPORT_OK = qw/json_no_space/;
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.55_02';
+our $VERSION = '0.56';
 
 use JSON::Tokenize 'tokenize_json';
 
