@@ -1235,9 +1235,10 @@ limit on the depth of parsing. See L</set_max_depth> and
 L</get_max_depth>.
 
 Another issue raised by the above reddit post is that JSON::Parse
-rejects UTF-8 representing Unicode U+FFFF and U+10FFFF. These are
-non-character code points, and JSON::Parse does indeed reject them,
-and this is by design. This parser only accepts valid UTF-8 as input.
+rejects various erroneous UTF-8 inputs, for example representing
+Unicode U+FFFF and U+10FFFF. These are non-character code points, and
+JSON::Parse does indeed reject them, and this is by design. This
+parser only accepts valid UTF-8 as input.
 
 =head1 HISTORY
 

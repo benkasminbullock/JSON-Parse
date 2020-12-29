@@ -11,12 +11,17 @@ binmode $builder->failure_output, ":utf8";
 binmode $builder->todo_output,    ":utf8";
 binmode STDOUT, ":encoding(utf8)";
 binmode STDERR, ":encoding(utf8)";
+use lib "$Bin";
+use JPXT;
 
 my $script = "$Bin/../script/validjson";
 my $lib = "-I $Bin/../blib/lib -I $Bin/../blib/auto";
 my @y = <$Bin/jpts/y_*>;
 my @n = <$Bin/jpts/n_*>;
 for my $y (@y) {
+    if (daft_test ($y)) {
+	next;
+    }
     run3 ("perl $lib $script $y -v", undef, \my $out, \my $error);
     ok (! $error, "no errors");
     if ($error) {

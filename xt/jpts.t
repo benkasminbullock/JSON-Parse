@@ -12,6 +12,8 @@ binmode $builder->todo_output,    ":utf8";
 binmode STDOUT, ":encoding(utf8)";
 binmode STDERR, ":encoding(utf8)";
 use JSON::Parse ':all';
+use lib "$Bin";
+use JPXT;
 
 my $dir = "$Bin/jpts";
 my @y = <$dir/y_*>;
@@ -24,6 +26,9 @@ $SIG{__WARN__} = sub {
 };
 
 for my $y (@y) {
+    if (daft_test ($y)) {
+	next;
+    }
     my $text = get_text ($y);
     eval {
 	assert_valid_json ($text);

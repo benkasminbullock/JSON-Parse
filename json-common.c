@@ -327,7 +327,7 @@ json_parse_init (json_parse_t * parser)
     PRINT_DEPTH;							\
     parser->depth++;							\
     if (parser->depth > parser->max_depth) {				\
-	croak ("Too many [ or {, maximum is %d",			\
+	croak ("error: too many [ or {, maximum is %d",			\
 	       parser->max_depth);					\
     }
 
