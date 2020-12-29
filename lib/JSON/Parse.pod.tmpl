@@ -438,23 +438,6 @@ literals>.
 These methods only work on an object created with L</new>; they do not
 affect the behaviour of L</parse_json> or L</parse_json_safe>.
 
-=head2 new
-
-    my $jp = JSON::Parse->new ();
-
-Create a new JSON::Parse object.
-
-This method was added in version 0.38.
-
-=head2 run
-
-    my $out = $jp->run ($json);
-
-This does the same thing as L</parse_json>, except its behaviour can
-be modified using the methods below.
-
-This method was added in version 0.38.
-
 =head2 check
 
     eval {
@@ -488,20 +471,6 @@ If the user also sets user-defined literals with L</set_true>,
 L</set_false> and L</set_null>, that takes precedence over this.
 
 This method was added in version 0.38.
-
-=head2 warn_only
-
-    $jp->warn_only (1);
-
-Warn, don't die, on error. Failed parsing returns the undefined value,
-C<undef>, and prints a warning.
-
-This can be switched off again using any false value:
-
-    $jp->warn_only ('');
-
-This method was documented in version 0.38, but only implemented in
-version 0.41.
 
 =head2 detect_collisions
 
@@ -537,6 +506,52 @@ which returns the usual error.
 This requires Perl version 5.14 or later.
 
 This method was added in version 0.46.
+
+=head2 get_max_depth
+
+   my $max_depth = $jp->get_max_depth ();
+
+This returns the maximum nesting depth of objects or arrays in the
+input JSON. The default value is 10,000.
+
+=head2 new
+
+    my $jp = JSON::Parse->new ();
+
+Create a new JSON::Parse object.
+
+This method was added in version 0.38.
+
+=head2 run
+
+    my $out = $jp->run ($json);
+
+This does the same thing as L</parse_json>, except its behaviour can
+be modified using the methods below.
+
+This method was added in version 0.38.
+
+
+=head2 set_max_depth
+
+    $jp->set_max_depth (42);
+
+Set the maximum nesting depth of objects or arrays in the input
+JSON. The default value is 10,000.
+
+=head2 warn_only
+
+    $jp->warn_only (1);
+
+Warn, don't die, on error. Failed parsing returns the undefined value,
+C<undef>, and prints a warning.
+
+This can be switched off again using any false value:
+
+    $jp->warn_only ('');
+
+This method was documented in version 0.38, but only implemented in
+version 0.41.
 
 =head2 Methods for manipulating literals
 
@@ -1210,6 +1225,19 @@ L<validjson|/SCRIPT> script as [% repo("xt/validjson.t") %] in the
 repository. These are author tests, so you may need to install extra
 modules to run them. These author tests are run automatically before
 any code is uploaded to CPAN.
+
+According to L<this post on
+reddit|https://www.reddit.com/r/perl/comments/ah29uh/updated_json_parsers_test_suite/>,
+JSON::Parse was crashing on one of the tests. This turned out to be a
+stack overflow error due to the very large nesting in one file. As a
+response, in version 0.58 of JSON::Parse we've added an arbitrary
+limit on the depth of parsing. See L</set_max_depth> and
+L</get_max_depth>.
+
+Another issue raised by the above reddit post is that JSON::Parse
+rejects UTF-8 representing Unicode U+FFFF and U+10FFFF. These are
+non-character code points, and JSON::Parse does indeed reject them,
+and this is by design. This parser only accepts valid UTF-8 as input.
 
 =head1 HISTORY
 

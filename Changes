@@ -1,3 +1,8 @@
+0.57_01 2020-12-29
+
+* Protect against stack overflows by having maximum parsing depth
+ -- set_max_depth, get_max_depth methods added
+
 0.57 2020-07-09
 
 * Bug fix for long strings
