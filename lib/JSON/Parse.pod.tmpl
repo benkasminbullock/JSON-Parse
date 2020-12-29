@@ -709,6 +709,10 @@ This restriction to UTF-8 applies regardless of whether Perl thinks
 that the input string is a character string or a byte
 string. Non-UTF-8 input will cause an L</Unexpected character> error.
 
+JSON::Parse does not accept non-characters or parts of surrogate pairs
+as UTF-8 bytes. See also the discussion under L</JSON Parsing Test
+Suite>.
+
 =back
 
 =head1 DIAGNOSTICS
@@ -1199,46 +1203,22 @@ JSON::Parse, so please don't install that version.
 
 =head2 JSON Parsing Test Suite
 
-Version 0.48 passed all but two of the yes/no tests of the L<JSON
-Parsing Test Suite|https://github.com/nst/JSONTestSuite>. The first
-failure was that L</assert_valid_json> did not mark L<a completely
-empty
-file|https://github.com/nst/JSONTestSuite/blob/master/test_parsing/n_structure_no_data.json>
-as invalid JSON, and the second was that L</parse_json> did not mark
-L<a file containing a single space
-character|https://github.com/nst/JSONTestSuite/blob/master/test_parsing/n_single_space.json>
-as invalid json. The tests also revealed an inconsistency between
-L</assert_valid_json> and L</valid_json>, which was reporting the
-completely empty file as invalid. Running these tests also revealed
-several bugs in the script L<validjson|/SCRIPT>. All of these errors
-were amended in version 0.49.
+JSON::Parse version 0.58 passes most of the JSON Parsing Test Suite,
+with the exception that JSON::Parse rejects various erroneous UTF-8
+inputs, for example JSON::Parse will throw an error for non-character
+code points like Unicode U+FFFF and U+10FFFF. This parser only accepts
+valid UTF-8 as input. See L</UTF-8 only>. It would be a disservice to
+users to allow bytes containing useless fragments such as incomplete
+parts of surrogate pairs, or invalid characters, just because the JSON
+specification doesn't actually explicitly rule out rejecting these
+kinds of garbage inputs. Please see the function C<daft_test> in the
+file F<xt/JPXT.pm> for exactly which of these elements of the test
+suite we do not comply with.
 
-I attempted to include the JSON Parsing Test Suite tests in the
-module's tests, but some of the files (like 100,000 open arrays)
-actually L<cause crashes on some versions of Perl on some
-machines|http://fast-matrix.cpantesters.org/?dist=JSON-Parse%200.48_01>,
-so they're not really suitable for distribution. The tests are found,
-however, in the repository under [% repo("xt/jpts.t") %] and the
-subdirectory [% repo("xt/jpts") %], so if you are interested in the
-results, please copy that and try it. There is also a test for the
-L<validjson|/SCRIPT> script as [% repo("xt/validjson.t") %] in the
-repository. These are author tests, so you may need to install extra
-modules to run them. These author tests are run automatically before
-any code is uploaded to CPAN.
-
-According to L<this post on
-reddit|https://www.reddit.com/r/perl/comments/ah29uh/updated_json_parsers_test_suite/>,
-JSON::Parse was crashing on one of the tests. This turned out to be a
-stack overflow error due to the very large nesting in one file. As a
-response, in version 0.58 of JSON::Parse we've added an arbitrary
-limit on the depth of parsing. See L</set_max_depth> and
-L</get_max_depth>.
-
-Another issue raised by the above reddit post is that JSON::Parse
-rejects various erroneous UTF-8 inputs, for example representing
-Unicode U+FFFF and U+10FFFF. These are non-character code points, and
-JSON::Parse does indeed reject them, and this is by design. This
-parser only accepts valid UTF-8 as input.
+JSON::Parse version 0.58 also introduced L</get_max_depth> and
+L</set_max_depth> to prevent the stack overflow errors caused by some
+very deeply nested inputs such as those of the JSON Parsing Test
+Suite.
 
 =head1 HISTORY
 
