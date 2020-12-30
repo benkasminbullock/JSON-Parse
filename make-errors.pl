@@ -18,9 +18,9 @@ my @labels;
 
 my $out = "$Bin/errors.c";
 if (-f $out) {
-    chmod 0644, $out or die $!;
+    chmod 0644, $out or die "chmod $out failed: $!";
 }
-open my $o, ">", $out or die $!;
+open my $o, ">", $out or die "open $out failed: $!";
 for my $e (@e) {
     my $error = $e->{error};
     if ($error) {
@@ -161,6 +161,6 @@ for my $i (0..$#arrays) {
 }
 print $o "};\n";
 
-close $o or die $!;
-chmod 0444, $out or die $!;
+close $o or die "close $o failed: $!";
+chmod 0444, $out or die "chmod $out failed: $!";
 exit;

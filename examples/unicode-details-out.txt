@@ -1,0 +1,5 @@
+JSON::Parse gives this: かあ
+Perl's output is like this: ãあ
+JSON::Parse did something like this: かあ
+JSON::Parse: かあ
+Native Perl: かあ

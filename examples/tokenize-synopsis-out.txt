@@ -1,0 +1,9 @@
+>>{"tuttie":["fruity", true, 100]}<< has type object
+   >>"tuttie"<< has type string
+   >>:<< has type colon
+   >>["fruity", true, 100]<< has type array
+      >>"fruity"<< has type string
+      >>,<< has type comma
+      >>true<< has type literal
+      >>,<< has type comma
+      >>100<< has type number

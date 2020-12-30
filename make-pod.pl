@@ -7,6 +7,7 @@ use lib 'blib/arch';
 use lib 'blib/lib';
 use JSON::Parse 'assert_valid_json';
 use Table::Readable 'read_table';
+use lib "$Bin/copied/lib";
 use Perl::Build::Pod ':all';
 use Perl::Build qw/get_version get_commit/;
 

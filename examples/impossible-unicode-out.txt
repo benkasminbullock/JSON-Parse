@@ -1,0 +1,2 @@
+Wide character in print at /usr/home/ben/projects/Json3/examples/impossible-unicode.pl line 8.
+あ

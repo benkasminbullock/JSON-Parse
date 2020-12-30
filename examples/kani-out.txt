@@ -1,0 +1,1 @@
+It's marked as a character string

@@ -1,21 +1,17 @@
 # Generated from Makefile.PL
 Makefile
 # Ignore distribution files.
-Json3-/
+JSON-Parse-[0-9]*
 *.tar.gz
 # Ignore outputs of XS compilation.
-Json3.c
-Json3.bs
-
-lib/JSON/Parse.pod
 Parse.bs
 Parse.c
+# POD file is generated
+lib/JSON/Parse.pod
 
 MANIFEST
 README
 makeitfile
-unicode.[ch]
-errors.c
+#unicode.[ch]
 
 random-test
-JSON-Parse-[0-9]*

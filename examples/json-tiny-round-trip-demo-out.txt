@@ -1,0 +1,24 @@
+First do a round-trip of our modules:
+
+{"hendrix":false,"clapton":true,"fripp":false,"bruce":true}
+
+Now do a round-trip of JSON::Tiny:
+
+{"bruce":true,"clapton":true,"fripp":false,"hendrix":false}
+
+First, incompatible mode:
+
+tiny(parse): {"bruce":1,"clapton":1,"fripp":"","hendrix":""}
+create(tiny): {"fripp":0,"bruce":1,"clapton":1,"hendrix":0}
+
+Compatibility with JSON::Parse:
+
+tiny(parse):{"bruce":true,"clapton":true,"fripp":false,"hendrix":false}
+
+Compatibility with JSON::Create:
+
+create(tiny):{"hendrix":false,"fripp":false,"bruce":true,"clapton":true}
+
+JSON::Parse and JSON::Create are still compatible too:
+
+{"fripp":false,"bruce":true,"clapton":true,"hendrix":false}
