@@ -248,7 +248,7 @@ format. To ensure that invalid inputs are never upgraded, JSON::Parse
 checks each input byte to make sure that it forms UTF-8. See also
 L</UTF-8 only>. Doing things this way, rather than the way that Perl
 does it, was one of the original motivations for writing this
-module. See also L</HISTORY>.
+module.
 
 Surrogate pairs in the form C<\uD834\uDD1E> are also handled. If the
 second half of the surrogate pair is missing, an L</Unexpected
@@ -744,7 +744,7 @@ The following error messages are produced:
 
 [% FOR error IN errors %]
 [% IF error.error != "invalid" %]
-=item2 [% error.error %]
+=item [% error.error %]
 
 [% error.description %]
 
@@ -840,12 +840,31 @@ JSON is specified in L<RFC 8259 "The JavaScript Object Notation (JSON) Data Inte
 L<https://json.org> is the website for JSON, authored by Douglas
 Crockford.
 
+=back
+
+=head2 Other CPAN modules for parsing and producing JSON
+
+Modules which we recommend are marked with 👍. Deprecated modules and
+modules which are definitely buggy (bug reports/pull requests ignored)
+and abandoned (no releases for several years) are marked with 👎
+and/or 🐛. Modules we can't work out are marked with 😕.
+
+=over
+
+=item Modules by the same author
+
+=over
+
 =item JSON::Create
 
-L<JSON::Create> is a companion module to JSON::Parse by the same
-author. As of version 0.08, I'm using it everywhere, but it should
-still be considered to be in a testing stage. Please feel free to try
-it out.
+👍 L<JSON::Create> is a companion module to JSON::Parse by the same
+author.
+
+=item JSON::Repair
+
+L<JSON::Repair> is an example module which demonstrates using
+JSON::Parse to apply some kinds of heuristics to repair "relaxed JSON"
+or otherwise broken JSON into compliant JSON.
 
 =item JSON::Tokenize
 
@@ -854,25 +873,42 @@ which reduces a JSON string to tokens. This makes the JSON::Parse
 tokenizer available to people who want to write their own JSON
 parsers.
 
-=item JSON::Repair
-
-L<JSON::Repair> is an example module which demonstrates using
-JSON::Parse to apply some kinds of heuristics to repair "relaxed JSON"
-or otherwise broken JSON into compliant JSON.
-
 =back
-
-=head2 Other CPAN modules for parsing and producing JSON
-
-=over
 
 =item Reading and writing JSON
 
 =over
 
+=item L<Cpanel::JSON::XS>
+
+This is a fork of L<JSON::XS> related to a disagreement about how to
+report bugs. Please see the module for details.
+
+=item L<File::JSON::Slurper>
+
+Slurp a JSON file into a data structure, and the reverse. It relies on
+L</JSON::MaybeXS>.
+
+=item L<Glib::JSON>
+
+Uses the JSON library from Glib, a library of C functions for the
+Linux GNOME desktop project.
+
+=item L<Inline::JSON>
+
+Include a chunk of JSON text right into your Perl program. Relies on
+L</JSON>.
+
 =item L<JSON>
 
 This calls on either L<JSON::PP> or L<JSON::XS>.
+
+=item L<JSON::DWIW>
+
+👎🐛 This module "Does What I Want", where "I" refers to the module's
+author. Development seems to have ceased in 2010, there is a long list
+of unfixed bugs, and some of the module's features seem to predate
+Unicode support in Perl.
 
 =item L<JSON::PP>
 
@@ -881,31 +917,13 @@ stands for "Pure Perl", which means it is in Perl-only without the XS
 (C-based) parsing. This is slower but may be necessary if you cannot
 install modules requiring a C compiler.
 
-=item L<JSON::XS>
+=item L<JSON::Slurper>
 
-This is an all-purpose JSON module in XS, which means it requires a C
-compiler to install.
-
-=item L<Cpanel::JSON::XS>
-
-This is a fork of L<JSON::XS> related to a disagreement about how to
-report bugs. Please see the module for details.
-
-=item L<JSON::DWIW>
-
-"Does what I want" module.
-
-=item L<JSON::YAJL>
-
-Wraps a C library called yajl.
-
-=item L<JSON::Util>
-
-Relies on L<JSON::MaybeXS>.
-
-=item L<Pegex::JSON>
-
-Based on L<Pegex>.
+Convenient file slurping and spurting of data using JSON. Uses
+L</JSON::PP> or L</Cpanel::JSON::XS> if available. The basic idea
+seems to be that it uses context to return arrays or hashes as
+required, and read and write files without extra stages of opening and
+closing the file.
 
 =item L<JSON::Syck>
 
@@ -913,14 +931,24 @@ Takes advantage of a similarity between YAML (yet another markup
 language) and JSON to provide a JSON parser/producer using
 L<YAML::Syck>.
 
-=item L<Inline::JSON>
+=item L<JSON::Tiny>
 
-Relies on L</JSON>.
+This is a fork of L</Mojo::JSON>.
 
-=item L<Glib::JSON>
+=item L<JSON::Util>
 
-Uses the JSON library from Glib, a library of C functions for the
-Linux GNOME desktop project.
+Relies on L<JSON::MaybeXS>.
+
+=item L<JSON::XS>
+
+This is an all-purpose JSON module in XS, which means it requires a C
+compiler to install.
+
+=item L<JSON::YAJL>
+
+👎🐛 Wraps a C library called yajl. The module has been abandoned since
+ten years ago, bug reports include serious errors, and pull requests
+have been ignored.
 
 =item L<Mojo::JSON>
 
@@ -928,20 +956,50 @@ Part of the L<Mojolicious> standalone web framework, "pure Perl" JSON
 reader/writer. As of version 6.25 of Mojolicious, this actually
 depends on L</JSON::PP>.
 
-=item L<JSON::Tiny>
+=item L<Pegex::JSON>
 
-This is a fork of L</Mojo::JSON>.
-
-=item L<File::JSON::Slurper>
-
-Slurp a JSON file into a data structure, and the reverse. It relies on
-L</JSON::MaybeXS>.
+🐛 Based on L<Pegex>. Seems to have been abandoned. See
+L<https://github.com/pegex-parser/pegex-json-pm/issues/3> for our bug
+report.
 
 =back
 
 =item Special-purpose modules
 
 =over
+
+=item L<App::JSON::to>
+
+Convert JSON data to other formats. It reads your JSON file or input
+and converts it into either YAML or Perl native format using
+L<Data::Dumper>.
+
+=item L<boolean>
+
+👍 This module offers C<true> and C<false> literals similar to JSON.
+
+=item L<Config::JSON>
+
+Configuration files in JSON
+
+=item L<Devel::JSON>
+
+For one-liners.
+
+=over
+
+If you use this module from the command-line, the last value of your
+one-liner (-e) code will be serialized as JSON data.
+
+=back
+
+=item L<JSON::Builder>
+
+Create JSON under memory limitations.
+
+=item L<JSON::Color>
+
+🌈 This module generates JSON colorized with ANSI escape sequences.
 
 =item L<JSON::MultiValueOrdered> and L<JSON::Tiny::Subclassable>
 
@@ -952,45 +1010,18 @@ C<{"a":1,"a":2}>) within objects.
 (JSON::Parse's handling of key collisions is discussed in L</Key
 collisions> in this document.)
 
-=item L<boolean>
+=item L<JSON::Path>
 
-This module offers C<true> and C<false> literals similar to JSON.
-
-=item L<Devel::JSON>
-
-For one-liners.
-
-=item L<App::JSON::to>
-
-Convert JSON data to other formats.
-
-=item L<JSON::Color>
-
-This module generates JSON, colorized with ANSI escape sequences.
-
-=item L<Config::JSON>
-
-Configuration files in JSON
-
-=item L<JSON::String>
-
-Automatically change a JSON string when a data structure changes.
-
-=item L<JSON::Builder>
-
-Create JSON under memory limitations.
+Search nested hashref/arrayref structures using JSONPath.
 
 =item L<JSON::Pointer>
 
 Extract parts of a JSON string.
 
-=item L<Inline::JSON>
+=item L<JSON::String>
 
-Include JSON in a Perl program.
-
-=item L<JSON::Path>
-
-Search nested hashref/arrayref structures using JSONPath.
+Automatically change a JSON string when a data structure changes using
+tied scalars.
 
 =back
 
@@ -998,20 +1029,22 @@ Search nested hashref/arrayref structures using JSONPath.
 
 =over
 
+=item L<Test::Deep::JSON>
+
+Compare JSON with L<Test::Deep>. As of version 0.03, it relies on
+L</JSON>.
+
 =item L<Test::JSON>
 
 This offers a way to compare two different JSON strings to see if they
 refer to the same object. As of version 0.11, it relies on
 L</JSON::Any>.
 
+=item L<Test::JSON::Entails>
+
 =item L<Test::JSON::More>
 
 JSON Test Utility. As of version 0.02, it relies on L</JSON>.
-
-=item L<Test::Deep::JSON>
-
-Compare JSON with L<Test::Deep>. As of version 0.03, it relies on
-L</JSON>.
 
 =back
 
@@ -1021,41 +1054,61 @@ These untangle numbers, strings, and booleans into JSON types.
 
 =over
 
+=item L<JSON::TypeInference>
+
+😕 Virtually undocumented, it's not clear what this does.
+
 =item L<JSON::Types>
 
-=item L<JSON::TypeInference>
+Change the type of a Perl variable so that it comes out as a number, a
+string, or a boolean in the output JSON.
+
+=item L<JSON::Types::Flexible>
+
+The module is barely documented, but from looking at L<the test
+file|https://metacpan.org/source/PINE/JSON-Types-Flexible-0.03/t%2Fjson%2Ftypes%2Fflexible%2Fclass.t>,
+this seems to enable you to change the output type of a number or a
+string so that you can, for example, make the number C<1> come out as
+either a number, C<1>, a string C<"1">, or a boolean, C<true>, in the
+output JSON.
 
 =item L<JSON::Typist>
 
-=item L<JSON::Types::Flexible>
+"Replace mushy strings and numbers with rigidly typed replacements"
+
+Since Perl muddles strings and numbers, this enables you to work out
+whether your input JSON was C<"123"> (a string) or C<123> (a number).
 
 =back
 
 =item Combination modules
 
-These modules rely on more than one back-end module.
+These modules rely on more than one back-end module to process JSON
+for you.
 
 =over
+
+=item L<JSON::Any>
+
+👎 This now-deprecated module combines L</JSON::DWIW>, L</JSON::XS>
+versions one and two, and L</JSON::Syck>.
 
 =item L<JSON::MaybeXS>
 
 A module which combines L</Cpanel::JSON::XS>, L</JSON::XS>, and
 L</JSON::PP>. The original L</JSON> combines L</JSON::XS> and
-L</JSON::PP>, so this prioritizes L</Cpanel::JSON::XS>.
-
-=item L<JSON::Any>
-
-This module combines L</JSON::DWIW>, L</JSON::XS> versions one and
-two, and L</JSON::Syck>.
+L</JSON::PP>, but this prioritizes L</Cpanel::JSON::XS> over
+L</JSON::XS>.
 
 =item L<JSON::XS::VersionOneAndTwo>
 
-A "combination module" which supports two different interfaces of
-L</JSON::XS>. However, JSON::XS is now onto version 3.
+👎 A "combination module" which supports two different interfaces of
+L</JSON::XS>. However, JSON::XS is now onto version 4.
 
 =item L<Mojo::JSON::MaybeXS>
 
-This pulls in L</JSON::MaybeXS> instead of L</Mojo::JSON>.
+This pulls in L</JSON::MaybeXS> instead of L</Mojo::JSON> for
+L<Mojolicious> users.
 
 =back
 
@@ -1065,6 +1118,10 @@ These modules extend JSON with comments and other things.
 
 =over
 
+=item L<JSON::Diffable>
+
+"A relaxed and easy diffable JSON variant"
+
 =item L<JSON::Relaxed>
 
 "An extension of JSON that allows for better human-readability".
@@ -1073,43 +1130,146 @@ These modules extend JSON with comments and other things.
 
 "Relaxed JSON with a little bit of YAML"
 
-=item L<JSON::Diffable>
+=back
 
-"A relaxed and easy diffable JSON variant"
+=item Web interactions via JSON
+
+=over
+
+=item L<JSON::API>
+
+Combines L<LWP::UserAgent> and L<JSON> to make a unified module to
+communicate with a web server via JSON.
+
+=item L<WWW::JSON>
+
+"Make working with JSON Web API's as painless as possible"
+
+=back
+
+=item Extension modules
+
+These modules extend the existing modules with some extra bits.
+
+=over
+
+=item L<JSON::XS::Sugar>
+
+Provides booleans and number/string forcing for L</JSON::XS>.
+
+=item L<Silki::JSON>
+
+Switches on formatting and strict utf8 in a L</JSON::XS> object.
 
 =back
 
 =item Other modules
 
+Modules which are parts of bigger releases have not been included here
+except by accident.
+
 =over
 
 =item L<App::JSON::Tools>
 
+Undocumented command-line tools for JSON.
+
 =item L<App::JSONPretty>
 
-=item L<Eve::Json>
+JSON prettification script. For whatever reason the script
+encapsulates the entirety of the old L</JSON> module from before
+L</JSON::PP> was included in the Perl core.
+
+=item L<ARGV::JSON>
 
 =item L<Haineko::JSON>
 
-=item L<JBD::JSON>
+😕 It says "Wrapper class to load/dump JSON" but we're not sure what
+the author means, for example what does it mean to say "loading JSON
+from scalar value"? Every module which deals with JSON deals with
+parsing JSON from a scalar, so why is a wrapper class necessary?
 
-=item L<JSON::JS>
+=item L<JS::JSON>
+
+👎 This is JavaScript code which was uploaded to CPAN. The original
+JavaScript is now obsolete since the thing it codes is included in all
+modern web browsers,
+
+=item L<JSON::Assert>
+
+"Asserts JSONPaths into a JSON data structure for correct
+values/matches"
+
+=item L<JSON::Eval>
+
+Eval Perl code found in JSON. This module enables one to encode and
+decode Perl scalar references and code references to JSON.
+
+=item L<JSON::ize>
+
+Something about one-liners.
+
+=item L<JSON::JSend>
+
+=item L<JSON::Lines>
+
+"JSON Lines is a convenient format for storing structured data that
+may be processed one record at a time."
 
 =item L<JSON::Meth>
 
+😕 Claims to be "no nonsense JSON encoding/decoding as method calls on
+data". From the documentation:
+
+=over
+
+Don't make me think and give me what I want! This module automatically
+figures out whether you want to encode a Perl data structure to JSON
+or decode a JSON string to a Perl data structure.
+
+=back
+
 =item L<JSON::ON>
+
+JavaScript object notation object notator.
+
+=item L<JSON::Patch>
+
+😕 We don't know what this does, or how it relates to JSON. The example
+in the synopsis section of the document doesn't show any JSON, it
+shows an example of altering nested hashes in Perl.
 
 =item L<JSON::SL>
 
+😕
+
 =item L<JSON::Streaming::Reader> and L<JSON::Streaming::Writer>
+
+=item L<JSON::T>
+
+Transform JSON using JsonT
 
 =item L<JSON::XS::ByteString>
 
-=item L<JSON::XS::Sugar>
+😕 L<The
+README|https://metacpan.org/source/CINDY/JSON-XS-ByteString-1.004/README>
+claims it is a "thin wrapper around JSON::XS", but L<it contains a
+complete implementation of
+JSON|https://metacpan.org/source/CINDY/JSON-XS-ByteString-1.004/ByteString.xs>,
+which seems to have partly been copy-pasted from the JSON::XS source
+code, but internally it doesn't make any reference to JSON::XS. The
+licence and copyright statement don't mention JSON::XS's original
+author at all so we're not sure if this is a fork, a wrapper, or a
+reimplementation.
 
-=item L<Silki::JSON>
+This module encodes numbers with quotes around them, so C<< {this => 2} >>
+turns into C<{"this":"2"}>.
 
 =item L<Text::JSON::Nibble>
+
+Nibble complete JSON objects from buffers.
+
+This seems to be for extracting JSON from the midst of noise.
 
 =back
 
