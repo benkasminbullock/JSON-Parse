@@ -32,7 +32,7 @@ Convert JSON into Perl.
 =head1 DESCRIPTION
 
 A module for parsing JSON. (JSON means "JavaScript Object Notation"
-and it is specified in L</RFC 7159>.)
+and it is specified in L</RFC 8259>.)
 
 JSON::Parse offers the function L</parse_json>, which takes a string
 containing JSON, and returns an equivalent Perl structure. It also
@@ -215,7 +215,7 @@ possible these are accepted by JSON::Parse.
 =head2 JSON strings
 
 JSON strings become Perl strings. The JSON escape characters such as
-C<\t> for the tab character (see section 2.5 of L</RFC 7159>) are
+C<\t> for the tab character (see section 2.5 of L</RFC 8259>) are
 mapped to the equivalent ASCII character.
 
 =head3 Handling of Unicode
@@ -233,7 +233,7 @@ but
 
 [% INCLUDE "ebi.pl" | xtidy %]
 
-Escapes of the form \uXXXX (see page three of L</RFC 7159>) are mapped
+Escapes of the form \uXXXX (see page three of L</RFC 8259>) are mapped
 to ASCII if XXXX is less than 0x80, or to UTF-8 if XXXX is greater
 than or equal to 0x80.
 
@@ -325,7 +325,7 @@ doesn't give information about collisions when storing into hash
 values, and checking for collisions for every key will degrade
 performance for the sake of an unlikely occurrence. The JSON
 specification says "The names within an object SHOULD be unique." (see
-L</RFC 7159>, page 5), although it's not a requirement.
+L</RFC 8259>, page 5), although it's not a requirement.
 
 For performance, L</valid_json> and L</assert_valid_json> do not store
 hash keys, thus they cannot detect this variety of problem.
@@ -666,7 +666,7 @@ This module imposes the following restrictions on its input.
 =item JSON only
 
 JSON::Parse is a strict parser. It only accepts input which exactly
-meets the criteria of L</RFC 7159>. That means, for example,
+meets the criteria of L</RFC 8259>. That means, for example,
 JSON::Parse does not accept single quotes (') instead of double quotes
 ("), or numbers with leading zeros, like 0123. JSON::Parse does not
 accept control characters (0x00 - 0x1F) in strings, missing commas
@@ -703,7 +703,7 @@ L<perluniintro>):
     open my $input, "<:encoding(UTF-16)", 'some-json-file'; 
 
 JSON::Parse does not determine the nature of the octet stream, as
-described in part 3 of L</RFC 7159>.
+described in part 3 of L</RFC 8259>.
 
 This restriction to UTF-8 applies regardless of whether Perl thinks
 that the input string is a character string or a byte
@@ -824,15 +824,13 @@ by JSON::XS.
 
 =over
 
-=item RFC 7159
+=item RFC 8259
 
-JSON is specified in L<RFC 7159 "The application/json Media Type for
-JavaScript Object Notation
-(JSON)"|http://www.ietf.org/rfc/rfc7159.txt>.
+JSON is specified in L<RFC 8259 "The JavaScript Object Notation (JSON) Data Interchange Format"|http://www.ietf.org/rfc/rfc8259.txt>.
 
 =item json.org
 
-L<http://json.org> is the website for JSON, authored by Douglas
+L<https://json.org> is the website for JSON, authored by Douglas
 Crockford.
 
 =item JSON::Create

@@ -20,7 +20,7 @@ for my $file (@files) {
     my $text = read_text ($bfile);
     if ($text =~ s/\Q$version\E/$newversion/g) {
 	print "$file OK\n";
-	# write_text ($bfile, $text);
+	write_text ($bfile, $text);
     }
     else {
 	warn "$file failed";
