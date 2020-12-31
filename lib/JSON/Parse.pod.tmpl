@@ -182,20 +182,6 @@ keys in objects, which is legal JSON. See F<t/jpts.t> for details.
 
 This function was added in version 0.38.
 
-=head1 OLD INTERFACE
-
-The following alternative function names are accepted. These are the
-names used for the functions in old versions of this module. These
-names are not deprecated and will never be removed from the module.
-
-=head2 json_to_perl
-
-This is exactly the same function as L</parse_json>.
-
-=head2 validate_json
-
-This is exactly the same function as L</assert_valid_json>.
-
 =head1 Mapping from JSON to Perl
 
 JSON elements are mapped to Perl as follows:
@@ -332,6 +318,17 @@ hash keys, thus they cannot detect this variety of problem.
 
 =head2 Literals
 
+=head3 false
+
+L</parse_json> maps the JSON false literal to a readonly scalar which
+evaluates to the empty string, or to zero in a numeric context. (This
+behaviour changed from version 0.36 to 0.37. In versions up to 0.36,
+the false literal was mapped to a readonly scalar which evaluated to 0
+only.) L</parse_json_safe> maps the JSON literal to a similar scalar
+without the readonly constraints. If you use a parser created with
+L</new>, you can choose either of these behaviours with
+L</copy_literals>, or you can tell JSON::Parse to put your own value
+in place of falses using the L</set_false> method.
 
 =head3 null
 
@@ -350,18 +347,6 @@ value 1. If you use a parser created with L</new>, you can choose
 either of these behaviours with L</copy_literals>, or you can tell
 JSON::Parse to put your own value in place of trues using the
 L</set_true> method.
-
-=head3 false
-
-L</parse_json> maps the JSON false literal to a readonly scalar which
-evaluates to the empty string, or to zero in a numeric context. (This
-behaviour changed from version 0.36 to 0.37. In versions up to 0.36,
-the false literal was mapped to a readonly scalar which evaluated to 0
-only.) L</parse_json_safe> maps the JSON literal to a similar scalar
-without the readonly constraints. If you use a parser created with
-L</new>, you can choose either of these behaviours with
-L</copy_literals>, or you can tell JSON::Parse to put your own value
-in place of falses using the L</set_false> method.
 
 =head3 Round trips and compatibility
 
@@ -657,6 +642,20 @@ copy_literals>.
 
 This method was added in version 0.38.
 
+=head1 OLD INTERFACE
+
+The following alternative function names are accepted. These are the
+names used for the functions in old versions of this module. These
+names are not deprecated and will never be removed from the module.
+
+=head2 json_to_perl
+
+This is exactly the same function as L</parse_json>.
+
+=head2 validate_json
+
+This is exactly the same function as L</assert_valid_json>.
+
 =head1 RESTRICTIONS
 
 This module imposes the following restrictions on its input.
@@ -741,18 +740,22 @@ block:
 
 The following error messages are produced:
 
+=over
+
 [% FOR error IN errors %]
 [% IF error.error != "invalid" %]
-=head2 [% error.error %]
+=item2 [% error.error %]
 
 [% error.description %]
 
 [% END %]
 [% END # error in errors %]
 
-=head2 Contradictory values for "true" and "false"
+=item Contradictory values for "true" and "false"
 
-=head3 User-defined value for JSON false evaluates as true
+=over
+
+=item User-defined value for JSON false evaluates as true
 
 This happens if you set JSON false to map to a true value:
 
@@ -762,7 +765,7 @@ To switch off this warning, use L</no_warn_literals>.
 
 This warning was added in version 0.38.
 
-=head3 User-defined value for JSON true evaluates as false
+=item User-defined value for JSON true evaluates as false
 
 This happens if you set JSON true to map to a false value:
 
@@ -772,13 +775,17 @@ To switch off this warning, use L</no_warn_literals>.
 
 This warning was added in version 0.38.
 
-=head2 User-defined value overrules copy_literals
+=item User-defined value overrules copy_literals
 
 This warning is given if you set up literals with L</copy_literals>
 then you also set up your own true, false, or null values with
 L</set_true>, L</set_false>, or L</set_null>.
 
 This warning was added in version 0.38.
+
+=back
+
+=back
 
 =head1 PERFORMANCE
 
@@ -1177,27 +1184,28 @@ it to the fragment and continuing the process until a complete valid
 JSON input is formed. The module has undergone about a billion
 repetitions of this test.
 
-This setup relies on a C file, [% repo("json-random-test.c") %], which isn't in
-the CPAN distribution, and it also requires [% repo("Json3.xs") %] to be edited
-to make the macro C<TESTRANDOM> true (uncomment line 7 of the
-file). The testing code uses C setjmp/longjmp, so it's not guaranteed
-to work on all operating systems and is commented out for CPAN
-releases.
+This setup relies on a C file, [% repo("json-random-test.c") %], which
+isn't in the CPAN distribution, and it also requires [%
+repo("Json3.xs") %] to be edited to make the macro C<TESTRANDOM> true
+(uncomment line 7 of the file). The testing code uses C
+setjmp/longjmp, so it's not guaranteed to work on all operating
+systems and is commented out for CPAN releases.
 
 A pure C version called [% repo("random-test.c") %] also exists. This applies
 exactly the same tests, and requires no Perl at all.
 
 If you're interested in testing your own JSON parser, the outputs
-generated by [% repo("randomjson.pl") %] are quite a good place to start. The
-default is to produce UTF-8 output, which looks pretty horrible since
-it tends to produce long strings of UTF-8 garbage. (This is because it
-chooses randomly from 256 bytes and the end-of-string marker C<"> has
-only a 1/256 chance of being chosen, so the strings tend to get long
-and messy). You can mess with the internals of JSON::Parse by setting
-MAXBYTE in F<json-common.c> to 0x80, recompiling (you can ignore the
-compiler warnings), and running F<randomjson.pl> again to get just
-ASCII random JSON things. This breaks the UTF-8 functionality of
-JSON::Parse, so please don't install that version.
+generated by [% repo("randomjson.pl") %] are quite a good place to
+start. The default is to produce UTF-8 output, which looks pretty
+horrible since it tends to produce long strings of UTF-8
+garbage. (This is because it chooses randomly from 256 bytes and the
+end-of-string marker C<"> has only a 1/256 chance of being chosen, so
+the strings tend to get long and messy). You can mess with the
+internals of JSON::Parse by setting MAXBYTE in F<json-common.c> to
+0x80, recompiling (you can ignore the compiler warnings), and running
+F<randomjson.pl> again to get just ASCII random JSON things. This
+breaks the UTF-8 functionality of JSON::Parse, so please don't install
+that version.
 
 =head2 JSON Parsing Test Suite
 
@@ -1205,9 +1213,11 @@ JSON::Parse version 0.58 passes most of the JSON Parsing Test Suite,
 with the exception that JSON::Parse rejects various erroneous UTF-8
 inputs, for example JSON::Parse will throw an error for non-character
 code points like Unicode U+FFFF and U+10FFFF. This parser only accepts
-valid UTF-8 as input. See L</UTF-8 only>. It would be a disservice to
-users to allow bytes containing useless fragments such as incomplete
-parts of surrogate pairs, or invalid characters, just because the JSON
+valid UTF-8 as input. See L</UTF-8 only>. 
+
+In our opinion it would be a disservice to users of this module to
+allow bytes containing useless fragments such as incomplete parts of
+surrogate pairs, or invalid characters, just because the JSON
 specification doesn't actually explicitly rule out rejecting these
 kinds of garbage inputs. Please see the function C<daft_test> in the
 file F<xt/JPXT.pm> for exactly which of these elements of the test
@@ -1218,68 +1228,16 @@ L</set_max_depth> to prevent the stack overflow errors caused by some
 very deeply nested inputs such as those of the JSON Parsing Test
 Suite.
 
-=head1 HISTORY
-
-See [% repo("Changes") %] in the distribution for a full list of changes.
-
-This module started out under the name C<JSON::Argo>. It was
-originally a way to escape from having to use the other JSON modules
-on CPAN. The biggest issue that I had with the other modules was the
-way that Unicode was handled. Insisting on the pure Perl method of
-dealing with JSON strings, which are required to be in Unicode anyway,
-seems to me little more than superstition, something like telling
-programmers not to step on cracks in the pavement. This module
-completely bypasses that. See L</Handling of Unicode> for the details
-of how this module differs from the other modules.
-
-The reason it only parsed JSON was that when I started this I didn't
-know the Perl extension language XS very well (I still don't know it
-very well), and I was not confident about making a JSON producer, so
-it only parsed JSON, which was the main job I needed to do. It
-originally used lex and yacc in the form of flex and bison, since
-discarded. I also found out that someone else had a JSON parser called
-Argo in Java, so to save confusion I dropped the name JSON::Argo and
-renamed this JSON::Parse, keeping the version numbers continuous.
-
-The module has since been completely rewritten, twice, mostly in an
-attempt to improve performance, after I found that JSON::XS was much
-faster than the original JSON::Parse. (The first rewrite of the module
-was not released to CPAN, this is the second one, which explains why
-some files have names like F<Json3.xs>). I also hoped to make something
-useful which wasn't in any existing CPAN module by offering the
-high-speed validator, L</valid_json>.
-
-I also rewrote the module due to some bugs I found, for example up to
-version 0.09 it was failing to accept whitespace after an object key
-string, so a JSON input of the form C<{ "x" : "y" }>, with whitespace
-between the C<"x"> and the colon, C<:>, would cause it to fail. That
-was one big reason I created the random testing regime described in
-L</TESTING> above. I believe that the module is now compliant with the
-JSON specification. 
-
-After starting JSON::Create, I realised that some edge case handling
-in JSON::Parse needed to be improved. This resulted in the addition of
-the hash collision and literal-overriding methods introduced
-in versions 0.37 and 0.38 of this module.
-
-Version 0.42 fixed a very serious bug where long strings could
-overflow an internal buffer, and could cause a segmentation fault.
-
-Version 0.48 removed an experimental feature called
-C<$json_diagnostics> which made the module's errors be produced in
-JSON format, and replaced it with the current L</diagnostics_hash>
-method, for the benefit of L</JSON::Repair>.
-
-Version 0.49 brought the module into conformance with the L</JSON
-Parsing Test Suite>.
-
-Version 0.54 removed support for the Solaris operating system.
-
 =head1 ACKNOWLEDGEMENTS
 
-Shlomi Fish (SHLOMIF) fixed some memory leaks in version
-0.40. kolmogorov42 (https://github.com/kolmogorov42) reported a very
-serious bug which led to version 0.42.
+Toby Inkster (TOBYINK) suggested the new function names which replaced
+the L</OLD INTERFACE> names. Nicolas Immelman and Shlomi Fish
+(SHLOMIF) reported memory leaks which were fixed in 0.32 and
+0.40. Github user kolmogorov42 reported a bug which led to
+0.42. Github user SteveGlassman found an error in string copying for
+long strings, fixed in 0.57. Lars Dɪᴇᴄᴋᴏᴡ (DAXIM) pointed out problems
+with the JSON Parsing Test Suite which led to the addition of stack
+protection and L</set_max_depth> and L</get_max_depth> in 0.58.
 
 [% start_year=2013 %]
 [% INCLUDE "author" %]
