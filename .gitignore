@@ -12,6 +12,7 @@ lib/JSON/Parse.pod
 MANIFEST
 README
 makeitfile
-#unicode.[ch]
-
+unicode.[ch]
+Json3.c
+errors.c
 random-test

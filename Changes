@@ -1,7 +1,10 @@
-0.57_02 2020-12-29
+0.57_02 2020-12-31
 
 * Protect against stack overflows by having maximum parsing depth
  -- set_max_depth, get_max_depth methods added
+* Documentation updated
+ -- JSON RFC changed to 8259
+ -- Discussion of Unicode tests in JSON Test Suite
 
 0.57 2020-07-09
 
