@@ -1,4 +1,4 @@
-0.57_02 2020-12-31
+0.58 2021-01-01
 
 * Protect against stack overflows by having maximum parsing depth
  -- set_max_depth, get_max_depth methods added
