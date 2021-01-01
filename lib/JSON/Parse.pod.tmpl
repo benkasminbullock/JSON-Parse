@@ -176,9 +176,7 @@ refers to the caller's line.
 =back
 
 As the name implies, this is meant to be a "safety-first" version of
-L</parse_json>. This function does not pass all of the tests of the
-L</JSON Parsing Test Suite>, because it creates an error for duplicate
-keys in objects, which is legal JSON. See F<t/jpts.t> for details.
+L</parse_json>. 
 
 This function was added in version 0.38.
 
@@ -927,9 +925,16 @@ closing the file.
 
 =item L<JSON::Syck>
 
-Takes advantage of a similarity between YAML (yet another markup
+👎🐛 Takes advantage of a similarity between YAML (yet another markup
 language) and JSON to provide a JSON parser/producer using
-L<YAML::Syck>.
+L<YAML::Syck>. 
+
+We have never tried this module, but it seems to be semi-deprecated
+(the ABSTRACT says "consider using JSON::XS instead!")  and L<there
+are a lot of bug reports|https://github.com/toddr/YAML-Syck/issues>
+about things like failing to process equals signs. However, the
+maintainer is fixing some of the bugs and making new releases, so
+we're not really sure.
 
 =item L<JSON::Tiny>
 
@@ -958,9 +963,8 @@ depends on L</JSON::PP>.
 
 =item L<Pegex::JSON>
 
-🐛 Based on L<Pegex>. Seems to have been abandoned. See
-L<https://github.com/pegex-parser/pegex-json-pm/issues/3> for our bug
-report.
+🐛 Based on L<Pegex>.  See
+L<our bug report|https://github.com/pegex-parser/pegex-json-pm/issues/3>.
 
 =back
 
@@ -1031,16 +1035,21 @@ tied scalars.
 
 =item L<Test::Deep::JSON>
 
-Compare JSON with L<Test::Deep>. As of version 0.03, it relies on
-L</JSON>.
+Compare JSON with L<Test::Deep>. As of version 0.05, it relies on
+L</JSON::MaybeXS>.
 
 =item L<Test::JSON>
 
-This offers a way to compare two different JSON strings to see if they
-refer to the same object. As of version 0.11, it relies on
-L</JSON::Any>.
+👎 This offers a way to compare two different JSON strings to see if
+they refer to the same object. The most recent version, 0.11, was
+released in 2009, and it relies on the deprecated L</JSON::Any>, which
+makes it essentially abandoned.
 
 =item L<Test::JSON::Entails>
+
+👎 Test whether one JSON or Perl structure entails/subsumes
+another. The most recent version is from 2012, and it relies on
+L</JSON::Any>, so it is probably abandoned.
 
 =item L<Test::JSON::More>
 
@@ -1176,9 +1185,13 @@ Undocumented command-line tools for JSON.
 
 =item L<App::JSONPretty>
 
-JSON prettification script. For whatever reason the script
-encapsulates the entirety of the old L</JSON> module from before
-L</JSON::PP> was included in the Perl core.
+👎🐛 JSON prettification script. For whatever reason the script
+encapsulates the entirety of an old version of the L</JSON> module
+dating from before L</JSON::PP> was included in the Perl core.
+
+If you need this kind of script, there is something called L<json_xs>
+which comes with L</JSON::XS>, or equivalently L<cpanel_json_xs> in
+the forked module L</Cpanel::JSON::XS>.
 
 =item L<ARGV::JSON>
 
@@ -1193,7 +1206,7 @@ parsing JSON from a scalar, so why is a wrapper class necessary?
 
 👎 This is JavaScript code which was uploaded to CPAN. The original
 JavaScript is now obsolete since the thing it codes is included in all
-modern web browsers,
+modern web browsers.
 
 =item L<JSON::Assert>
 
@@ -1262,8 +1275,9 @@ licence and copyright statement don't mention JSON::XS's original
 author at all so we're not sure if this is a fork, a wrapper, or a
 reimplementation.
 
-This module encodes numbers with quotes around them, so C<< {this => 2} >>
-turns into C<{"this":"2"}>.
+We haven't tried downloading this or installing it, but according to
+the documentation, this module encodes numbers with quotes around
+them, so C<< {this => 2} >> turns into C<{"this":"2"}>.
 
 =item L<Text::JSON::Nibble>
 
@@ -1381,7 +1395,10 @@ surrogate pairs, or invalid characters, just because the JSON
 specification doesn't actually explicitly rule out rejecting these
 kinds of garbage inputs. Please see the function C<daft_test> in the
 file F<xt/JPXT.pm> for exactly which of these elements of the test
-suite we do not comply with.
+suite we do not comply with. See also Douglas Crockford, the inventor
+of JSON's, L<JSON
+parser|https://github.com/douglascrockford/JSON-c/blob/master/utf8_decode.c#L38-L43>,
+dated 2005.
 
 JSON::Parse version 0.58 also introduced L</get_max_depth> and
 L</set_max_depth> to prevent the stack overflow errors caused by some
