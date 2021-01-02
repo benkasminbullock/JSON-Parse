@@ -5,11 +5,11 @@ use Template;
 use FindBin '$Bin';
 use lib 'blib/arch';
 use lib 'blib/lib';
-use JSON::Parse 'assert_valid_json';
+use JSON::Parse qw!json_file_to_perl assert_valid_json!;
 use Table::Readable 'read_table';
 use lib "$Bin/copied/lib";
 use Perl::Build::Pod ':all';
-use Perl::Build qw/get_version get_commit/;
+use Perl::Build qw/get_version get_commit get_info/;
 
 make_examples ("$Bin/examples", undef, undef);
 
@@ -17,8 +17,18 @@ make_examples ("$Bin/examples", undef, undef);
 
 my %vars;
 
+my $info = get_info (base => $Bin,);
+$vars{info} = $info;
 $vars{version} = get_version ();
 $vars{commit} = get_commit ();
+my $see_also_info = json_file_to_perl ("$Bin/see-also-info.json");
+my %mod2info;
+for (@$see_also_info) {
+    $_->{date} =~ s/T.*$//;
+    $mod2info{$_->{module}} = $_;
+}
+$vars{mod2info} = \%mod2info;
+
 
 my $tt = Template->new (
     ABSOLUTE => 1,
@@ -46,7 +56,7 @@ for my $mod (qw/Parse Tokenize/) {
 
 This documents version [% version %] of JSON::$mod corresponding to
 L<git commit [% commit.commit
-%]|https://github.com/benkasminbullock/JSON-Parse/commit/[%
+%]|[% info.repo %]/commit/[%
 commit.commit %]> released on [% commit.date %].
 
 EOF

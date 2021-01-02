@@ -1,7 +1,13 @@
+# Check that the "SEE ALSO" part of the pod doesn't contain the same
+# module twice and is sorted so that the modules mentioned are in
+# case-insensitive alphabetical order.
+
 use warnings;
 use strict;
 use utf8;
 use FindBin '$Bin';
+use lib "$Bin/../build/";
+use JPB;
 use Test::More;
 my $builder = Test::More->builder;
 binmode $builder->output,         ":utf8";
@@ -9,19 +15,21 @@ binmode $builder->failure_output, ":utf8";
 binmode $builder->todo_output,    ":utf8";
 binmode STDOUT, ":encoding(utf8)";
 binmode STDERR, ":encoding(utf8)";
-use File::Slurper 'read_text';
-use Test::More;
 
-my $pod = "$Bin/../lib/JSON/Parse.pod.tmpl";
-my $text = read_text ($pod);
-if (! ($text =~ s!^.*=head1 SEE ALSO(.*)=head1.*$!$1!gsm)) {
-    die "Could not extract see also";
-}
+# Check no duplicates
+
+# Read the file in & extract the section
+
+my $text = see_also ();
+
 my %modules;
-while ($text =~ /=item\s+L<(.*)>/g) {
+while ($text =~ /$mod_re/g) {
     ok (! $modules{$1}, "Entry for $1 is not a duplicate");
     $modules{$1} = 1;
 }
+
+# Check each subsection is in case-insensitive alphabetical order
+
 while ($text =~ /=item\s+(.*?)=over(.*?)=back/gsm) {
     my $name = $1;
     my $section = $2;
@@ -30,13 +38,11 @@ while ($text =~ /=item\s+(.*?)=over(.*?)=back/gsm) {
 	next;
     }
     my @sm;
-    while ($section =~ /=item\s+L<(.*)>/g) {
+    while ($section =~ /$mod_re/g) {
 	push @sm, $1;
     }
-#    print "@sm\n\n";
     my @sms = sort {uc $a cmp uc $b} @sm;
     is_deeply (\@sm, \@sms, "Modules in section $name are sorted");
 }
-# Check no duplicates
 
 done_testing ();

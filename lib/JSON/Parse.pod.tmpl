@@ -1,6 +1,6 @@
 [% github="https://github.com/benkasminbullock/JSON-Parse/blob" %]
 [% MACRO repo(file) BLOCK -%]
-L<F<[% file %]>|[% github %]/[% commit.commit %]/[% file %]>
+L<F<[% file %]>|[% info.repo %]/[% commit.commit %]/[% file %]>
 [%- END %]
 [% MACRO example(file) BLOCK %]
 [%- pl = file _ ".pl" -%]
@@ -13,6 +13,10 @@ produces output
 
 (This example is included as L<F<[% pl %]>|https://fastapi.metacpan.org/source/BKB/JSON-Parse-[% version %]/examples/[% pl %]> in the distribution.)
 [% END %]
+[%- MACRO since(what,version) BLOCK -%]
+🎲 This [% what %] was added in version [% version %].
+[%- END -%]
+
 =pod
 
 =encoding UTF-8
@@ -39,7 +43,7 @@ containing JSON, and returns an equivalent Perl structure. It also
 offers validation of JSON via L</valid_json>, which returns true or
 false depending on whether the JSON is correct or not, and
 L</assert_valid_json>, which produces a descriptive fatal error if the
-JSON is invalid. A function L</json_file_to_perl> reads JSON from a
+JSON is invalid. A function L</read_json> reads JSON from a
 file, and there is a safer version of L</parse_json> called
 L</parse_json_safe> which doesn't throw exceptions.
 
@@ -51,6 +55,22 @@ JSON::Parse accepts only UTF-8 as input. See L</UTF-8 only> and
 L</Handling of Unicode>.
 
 =head1 FUNCTIONS
+
+=head2 assert_valid_json
+
+[% example("assert") %]
+
+This is the underlying function for L</valid_json>. It runs at the
+same speed, but it throws an error if the JSON is wrong, rather than
+returning 1 or 0. See L</DIAGNOSTICS> for the error format, which is
+identical to L</parse_json>.
+
+This cannot detect key collisions in the JSON since it does not store
+values. See L</Key collisions> for more on this module's handling of
+non-unique names in the JSON.
+
+The behaviour of disallowing empty inputs was changed in version
+0.49.
 
 =head2 parse_json
 
@@ -84,56 +104,6 @@ JSON. The behaviour of disallowing empty inputs was changed in version
 
 The function L</parse_json_safe> offers a version of this function
 with various safety features enabled.
-
-=head2 json_file_to_perl
-
-    use JSON::Parse 'json_file_to_perl';
-    my $p = json_file_to_perl ('filename');
-
-This is exactly the same as L</parse_json> except that it reads the
-JSON from the specified file rather than a scalar. The file must be in
-the UTF-8 encoding, and is opened as a character file using
-C<:encoding(UTF-8)> (see L<PerlIO::encoding> and L<perluniintro> for
-details). The output is marked as character strings.
-
-This is a convenience function written in Perl. You may prefer to read
-the file yourself using another module if you need faster performance.
-
-=head2 valid_json
-
-    use JSON::Parse 'valid_json';
-    if (valid_json ($json)) {
-        # do something
-    }
-
-C<valid_json> returns I<1> if its argument is valid JSON and I<0> if
-not. It runs several times faster than L</parse_json>. This gain in
-speed is obtained because it discards the input data after reading it,
-rather than storing it into Perl variables.
-
-This does not supply the actual errors which caused invalidity. Use
-L</assert_valid_json> to get error messages when the JSON is invalid.
-
-This cannot detect key collisions in the JSON since it does not store
-values. See L</Key collisions> for more on this module's handling of
-non-unique names in the JSON.
-
-=head2 assert_valid_json
-
-[% example("assert") %]
-
-This is the underlying function for L</valid_json>. It runs at the
-same speed, but it throws an error if the JSON is wrong, rather than
-returning 1 or 0. See L</DIAGNOSTICS> for the error format, which is
-identical to L</parse_json>.
-
-This cannot detect key collisions in the JSON since it does not store
-values. See L</Key collisions> for more on this module's handling of
-non-unique names in the JSON.
-
-The behaviour of disallowing empty inputs was changed in version
-0.49. This makes it conform to the L</JSON Parsing Test Suite>, and
-also makes it give identical results to L</valid_json>.
 
 =head2 parse_json_safe
 
@@ -178,7 +148,43 @@ refers to the caller's line.
 As the name implies, this is meant to be a "safety-first" version of
 L</parse_json>. 
 
-This function was added in version 0.38.
+[% since('function', '0.38') %]
+
+=head2 read_json
+
+    use JSON::Parse 'read_json';
+    my $p = read_json ('filename');
+
+This is exactly the same as L</parse_json> except that it reads the
+JSON from the specified file rather than a scalar. The file must be in
+the UTF-8 encoding, and is opened as a character file using
+C<:encoding(UTF-8)> (see L<PerlIO::encoding> and L<perluniintro> for
+details). The output is marked as character strings.
+
+This is a convenience function written in Perl. You may prefer to read
+the file yourself using another module if you need faster performance.
+
+This was renamed from L</json_file_to_perl> in version 0.59. The old
+name will also continue to work indefinitely.
+
+=head2 valid_json
+
+    use JSON::Parse 'valid_json';
+    if (valid_json ($json)) {
+        # do something
+    }
+
+C<valid_json> returns I<1> if its argument is valid JSON and I<0> if
+not. It runs several times faster than L</parse_json>. This gain in
+speed is obtained because it discards the input data after reading it,
+rather than storing it into Perl variables.
+
+This does not supply the actual errors which caused invalidity. Use
+L</assert_valid_json> to get error messages when the JSON is invalid.
+
+This cannot detect key collisions in the JSON since it does not store
+values. See L</Key collisions> for more on this module's handling of
+non-unique names in the JSON.
 
 =head1 Mapping from JSON to Perl
 
@@ -356,8 +362,10 @@ other CPAN modules, create a JSON::Parse object with L</new>, and set
 JSON::Parse's literals with L</set_true>, L</set_false>, and
 L</set_null>.
 
-This example demonstrates round-trip compatibility using L<JSON::Tiny>
-version 0.54:
+=head3 A round trip with JSON::Tiny
+
+This example demonstrates round-trip compatibility using L<JSON::Tiny>,
+version 0.58:
 
 [% example("json-tiny-round-trip-demo") %]
 
@@ -428,10 +436,9 @@ affect the behaviour of L</parse_json> or L</parse_json_safe>.
     };
 
 This does the same thing as L</assert_valid_json>, except its
-behaviour can be modified using the methods below. Only the
-L</diagnostics_hash> method will actually affect this.
+behaviour can be modified using the L</diagnostics_hash> method.
 
-This method was added in version 0.48, for the benefit of
+[% since('method', '0.48') %] This is for the benefit of
 L<JSON::Repair>.
 
 =head2 copy_literals
@@ -453,7 +460,7 @@ behaviour of L</parse_json>.
 If the user also sets user-defined literals with L</set_true>,
 L</set_false> and L</set_null>, that takes precedence over this.
 
-This method was added in version 0.38.
+[% since('method', '0.38') %]
 
 =head2 detect_collisions
 
@@ -470,7 +477,7 @@ The C<detect_collisions (1)> behaviour is the behaviour of
 L</parse_json_safe>. The C<detect_collisions (0)> behaviour is the
 behaviour of L</parse_json>.
 
-This method was added in version 0.38.
+[% since('method', '0.38') %]
 
 =head2 diagnostics_hash
 
@@ -488,7 +495,7 @@ which returns the usual error.
 
 This requires Perl version 5.14 or later.
 
-This method was added in version 0.46.
+[% since('method', '0.46') %]
 
 =head2 get_max_depth
 
@@ -497,13 +504,15 @@ This method was added in version 0.46.
 This returns the maximum nesting depth of objects or arrays in the
 input JSON. The default value is 10,000.
 
+[% since('method', '0.58') %]
+
 =head2 new
 
     my $jp = JSON::Parse->new ();
 
 Create a new JSON::Parse object.
 
-This method was added in version 0.38.
+[% since('method', '0.38') %]
 
 =head2 run
 
@@ -512,8 +521,7 @@ This method was added in version 0.38.
 This does the same thing as L</parse_json>, except its behaviour can
 be modified using the methods below.
 
-This method was added in version 0.38.
-
+[% since('method', '0.38') %]
 
 =head2 set_max_depth
 
@@ -521,6 +529,8 @@ This method was added in version 0.38.
 
 Set the maximum nesting depth of objects or arrays in the input
 JSON. The default value is 10,000.
+
+[% since('method', '0.58') %]
 
 =head2 warn_only
 
@@ -533,8 +543,7 @@ This can be switched off again using any false value:
 
     $jp->warn_only ('');
 
-This method was documented in version 0.38, but only implemented in
-version 0.41.
+[% since('method', 0.41) %]
 
 =head2 Methods for manipulating literals
 
@@ -542,16 +551,15 @@ These methods alter what is written into the Perl structure when the
 parser sees a literal value, C<true>, C<false> or C<null> in the input
 JSON.
 
-This number of methods is unfortunately necessary, since it's possible
-that a user might want to set_false (undef) to set false values to
-turn into undefs.
+This number of methods is needed because of the possibility that a
+user wants to set the output for C<false> to be C<undef>:
 
     $jp->set_false (undef);
 
 Thus, we cannot use a single function C<< $jp->false (undef) >> to
 cover both setting and deleting of values.
 
-These methods were added in version 0.38.
+[% since('facility', '0.38') %]
 
 [% BLOCK set_literal %]
 
@@ -603,7 +611,7 @@ You can switch this warning off with L</no_warn_literals>.
 
 [% END %]
 
-This method was added in version 0.38.
+[% since('method', '0.38') %]
 
 =head3 delete_[% literal %]
 
@@ -614,7 +622,7 @@ Delete the user-defined [% literal %] value. See L</set_[% literal %]>.
 This method is "safe" in that it has absolutely no effect if no
 user-defined value is in place. It does not return a value.
 
-This method was added in version 0.38.
+[% since('method', '0.38') %]
 
 [% END %]
 
@@ -638,7 +646,7 @@ See also L</Contradictory values for "true" and "false">.
 This also switches off the warning L</User-defined value overrules
 copy_literals>.
 
-This method was added in version 0.38.
+[% since('method', '0.38') %]
 
 =head1 OLD INTERFACE
 
@@ -646,9 +654,18 @@ The following alternative function names are accepted. These are the
 names used for the functions in old versions of this module. These
 names are not deprecated and will never be removed from the module.
 
+The names ending in "_to_perl" seem quite silly in retrospect since
+surely it is obvious that one is programming in Perl.
+
 =head2 json_to_perl
 
 This is exactly the same function as L</parse_json>.
+
+=head2 json_file_to_perl
+
+This is exactly the same function as L</read_json>. The function was
+renamed in version 0.59, after the same function in
+L<File::JSON::Slurper>.
 
 =head2 validate_json
 
@@ -669,15 +686,19 @@ JSON::Parse does not accept single quotes (') instead of double quotes
 accept control characters (0x00 - 0x1F) in strings, missing commas
 between array or hash elements like C<["a" "b"]>, or trailing commas
 like C<["a","b","c",]>. It also does not accept trailing
-non-whitespace, like the second "]" in C<["a"]]>.
+non-whitespace, like the second "]" in C<["a"]]>. 
+
+You may find L</JSON::Repair> by the same authors as JSON::Parse
+useful if you need to process JSON-like text with tolerance for
+errors.
 
 =item No incremental parsing
 
 JSON::Parse does not parse incrementally. It only parses fully-formed
 JSON strings which include all opening and closing brackets. This is
 an inherent part of the design of the module. Incremental parsing in
-the style of L<XML::Parser> would (obviously) require some kind of
-callback structure to deal with the elements of the partially digested
+the style of L<XML::Parser> would require some kind of callback
+structure to deal with the elements of the partially digested
 structures, but JSON::Parse was never designed to do this; it merely
 converts what it sees into a Perl structure. Claims to offer
 incremental JSON parsing in other modules' documentation should be
@@ -699,16 +720,21 @@ L<perluniintro>):
 
     open my $input, "<:encoding(UTF-16)", 'some-json-file'; 
 
-JSON::Parse does not determine the nature of the octet stream, as
-described in part 3 of L</RFC 8259>.
+JSON::Parse does not try to determine the nature of the octet stream
+using BOM markers. A BOM marker in the input consists of bytes C<0xFE>
+and C<0xFF> which are invalid as UTF-8, and thus will cause a fatal
+error.
 
 This restriction to UTF-8 applies regardless of whether Perl thinks
 that the input string is a character string or a byte
 string. Non-UTF-8 input will cause an L</Unexpected character> error.
 
-JSON::Parse does not accept non-characters or parts of surrogate pairs
-as UTF-8 bytes. See also the discussion under L</JSON Parsing Test
-Suite>.
+The latest specification for JSON, L</RFC 8259>, specifies it to be a
+UTF-8 only format.
+
+JSON::Parse does not accept Unicode non-characters (U+FFFF, UFDDO,
+etc.), UTF-8 representing surrogate pair code points, or bytes outside
+the range of Unicode code points as UTF-8 bytes.
 
 =back
 
@@ -761,7 +787,7 @@ This happens if you set JSON false to map to a true value:
 
 To switch off this warning, use L</no_warn_literals>.
 
-This warning was added in version 0.38.
+[% since('warning', '0.38') %]
 
 =item User-defined value for JSON true evaluates as false
 
@@ -771,7 +797,7 @@ This happens if you set JSON true to map to a false value:
 
 To switch off this warning, use L</no_warn_literals>.
 
-This warning was added in version 0.38.
+[% since('warning', '0.38') %]
 
 =item User-defined value overrules copy_literals
 
@@ -779,7 +805,7 @@ This warning is given if you set up literals with L</copy_literals>
 then you also set up your own true, false, or null values with
 L</set_true>, L</set_false>, or L</set_null>.
 
-This warning was added in version 0.38.
+[% since('warning', '0.38') %]
 
 =back
 
@@ -873,49 +899,68 @@ parsers.
 
 =back
 
+[% MACRO cpm(module) BLOCK %]
+=item L<[% module %]>
+[% IF mod2info.defined(module) %]
+[% info = mod2info.$module %]
+[Author: L<[% info.author %]|https://metacpan.org/author/[% info.author %]>; Date: C<[% info.date %]>; Version: C<[% info.version %]>]
+[% END %]
+[% END %]
+
 =item Reading and writing JSON
 
 =over
 
-=item L<Cpanel::JSON::XS>
+[% cpm('Cpanel::JSON::XS') %]
 
 This is a fork of L<JSON::XS> related to a disagreement about how to
 report bugs. Please see the module for details.
 
-=item L<File::JSON::Slurper>
+[% cpm('File::JSON::Slurper') %]
 
 Slurp a JSON file into a data structure, and the reverse. It relies on
 L</JSON::MaybeXS>.
 
-=item L<Glib::JSON>
+[% cpm('Glib::JSON') %]
 
 Uses the JSON library from Glib, a library of C functions for the
-Linux GNOME desktop project.
+Linux GNOME desktop project, so it is independent of the other CPAN
+modules. Judging from the fairly sparse documentation, it seems to be
+a module where you build the JSON on the fly rather than converting a
+Perl structure wholesale into JSON.
 
-=item L<Inline::JSON>
+[% cpm('Inline::JSON') %]
 
-Include a chunk of JSON text right into your Perl program. Relies on
+"Embed JSON data structures directly into your Perl code". Relies on
 L</JSON>.
 
-=item L<JSON>
+[% cpm('JSON') %]
 
 This calls on either L<JSON::PP> or L<JSON::XS>.
 
-=item L<JSON::DWIW>
+[% cpm('JSON::Decode::Marpa') %]
+
+[% cpm('JSON::Decode::Regexp') %]
+
+JSON parser as a single Perl Regex.
+
+[% cpm('JSON::DWIW') %]
 
 👎🐛 This module "Does What I Want", where "I" refers to the module's
 author. Development seems to have ceased in 2010, there is a long list
 of unfixed bugs, and some of the module's features seem to predate
-Unicode support in Perl.
+Unicode support in Perl. It is written in XS, and it claims to accept
+a wide variety of non-JSON formats such as comments, single-quoted
+strings, trailing commas, etc.
 
-=item L<JSON::PP>
+[% cpm('JSON::PP') %]
 
 This is part of the Perl core, installed when you install Perl. "PP"
 stands for "Pure Perl", which means it is in Perl-only without the XS
 (C-based) parsing. This is slower but may be necessary if you cannot
 install modules requiring a C compiler.
 
-=item L<JSON::Slurper>
+[% cpm('JSON::Slurper') %]
 
 Convenient file slurping and spurting of data using JSON. Uses
 L</JSON::PP> or L</Cpanel::JSON::XS> if available. The basic idea
@@ -923,7 +968,7 @@ seems to be that it uses context to return arrays or hashes as
 required, and read and write files without extra stages of opening and
 closing the file.
 
-=item L<JSON::Syck>
+[% cpm('JSON::Syck') %]
 
 👎🐛 Takes advantage of a similarity between YAML (yet another markup
 language) and JSON to provide a JSON parser/producer using
@@ -936,32 +981,31 @@ about things like failing to process equals signs. However, the
 maintainer is fixing some of the bugs and making new releases, so
 we're not really sure.
 
-=item L<JSON::Tiny>
+[% cpm('JSON::Tiny') %]
 
 This is a fork of L</Mojo::JSON>.
 
-=item L<JSON::Util>
-
-Relies on L<JSON::MaybeXS>.
-
-=item L<JSON::XS>
+[% cpm('JSON::XS') %]
 
 This is an all-purpose JSON module in XS, which means it requires a C
 compiler to install.
 
-=item L<JSON::YAJL>
+[% cpm('JSON::YAJL') %]
 
-👎🐛 Wraps a C library called yajl. The module has been abandoned since
-ten years ago, bug reports include serious errors, and pull requests
-have been ignored.
+👎🐛 Wraps a C library called yajl. The module has been abandoned
+since ten years ago. Bug reports include serious errors, and pull
+requests have been ignored.
 
-=item L<Mojo::JSON>
+[% cpm('MarpaX::Demo::JSONParser') %]
+
+[% cpm('Mojo::JSON') %]
 
 Part of the L<Mojolicious> standalone web framework, "pure Perl" JSON
-reader/writer. As of version 6.25 of Mojolicious, this actually
-depends on L</JSON::PP>.
+reader/writer. As of version 8.70 of Mojolicious, this actually
+depends on L</JSON::PP> but will load L</Cpanel::JSON::XS> if it is
+available.
 
-=item L<Pegex::JSON>
+[% cpm('Pegex::JSON') %]
 
 🐛 Based on L<Pegex>.  See
 L<our bug report|https://github.com/pegex-parser/pegex-json-pm/issues/3>.
@@ -972,21 +1016,26 @@ L<our bug report|https://github.com/pegex-parser/pegex-json-pm/issues/3>.
 
 =over
 
-=item L<App::JSON::to>
+[% cpm('App::JSON::to') %]
 
 Convert JSON data to other formats. It reads your JSON file or input
 and converts it into either YAML or Perl native format using
 L<Data::Dumper>.
 
-=item L<boolean>
+[% cpm('boolean') %]
 
-👍 This module offers C<true> and C<false> literals similar to JSON.
+👍 This module offers C<true> and C<false> literals in Perl, so you just have
 
-=item L<Config::JSON>
+    use boolean;
+    my $something = true;
 
-Configuration files in JSON
+This is very useful for dealing with JSON.
 
-=item L<Devel::JSON>
+[% cpm('Config::JSON') %]
+
+Configuration files in JSON, with hash comments also allowed.
+
+[% cpm('Devel::JSON') %]
 
 For one-liners.
 
@@ -997,15 +1046,17 @@ one-liner (-e) code will be serialized as JSON data.
 
 =back
 
-=item L<JSON::Builder>
+[% cpm('JSON::Builder') %]
 
 Create JSON under memory limitations.
 
-=item L<JSON::Color>
+[% cpm('JSON::Color') %]
 
 🌈 This module generates JSON colorized with ANSI escape sequences.
 
-=item L<JSON::MultiValueOrdered> and L<JSON::Tiny::Subclassable>
+[% cpm('JSON_File') %]
+
+[% cpm('JSON::MultiValueOrdered') %]
 
 C<JSON::MultiValueOrdered> is a special-purpose module for parsing
 JSON objects which have key collisions (something like
@@ -1014,46 +1065,76 @@ C<{"a":1,"a":2}>) within objects.
 (JSON::Parse's handling of key collisions is discussed in L</Key
 collisions> in this document.)
 
-=item L<JSON::Path>
-
-Search nested hashref/arrayref structures using JSONPath.
-
-=item L<JSON::Pointer>
-
-Extract parts of a JSON string.
-
-=item L<JSON::String>
+[% cpm('JSON::String') %]
 
 Automatically change a JSON string when a data structure changes using
 tied scalars.
 
 =back
 
+=item Patch, path, pointer, and transform modules
+
+=over
+
+[% cpm('JSON::MergePatch') %]
+
+[% cpm('JSON::Patch') %]
+
+😕 We don't know what this does, or how it relates to JSON. The example
+in the synopsis section of the document doesn't show any JSON, it
+shows an example of altering nested hashes in Perl.
+
+[% cpm('JSON::Path') %]
+
+Search nested hashref/arrayref structures using JSONPath.
+
+[% cpm('JSON::Pointer') %]
+
+Extract parts of a JSON string.
+
+[% cpm('JSON::T') %]
+
+Transform JSON using JsonT
+
+[% cpm('JSON::Transform') %]
+
+=back
+
+
 =item Test-related modules
 
 =over
 
-=item L<Test::Deep::JSON>
+[% cpm('Test2::Tools::JSON') %]
+
+[% cpm('Test::Deep::JSON') %]
 
 Compare JSON with L<Test::Deep>. As of version 0.05, it relies on
 L</JSON::MaybeXS>.
 
-=item L<Test::JSON>
+[% cpm('Test::JSON') %]
 
 👎 This offers a way to compare two different JSON strings to see if
 they refer to the same object. The most recent version, 0.11, was
 released in 2009, and it relies on the deprecated L</JSON::Any>, which
 makes it essentially abandoned.
 
-=item L<Test::JSON::Entails>
+[% cpm('Test::JSON::Entails') %]
 
 👎 Test whether one JSON or Perl structure entails/subsumes
 another. The most recent version is from 2012, and it relies on
-L</JSON::Any>, so it is probably abandoned.
+L</JSON::Any>, so it is probably abandoned. Also, oddly but not
+uniquely for CPAN modules with the name JSON in the title, it seems to
+not actually have that much to do with JSON, which is a data
+serialisation format, but actually be testing Perl hashes and arrays.
 
-=item L<Test::JSON::More>
+[% cpm('Test::JSON::More') %]
 
-JSON Test Utility. As of version 0.02, it relies on L</JSON>.
+JSON Test Utility. As of version 0.02, it relies on L</JSON> but it is
+able to use L</JSON::XS> instead, and so probably L</Cpanel::JSON::XS>
+would be OK too. According to the documentation, it can test JSON for
+validity and compare JSON strings with keys in a different order, and
+presumably with different whitespace.
 
 =back
 
@@ -1063,16 +1144,16 @@ These untangle numbers, strings, and booleans into JSON types.
 
 =over
 
-=item L<JSON::TypeInference>
+[% cpm('JSON::TypeInference') %]
 
 😕 Virtually undocumented, it's not clear what this does.
 
-=item L<JSON::Types>
+[% cpm('JSON::Types') %]
 
 Change the type of a Perl variable so that it comes out as a number, a
 string, or a boolean in the output JSON.
 
-=item L<JSON::Types::Flexible>
+[% cpm('JSON::Types::Flexible') %]
 
 The module is barely documented, but from looking at L<the test
 file|https://metacpan.org/source/PINE/JSON-Types-Flexible-0.03/t%2Fjson%2Ftypes%2Fflexible%2Fclass.t>,
@@ -1081,7 +1162,7 @@ string so that you can, for example, make the number C<1> come out as
 either a number, C<1>, a string C<"1">, or a boolean, C<true>, in the
 output JSON.
 
-=item L<JSON::Typist>
+[% cpm('JSON::Typist') %]
 
 "Replace mushy strings and numbers with rigidly typed replacements"
 
@@ -1097,27 +1178,29 @@ for you.
 
 =over
 
-=item L<JSON::Any>
+[% cpm('JSON::Any') %]
 
 👎 This now-deprecated module combines L</JSON::DWIW>, L</JSON::XS>
 versions one and two, and L</JSON::Syck>.
 
-=item L<JSON::MaybeXS>
+[% cpm('JSON::MaybeXS') %]
 
 A module which combines L</Cpanel::JSON::XS>, L</JSON::XS>, and
 L</JSON::PP>. The original L</JSON> combines L</JSON::XS> and
 L</JSON::PP>, but this prioritizes L</Cpanel::JSON::XS> over
 L</JSON::XS>.
 
-=item L<JSON::XS::VersionOneAndTwo>
+[% cpm('JSON::XS::VersionOneAndTwo') %]
 
 👎 A "combination module" which supports two different interfaces of
 L</JSON::XS>. However, JSON::XS is now onto version 4.
 
-=item L<Mojo::JSON::MaybeXS>
+[% cpm('Mojo::JSON::MaybeXS') %]
 
-This pulls in L</JSON::MaybeXS> instead of L</Mojo::JSON> for
-L<Mojolicious> users.
+👎 This pulls in L</JSON::MaybeXS> instead of L</Mojo::JSON> for
+L<Mojolicious> users. It seems to have been rendered obsolete by
+modern versions of Mojolicious due to changes to make that depend on
+L</Cpanel::JSON::XS> if available.
 
 =back
 
@@ -1127,15 +1210,15 @@ These modules extend JSON with comments and other things.
 
 =over
 
-=item L<JSON::Diffable>
+[% cpm('JSON::Diffable') %]
 
 "A relaxed and easy diffable JSON variant"
 
-=item L<JSON::Relaxed>
+[% cpm('JSON::Relaxed') %]
 
 "An extension of JSON that allows for better human-readability".
 
-=item L<JSONY>
+[% cpm('JSONY') %]
 
 "Relaxed JSON with a little bit of YAML"
 
@@ -1145,12 +1228,14 @@ These modules extend JSON with comments and other things.
 
 =over
 
-=item L<JSON::API>
+[% cpm('JSON::API') %]
 
 Combines L<LWP::UserAgent> and L<JSON> to make a unified module to
 communicate with a web server via JSON.
 
-=item L<WWW::JSON>
+[% cpm('LWP::JSON::Tiny') %]
+
+[% cpm('WWW::JSON') %]
 
 "Make working with JSON Web API's as painless as possible"
 
@@ -1162,11 +1247,11 @@ These modules extend the existing modules with some extra bits.
 
 =over
 
-=item L<JSON::XS::Sugar>
+[% cpm('JSON::XS::Sugar') %]
 
 Provides booleans and number/string forcing for L</JSON::XS>.
 
-=item L<Silki::JSON>
+[% cpm('Silki::JSON') %]
 
 Switches on formatting and strict utf8 in a L</JSON::XS> object.
 
@@ -1179,11 +1264,11 @@ except by accident.
 
 =over
 
-=item L<App::JSON::Tools>
+[% cpm('App::JSON::Tools') %]
 
 Undocumented command-line tools for JSON.
 
-=item L<App::JSONPretty>
+[% cpm('App::JSONPretty') %]
 
 👎🐛 JSON prettification script. For whatever reason the script
 encapsulates the entirety of an old version of the L</JSON> module
@@ -1193,43 +1278,43 @@ If you need this kind of script, there is something called L<json_xs>
 which comes with L</JSON::XS>, or equivalently L<cpanel_json_xs> in
 the forked module L</Cpanel::JSON::XS>.
 
-=item L<ARGV::JSON>
+[% cpm('ARGV::JSON') %]
 
-=item L<Haineko::JSON>
+[% cpm('Haineko::JSON') %]
 
 😕 It says "Wrapper class to load/dump JSON" but we're not sure what
 the author means, for example what does it mean to say "loading JSON
 from scalar value"? Every module which deals with JSON deals with
 parsing JSON from a scalar, so why is a wrapper class necessary?
 
-=item L<JS::JSON>
+[% cpm('JS::JSON') %]
 
 👎 This is JavaScript code which was uploaded to CPAN. The original
 JavaScript is now obsolete since the thing it codes is included in all
 modern web browsers.
 
-=item L<JSON::Assert>
+[% cpm('JSON::Assert') %]
 
 "Asserts JSONPaths into a JSON data structure for correct
 values/matches"
 
-=item L<JSON::Eval>
+[% cpm('JSON::Eval') %]
 
 Eval Perl code found in JSON. This module enables one to encode and
 decode Perl scalar references and code references to JSON.
 
-=item L<JSON::ize>
+[% cpm('JSON::ize') %]
 
 Something about one-liners.
 
-=item L<JSON::JSend>
+[% cpm('JSON::JSend') %]
 
-=item L<JSON::Lines>
+[% cpm('JSON::Lines') %]
 
 "JSON Lines is a convenient format for storing structured data that
 may be processed one record at a time."
 
-=item L<JSON::Meth>
+[% cpm('JSON::Meth') %]
 
 😕 Claims to be "no nonsense JSON encoding/decoding as method calls on
 data". From the documentation:
@@ -1242,27 +1327,28 @@ or decode a JSON string to a Perl data structure.
 
 =back
 
-=item L<JSON::ON>
+[% cpm('JSON::ON') %]
 
 JavaScript object notation object notator.
 
-=item L<JSON::Patch>
-
-😕 We don't know what this does, or how it relates to JSON. The example
-in the synopsis section of the document doesn't show any JSON, it
-shows an example of altering nested hashes in Perl.
-
-=item L<JSON::SL>
+[% cpm('JSON::SL') %]
 
 😕
 
-=item L<JSON::Streaming::Reader> and L<JSON::Streaming::Writer>
+[% cpm('JSON::Streaming::Reader') %]
 
-=item L<JSON::T>
+[% cpm('JSON::Streaming::Writer') %]
 
-Transform JSON using JsonT
+[% cpm('JSON::Util') %]
 
-=item L<JSON::XS::ByteString>
+Relies on L<JSON::MaybeXS> and the author's other module L<IO::Any>,
+so that you can put either a file name or a JSON string as the
+argument and it tries to work out which one you have given it. That is
+ingenious, but it seems that if you are a programmer who cannot
+distinguish whether your input string is a file name or JSON, you have
+a very serious problem.
+
+[% cpm('JSON::XS::ByteString') %]
 
 😕 L<The
 README|https://metacpan.org/source/CINDY/JSON-XS-ByteString-1.004/README>
@@ -1279,7 +1365,7 @@ We haven't tried downloading this or installing it, but according to
 the documentation, this module encodes numbers with quotes around
 them, so C<< {this => 2} >> turns into C<{"this":"2"}>.
 
-=item L<Text::JSON::Nibble>
+[% cpm('Text::JSON::Nibble') %]
 
 Nibble complete JSON objects from buffers.
 
@@ -1312,13 +1398,6 @@ If you need confirmation, use its --verbose option:
     linedecomps.json is valid JSON.
     radkfile-radicals.json is valid JSON.
 
-=head1 TEST RESULTS
-
-The CPAN testers results are at the usual place. 
-
-The ActiveState test results are at
-L<http://code.activestate.com/ppm/JSON-Parse/>.
-
 =head1 DEPENDENCIES
 
 =over
@@ -1330,9 +1409,10 @@ L<http://code.activestate.com/ppm/JSON-Parse/>.
 =head1 EXPORTS
 
 The module exports nothing by default. Functions L</parse_json>,
-L</parse_json_safe>, L</json_file_to_perl>, L</valid_json> and
+L</parse_json_safe>, L</read_json>, L</valid_json> and
 L</assert_valid_json>, as well as the old function names
-L</validate_json> and L</json_to_perl>, can be exported on request.
+L</validate_json>, L</json_file_to_perl>, and L</json_to_perl>, can be
+exported on request.
 
 All of the functions can be exported using the tag ':all':
 
@@ -1392,18 +1472,30 @@ valid UTF-8 as input. See L</UTF-8 only>.
 In our opinion it would be a disservice to users of this module to
 allow bytes containing useless fragments such as incomplete parts of
 surrogate pairs, or invalid characters, just because the JSON
-specification doesn't actually explicitly rule out rejecting these
-kinds of garbage inputs. Please see the function C<daft_test> in the
-file F<xt/JPXT.pm> for exactly which of these elements of the test
-suite we do not comply with. See also Douglas Crockford, the inventor
-of JSON's, L<JSON
+specification doesn't actually explicitly demand rejecting these kinds
+of garbage inputs. Please see the function C<daft_test> in the file
+F<xt/JPXT.pm> for exactly which of these elements of the test suite we
+do not comply with. We note that this comment from Douglas Crockford,
+the inventor of JSON, L<JSON
 parser|https://github.com/douglascrockford/JSON-c/blob/master/utf8_decode.c#L38-L43>,
-dated 2005.
+dated 2005, agrees with our opinion on this point.
 
 JSON::Parse version 0.58 also introduced L</get_max_depth> and
 L</set_max_depth> to prevent the stack overflow errors caused by some
 very deeply nested inputs such as those of the JSON Parsing Test
 Suite.
+
+=head2 Test results
+
+=over
+
+=item L<ActiveState PPM|http://code.activestate.com/ppm/JSON-Parse/>.
+
+=item L<CPAN testers|http://matrix.cpantesters.org/?dist=JSON-Parse+[% version %]>
+
+=item L<Travis CI|https://travis-ci.com/github/benkasminbullock/JSON-Parse>
+
+=back
 
 =head1 ACKNOWLEDGEMENTS
 
