@@ -1,9 +1,10 @@
-0.58_01 2021-01-03
+0.59 2021-01-04
 
 * "json_file_to_perl" renamed "read_json"
 * Documentation work
  -- Benchmarks section updated with latest versions, add Cpanel::JSON::XS
  -- Add Metacpan vote ratings to other CPAN modules section
+ -- Sections reordered to put methods above parsing details
 
 0.58 2021-01-01
 

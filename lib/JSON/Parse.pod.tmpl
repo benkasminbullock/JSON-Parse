@@ -23,7 +23,7 @@ produces output
 
 =head1 NAME
 
-JSON::Parse - Read JSON into a Perl variable
+JSON::Parse - Parse JSON
 
 =head1 SYNOPSIS
 
@@ -185,234 +185,6 @@ L</assert_valid_json> to get error messages when the JSON is invalid.
 This cannot detect key collisions in the JSON since it does not store
 values. See L</Key collisions> for more on this module's handling of
 non-unique names in the JSON.
-
-=head1 Mapping from JSON to Perl
-
-JSON elements are mapped to Perl as follows:
-
-=head2 JSON numbers
-
-JSON numbers become Perl numbers, either integers or double-precision
-floating point numbers, or possibly strings containing the number if
-parsing of a number by the usual methods fails somehow.
-
-JSON does not allow leading zeros, like I<0123>, or leading plus
-signs, like I<+100>, in numbers, so these cause an L</Unexpected
-character> error. JSON also does not allow numbers of the form I<1.>,
-but it does allow things like I<0e0> or I<1E999999>. As far as
-possible these are accepted by JSON::Parse.
-
-=head2 JSON strings
-
-JSON strings become Perl strings. The JSON escape characters such as
-C<\t> for the tab character (see section 2.5 of L</RFC 8259>) are
-mapped to the equivalent ASCII character.
-
-=head3 Handling of Unicode
-
-Inputs must be in the UTF-8 format. See L</UTF-8 only>.
-
-If the input to L</parse_json> is marked as Unicode characters, the
-output strings will be marked as Unicode characters. If the input is
-not marked as Unicode characters, the output strings will not be
-marked as Unicode characters. Thus, 
-
-[% INCLUDE "sasori.pl" | xtidy %]
-
-but
-
-[% INCLUDE "ebi.pl" | xtidy %]
-
-Escapes of the form \uXXXX (see page three of L</RFC 8259>) are mapped
-to ASCII if XXXX is less than 0x80, or to UTF-8 if XXXX is greater
-than or equal to 0x80.
-
-Strings containing \uXXXX escapes greater than 0x80 are also upgraded
-to character strings, regardless of whether the input is a character
-string or a byte string, thus regardless of whether Perl thinks the
-input string is Unicode, escapes like \u87f9 are converted into the
-equivalent UTF-8 bytes and the particular string in which they occur
-is marked as a character string:
-
-[% INCLUDE "kani.pl" | xtidy %]
-
-This is modelled on the behaviour of Perl's C<chr>:
-
-[% INCLUDE "chr.pl" | xtidy %]
-
-However, JSON::Parse also upgrades the remaining part of the string
-into a character string, even when it's not marked as a character
-string. For example,
-
-[% example("unicode-details") %]
-
-Although in general the above would be an unsafe practice, JSON::Parse
-can do things this way because JSON is a text-only, Unicode-only
-format. To ensure that invalid inputs are never upgraded, JSON::Parse
-checks each input byte to make sure that it forms UTF-8. See also
-L</UTF-8 only>. Doing things this way, rather than the way that Perl
-does it, was one of the original motivations for writing this
-module.
-
-Surrogate pairs in the form C<\uD834\uDD1E> are also handled. If the
-second half of the surrogate pair is missing, an L</Unexpected
-character> or L</Unexpected end of input> error is thrown. If the
-second half of the surrogate pair is present but contains an
-impossible value, a L</Not surrogate pair> error is thrown.
-
-=head2 JSON arrays
-
-JSON arrays become Perl array references. The elements of the Perl
-array are in the same order as they appear in the JSON.
-
-Thus
-
-    my $p = parse_json ('["monday", "tuesday", "wednesday"]');
-
-has the same result as a Perl declaration of the form
-
-    my $p = [ 'monday', 'tuesday', 'wednesday' ];
-
-=head2 JSON objects
-
-JSON objects become Perl hashes. The members of the JSON object become
-key and value pairs in the Perl hash. The string part of each object
-member becomes the key of the Perl hash. The value part of each member
-is mapped to the value of the Perl hash.
-
-Thus
-
-    my $j = <<EOF;
-    {"monday":["blue", "black"],
-     "tuesday":["grey", "heart attack"],
-     "friday":"Gotta get down on Friday"}
-    EOF
-
-    my $p = parse_json ($j);
-
-has the same result as a Perl declaration of the form
-
-    my $p = {
-        monday => ['blue', 'black'],
-        tuesday => ['grey', 'heart attack'],
-        friday => 'Gotta get down on Friday',
-    };
-
-=head3 Key collisions
-
-A key collision is something like the following.
-
-[% example("key-collision") %]
-
-Here the key "a" could be either 1 or 2. As seen in the example,
-L</parse_json> overwrites the first value with the second
-value. L</parse_json_safe> halts and prints a warning. If you use
-L</new> you can switch key collision on and off with the
-L</detect_collisions> method.
-
-The rationale for L</parse_json> not to give warnings is that Perl
-doesn't give information about collisions when storing into hash
-values, and checking for collisions for every key will degrade
-performance for the sake of an unlikely occurrence. The JSON
-specification says "The names within an object SHOULD be unique." (see
-L</RFC 8259>, page 5), although it's not a requirement.
-
-For performance, L</valid_json> and L</assert_valid_json> do not store
-hash keys, thus they cannot detect this variety of problem.
-
-=head2 Literals
-
-=head3 false
-
-L</parse_json> maps the JSON false literal to a readonly scalar which
-evaluates to the empty string, or to zero in a numeric context. (This
-behaviour changed from version 0.36 to 0.37. In versions up to 0.36,
-the false literal was mapped to a readonly scalar which evaluated to 0
-only.) L</parse_json_safe> maps the JSON literal to a similar scalar
-without the readonly constraints. If you use a parser created with
-L</new>, you can choose either of these behaviours with
-L</copy_literals>, or you can tell JSON::Parse to put your own value
-in place of falses using the L</set_false> method.
-
-=head3 null
-
-L</parse_json> maps the JSON null literal to a readonly scalar
-C<$JSON::Parse::null> which evaluates to C<undef>. L</parse_json_safe>
-maps the JSON literal to the undefined value. If you use a parser
-created with L</new>, you can choose either of these behaviours with
-L</copy_literals>, or you can tell JSON::Parse to put your own value
-in place of nulls using the L</set_null> method.
-
-=head3 true
-
-L</parse_json> maps the JSON true literal to a readonly scalar which
-evaluates to C<1>. L</parse_json_safe> maps the JSON literal to the
-value 1. If you use a parser created with L</new>, you can choose
-either of these behaviours with L</copy_literals>, or you can tell
-JSON::Parse to put your own value in place of trues using the
-L</set_true> method.
-
-=head3 Round trips and compatibility
-
-The Perl versions of literals produced by L</parse_json> will be
-converted back to JSON literals if you use
-L<JSON::Create/create_json>. However, JSON::Parse's literals are
-incompatible with the other CPAN JSON modules. For compatibility with
-other CPAN modules, create a JSON::Parse object with L</new>, and set
-JSON::Parse's literals with L</set_true>, L</set_false>, and
-L</set_null>.
-
-=head3 A round trip with JSON::Tiny
-
-This example demonstrates round-trip compatibility using L<JSON::Tiny>,
-version 0.58:
-
-[% example("json-tiny-round-trip-demo") %]
-
-Most of the other CPAN modules use similar methods to L<JSON::Tiny>,
-so the above example can easily be adapted. See also
-L<JSON::Create/Interoperability> for various examples.
-
-=head3 Modifying the values
-
-L</parse_json> maps all the literals to read-only values. Because of
-this, attempting to modifying the boolean values in the hash reference
-returned by L</parse_json> will cause "Modification of a read-only
-value attempted" errors:
-
-    my $in = '{"hocus":true,"pocus":false,"focus":null}';
-    my $p = json_parse ($in);
-    $p->{hocus} = 99;
-    # "Modification of a read-only value attempted" error occurs
-
-Since the hash values are read-only scalars, 
-C<< $p->{hocus} = 99 >> is like this:
-
-    undef = 99;
-
-If you need to modify the returned hash reference, then delete the
-value first:
-
-    my $in = '{"hocus":true,"pocus":false,"focus":null}';
-    my $p = json_parse ($in);
-    delete $p->{pocus};
-    $p->{pocus} = 99;
-    # OK
-
-Similarly with array references, delete the value before altering:
-
-    my $in = '[true,false,null]';
-    my $q = json_parse ($in);
-    delete $q->[1];
-    $q->[1] = 'magic';
-
-Note that the return values from parsing bare literals are not
-read-only scalars, so
-
-    my $true = JSON::Parse::json_parse ('true');
-    $true = 99;
-
-produces no error. This is because Perl copies the scalar.
 
 =head1 METHODS
 
@@ -670,6 +442,234 @@ L</File::JSON::Slurper>.
 =head2 validate_json
 
 This is exactly the same function as L</assert_valid_json>.
+
+=head1 Mapping from JSON to Perl
+
+JSON elements are mapped to Perl as follows:
+
+=head2 JSON numbers
+
+JSON numbers become Perl numbers, either integers or double-precision
+floating point numbers, or possibly strings containing the number if
+parsing of a number by the usual methods fails somehow.
+
+JSON does not allow leading zeros, like I<0123>, or leading plus
+signs, like I<+100>, in numbers, so these cause an L</Unexpected
+character> error. JSON also does not allow numbers of the form I<1.>,
+but it does allow things like I<0e0> or I<1E999999>. As far as
+possible these are accepted by JSON::Parse.
+
+=head2 JSON strings
+
+JSON strings become Perl strings. The JSON escape characters such as
+C<\t> for the tab character (see section 2.5 of L</RFC 8259>) are
+mapped to the equivalent ASCII character.
+
+=head3 Handling of Unicode
+
+Inputs must be in the UTF-8 format. See L</UTF-8 only>.
+
+If the input to L</parse_json> is marked as Unicode characters, the
+output strings will be marked as Unicode characters. If the input is
+not marked as Unicode characters, the output strings will not be
+marked as Unicode characters. Thus, 
+
+[% INCLUDE "sasori.pl" | xtidy %]
+
+but
+
+[% INCLUDE "ebi.pl" | xtidy %]
+
+Escapes of the form \uXXXX (see page three of L</RFC 8259>) are mapped
+to ASCII if XXXX is less than 0x80, or to UTF-8 if XXXX is greater
+than or equal to 0x80.
+
+Strings containing \uXXXX escapes greater than 0x80 are also upgraded
+to character strings, regardless of whether the input is a character
+string or a byte string, thus regardless of whether Perl thinks the
+input string is Unicode, escapes like \u87f9 are converted into the
+equivalent UTF-8 bytes and the particular string in which they occur
+is marked as a character string:
+
+[% INCLUDE "kani.pl" | xtidy %]
+
+This is modelled on the behaviour of Perl's C<chr>:
+
+[% INCLUDE "chr.pl" | xtidy %]
+
+However, JSON::Parse also upgrades the remaining part of the string
+into a character string, even when it's not marked as a character
+string. For example,
+
+[% example("unicode-details") %]
+
+Although in general the above would be an unsafe practice, JSON::Parse
+can do things this way because JSON is a text-only, Unicode-only
+format. To ensure that invalid inputs are never upgraded, JSON::Parse
+checks each input byte to make sure that it forms UTF-8. See also
+L</UTF-8 only>. Doing things this way, rather than the way that Perl
+does it, was one of the original motivations for writing this
+module.
+
+Surrogate pairs in the form C<\uD834\uDD1E> are also handled. If the
+second half of the surrogate pair is missing, an L</Unexpected
+character> or L</Unexpected end of input> error is thrown. If the
+second half of the surrogate pair is present but contains an
+impossible value, a L</Not surrogate pair> error is thrown.
+
+=head2 JSON arrays
+
+JSON arrays become Perl array references. The elements of the Perl
+array are in the same order as they appear in the JSON.
+
+Thus
+
+    my $p = parse_json ('["monday", "tuesday", "wednesday"]');
+
+has the same result as a Perl declaration of the form
+
+    my $p = [ 'monday', 'tuesday', 'wednesday' ];
+
+=head2 JSON objects
+
+JSON objects become Perl hashes. The members of the JSON object become
+key and value pairs in the Perl hash. The string part of each object
+member becomes the key of the Perl hash. The value part of each member
+is mapped to the value of the Perl hash.
+
+Thus
+
+    my $j = <<EOF;
+    {"monday":["blue", "black"],
+     "tuesday":["grey", "heart attack"],
+     "friday":"Gotta get down on Friday"}
+    EOF
+
+    my $p = parse_json ($j);
+
+has the same result as a Perl declaration of the form
+
+    my $p = {
+        monday => ['blue', 'black'],
+        tuesday => ['grey', 'heart attack'],
+        friday => 'Gotta get down on Friday',
+    };
+
+=head3 Key collisions
+
+A key collision is something like the following.
+
+[% example("key-collision") %]
+
+Here the key "a" could be either 1 or 2. As seen in the example,
+L</parse_json> overwrites the first value with the second
+value. L</parse_json_safe> halts and prints a warning. If you use
+L</new> you can switch key collision on and off with the
+L</detect_collisions> method.
+
+The rationale for L</parse_json> not to give warnings is that Perl
+doesn't give information about collisions when storing into hash
+values, and checking for collisions for every key will degrade
+performance for the sake of an unlikely occurrence. The JSON
+specification says "The names within an object SHOULD be unique." (see
+L</RFC 8259>, page 5), although it's not a requirement.
+
+For performance, L</valid_json> and L</assert_valid_json> do not store
+hash keys, thus they cannot detect this variety of problem.
+
+=head2 Literals
+
+=head3 false
+
+L</parse_json> maps the JSON false literal to a readonly scalar which
+evaluates to the empty string, or to zero in a numeric context. (This
+behaviour changed from version 0.36 to 0.37. In versions up to 0.36,
+the false literal was mapped to a readonly scalar which evaluated to 0
+only.) L</parse_json_safe> maps the JSON literal to a similar scalar
+without the readonly constraints. If you use a parser created with
+L</new>, you can choose either of these behaviours with
+L</copy_literals>, or you can tell JSON::Parse to put your own value
+in place of falses using the L</set_false> method.
+
+=head3 null
+
+L</parse_json> maps the JSON null literal to a readonly scalar
+C<$JSON::Parse::null> which evaluates to C<undef>. L</parse_json_safe>
+maps the JSON literal to the undefined value. If you use a parser
+created with L</new>, you can choose either of these behaviours with
+L</copy_literals>, or you can tell JSON::Parse to put your own value
+in place of nulls using the L</set_null> method.
+
+=head3 true
+
+L</parse_json> maps the JSON true literal to a readonly scalar which
+evaluates to C<1>. L</parse_json_safe> maps the JSON literal to the
+value 1. If you use a parser created with L</new>, you can choose
+either of these behaviours with L</copy_literals>, or you can tell
+JSON::Parse to put your own value in place of trues using the
+L</set_true> method.
+
+=head3 Round trips and compatibility
+
+The Perl versions of literals produced by L</parse_json> will be
+converted back to JSON literals if you use
+L<JSON::Create/create_json>. However, JSON::Parse's literals are
+incompatible with the other CPAN JSON modules. For compatibility with
+other CPAN modules, create a JSON::Parse object with L</new>, and set
+JSON::Parse's literals with L</set_true>, L</set_false>, and
+L</set_null>.
+
+=head3 A round trip with JSON::Tiny
+
+This example demonstrates round-trip compatibility using L<JSON::Tiny>,
+version 0.58:
+
+[% example("json-tiny-round-trip-demo") %]
+
+Most of the other CPAN modules use similar methods to L<JSON::Tiny>,
+so the above example can easily be adapted. See also
+L<JSON::Create/Interoperability> for various examples.
+
+=head3 Modifying the values
+
+L</parse_json> maps all the literals to read-only values. Because of
+this, attempting to modifying the boolean values in the hash reference
+returned by L</parse_json> will cause "Modification of a read-only
+value attempted" errors:
+
+    my $in = '{"hocus":true,"pocus":false,"focus":null}';
+    my $p = json_parse ($in);
+    $p->{hocus} = 99;
+    # "Modification of a read-only value attempted" error occurs
+
+Since the hash values are read-only scalars, 
+C<< $p->{hocus} = 99 >> is like this:
+
+    undef = 99;
+
+If you need to modify the returned hash reference, then delete the
+value first:
+
+    my $in = '{"hocus":true,"pocus":false,"focus":null}';
+    my $p = json_parse ($in);
+    delete $p->{pocus};
+    $p->{pocus} = 99;
+    # OK
+
+Similarly with array references, delete the value before altering:
+
+    my $in = '[true,false,null]';
+    my $q = json_parse ($in);
+    delete $q->[1];
+    $q->[1] = 'magic';
+
+Note that the return values from parsing bare literals are not
+read-only scalars, so
+
+    my $true = JSON::Parse::json_parse ('true');
+    $true = 99;
+
+produces no error. This is because Perl copies the scalar.
 
 =head1 RESTRICTIONS
 
