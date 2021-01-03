@@ -1,3 +1,10 @@
+0.58_01 2021-01-03
+
+* "json_file_to_perl" renamed "read_json"
+* Documentation work
+ -- Benchmarks section updated with latest versions
+ -- Add Metacpan vote ratings to other CPAN modules section
+
 0.58 2021-01-01
 
 * Protect against stack overflows by having maximum parsing depth

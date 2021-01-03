@@ -10,8 +10,8 @@ use FindBin '$Bin';
 use File::Slurper qw!read_text write_text!;
 use Deploy 'make_date';
 
-my $version = '0.57_02';
-my $newversion = '0.58';
+my $version = '0.58';
+my $newversion = '0.58_01';
 
 my @pmfiles = qw!
 lib/JSON/Parse.pm
@@ -22,7 +22,7 @@ lib/JSON/Whitespace.pm
 for my $file (@pmfiles) {
     my $bfile = "$Bin/$file";
     my $text = read_text ($bfile);
-    if ($text =~ s/\Q$version\E/$newversion/g) {
+    if ($text =~ s/\Q$version\E\b/$newversion/g) {
 	print "$file OK\n";
 	write_text ($bfile, $text);
     }

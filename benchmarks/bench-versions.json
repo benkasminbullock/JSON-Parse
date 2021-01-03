@@ -1,0 +1,15 @@
+{
+	"Cpanel::JSON::XS":"4.25",
+	"JSON::Parse":"0.58_01",
+	"JSON::XS":"4.03",
+	"cc":"FreeBSD clang version 10.0.1",
+	"perl":{
+		"original":"v5.32.0",
+		"qv":1,
+		"version":[
+			5,
+			32,
+			0
+		]
+	}
+}

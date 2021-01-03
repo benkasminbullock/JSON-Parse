@@ -100,7 +100,7 @@ Otherwise a Perl scalar is returned.
 The behaviour of allowing a scalar was added in version 0.32 of this
 module. This brings it into line with the new specification for
 JSON. The behaviour of disallowing empty inputs was changed in version
-0.49. This makes it conform to the L</JSON Parsing Test Suite>.
+0.49.
 
 The function L</parse_json_safe> offers a version of this function
 with various safety features enabled.
@@ -665,7 +665,7 @@ This is exactly the same function as L</parse_json>.
 
 This is exactly the same function as L</read_json>. The function was
 renamed in version 0.59, after the same function in
-L<File::JSON::Slurper>.
+L</File::JSON::Slurper>.
 
 =head2 validate_json
 
@@ -839,11 +839,14 @@ script in the L<JSON::XS> distribution. The script [%
 repo("benchmarks/pub-bench.pl") %] runs the benchmarks and prints them
 out as POD.
 
-The following benchmark tests used version 0.47 of JSON::Parse and
-version 3.03 of JSON::XS on Perl Version 18.2, compiled with Clang
-version 3.4.1 on FreeBSD 10.3. The files in the "benchmarks" directory
-of JSON::Parse. "short.json" and "long.json" are the benchmarks used
-by JSON::XS.
+The following benchmark tests used version [%
+benchv.item('JSON::Parse') %] of JSON::Parse, version [%
+benchv.item('JSON::XS') %] of L</JSON::XS>, and version [%
+benchv.item('Cpanel::JSON::XS') %] of L</Cpanel::JSON::XS> on Perl
+version [% benchv.perl.original %] compiled with Clang version [%
+benchv.cc %] on FreeBSD 12.2. The files in the "benchmarks" directory
+of JSON::Parse. F<short.json> and F<long.json> are the benchmarks used
+by L</JSON::XS>.
 
 =over
 
@@ -868,10 +871,14 @@ Crockford.
 
 =head2 Other CPAN modules for parsing and producing JSON
 
-Modules which we recommend are marked with 👍. Deprecated modules and
-modules which are definitely buggy (bug reports/pull requests ignored)
-and abandoned (no releases for several years) are marked with 👎
-and/or 🐛. Modules we can't work out are marked with 😕.
+[% star = "⭐" %] 
+
+The [% star %] represents the number of votes this module has received
+on metacpan, on a logarithmic scale. Modules which we recommend are
+marked with 👍. Deprecated modules and modules which are definitely
+buggy (bug reports/pull requests ignored) and abandoned (no releases
+for several years) are marked with 👎 and/or 🐛. Modules we can't work
+out are marked with 😕.
 
 =over
 
@@ -898,12 +905,14 @@ tokenizer available to people who want to write their own JSON
 parsers.
 
 =back
-
 [% MACRO cpm(module) BLOCK %]
 =item L<[% module %]>
 [% IF mod2info.defined(module) %]
 [% info = mod2info.$module %]
-[Author: L<[% info.author %]|https://metacpan.org/author/[% info.author %]>; Date: C<[% info.date %]>; Version: C<[% info.version %]>]
+[
+[%- IF info.log_fav > 0 -%]
+[% star.repeat(info.log_fav) %] [% END -%]
+Author: L<[% info.author %]|https://metacpan.org/author/[% info.author %]>; Date: C<[% info.date %]>; Version: C<[% info.version %]>]
 [% END %]
 [% END %]
 
@@ -913,8 +922,8 @@ parsers.
 
 [% cpm('Cpanel::JSON::XS') %]
 
-This is a fork of L<JSON::XS> related to a disagreement about how to
-report bugs. Please see the module for details.
+This is a fork of L<JSON::XS>. Please see the module for details about
+the reasons for the fork.
 
 [% cpm('File::JSON::Slurper') %]
 
@@ -929,20 +938,9 @@ modules. Judging from the fairly sparse documentation, it seems to be
 a module where you build the JSON on the fly rather than converting a
 Perl structure wholesale into JSON.
 
-[% cpm('Inline::JSON') %]
-
-"Embed JSON data structures directly into your Perl code". Relies on
-L</JSON>.
-
 [% cpm('JSON') %]
 
 This calls on either L<JSON::PP> or L<JSON::XS>.
-
-[% cpm('JSON::Decode::Marpa') %]
-
-[% cpm('JSON::Decode::Regexp') %]
-
-JSON parser as a single Perl Regex.
 
 [% cpm('JSON::DWIW') %]
 
@@ -996,8 +994,6 @@ compiler to install.
 since ten years ago. Bug reports include serious errors, and pull
 requests have been ignored.
 
-[% cpm('MarpaX::Demo::JSONParser') %]
-
 [% cpm('Mojo::JSON') %]
 
 Part of the L<Mojolicious> standalone web framework, "pure Perl" JSON
@@ -1005,98 +1001,38 @@ reader/writer. As of version 8.70 of Mojolicious, this actually
 depends on L</JSON::PP> but will load L</Cpanel::JSON::XS> if it is
 available.
 
-[% cpm('Pegex::JSON') %]
-
-🐛 Based on L<Pegex>.  See
-L<our bug report|https://github.com/pegex-parser/pegex-json-pm/issues/3>.
-
 =back
 
-=item Special-purpose modules
+=item Combination modules
+
+These modules rely on more than one back-end module to process JSON
+for you.
 
 =over
 
-[% cpm('App::JSON::to') %]
+[% cpm('JSON::Any') %]
 
-Convert JSON data to other formats. It reads your JSON file or input
-and converts it into either YAML or Perl native format using
-L<Data::Dumper>.
+👎 This now-deprecated module combines L</JSON::DWIW>, L</JSON::XS>
+versions one and two, and L</JSON::Syck>.
 
-[% cpm('boolean') %]
+[% cpm('JSON::MaybeXS') %]
 
-👍 This module offers C<true> and C<false> literals in Perl, so you just have
+A module which combines L</Cpanel::JSON::XS>, L</JSON::XS>, and
+L</JSON::PP>. The original L</JSON> combines L</JSON::XS> and
+L</JSON::PP>, but this prioritizes L</Cpanel::JSON::XS> over
+L</JSON::XS>.
 
-    use boolean;
-    my $something = true;
+[% cpm('JSON::XS::VersionOneAndTwo') %]
 
-This is very useful for dealing with JSON.
+👎 A "combination module" which supports two different interfaces of
+L</JSON::XS>. However, JSON::XS is now onto version 4.
 
-[% cpm('Config::JSON') %]
+[% cpm('Mojo::JSON::MaybeXS') %]
 
-Configuration files in JSON, with hash comments also allowed.
-
-[% cpm('Devel::JSON') %]
-
-For one-liners.
-
-=over
-
-If you use this module from the command-line, the last value of your
-one-liner (-e) code will be serialized as JSON data.
-
-=back
-
-[% cpm('JSON::Builder') %]
-
-Create JSON under memory limitations.
-
-[% cpm('JSON::Color') %]
-
-🌈 This module generates JSON colorized with ANSI escape sequences.
-
-[% cpm('JSON_File') %]
-
-[% cpm('JSON::MultiValueOrdered') %]
-
-C<JSON::MultiValueOrdered> is a special-purpose module for parsing
-JSON objects which have key collisions (something like
-C<{"a":1,"a":2}>) within objects.
-
-(JSON::Parse's handling of key collisions is discussed in L</Key
-collisions> in this document.)
-
-[% cpm('JSON::String') %]
-
-Automatically change a JSON string when a data structure changes using
-tied scalars.
-
-=back
-
-=item Patch, path, pointer, and transform modules
-
-=over
-
-[% cpm('JSON::MergePatch') %]
-
-[% cpm('JSON::Patch') %]
-
-😕 We don't know what this does, or how it relates to JSON. The example
-in the synopsis section of the document doesn't show any JSON, it
-shows an example of altering nested hashes in Perl.
-
-[% cpm('JSON::Path') %]
-
-Search nested hashref/arrayref structures using JSONPath.
-
-[% cpm('JSON::Pointer') %]
-
-Extract parts of a JSON string.
-
-[% cpm('JSON::T') %]
-
-Transform JSON using JsonT
-
-[% cpm('JSON::Transform') %]
+👎 This pulls in L</JSON::MaybeXS> instead of L</Mojo::JSON> for
+L<Mojolicious> users. It seems to have been rendered obsolete by
+modern versions of Mojolicious due to changes to make that depend on
+L</Cpanel::JSON::XS> if available.
 
 =back
 
@@ -1171,36 +1107,101 @@ whether your input JSON was C<"123"> (a string) or C<123> (a number).
 
 =back
 
-=item Combination modules
-
-These modules rely on more than one back-end module to process JSON
-for you.
+=item Special-purpose modules
 
 =over
 
-[% cpm('JSON::Any') %]
+[% cpm('App::JSON::to') %]
 
-👎 This now-deprecated module combines L</JSON::DWIW>, L</JSON::XS>
-versions one and two, and L</JSON::Syck>.
+Convert JSON data to other formats. It reads your JSON file or input
+and converts it into either YAML or Perl native format using
+L<Data::Dumper>.
 
-[% cpm('JSON::MaybeXS') %]
+[% cpm('boolean') %]
 
-A module which combines L</Cpanel::JSON::XS>, L</JSON::XS>, and
-L</JSON::PP>. The original L</JSON> combines L</JSON::XS> and
-L</JSON::PP>, but this prioritizes L</Cpanel::JSON::XS> over
-L</JSON::XS>.
+👍 This module offers C<true> and C<false> literals in Perl, so you just have
 
-[% cpm('JSON::XS::VersionOneAndTwo') %]
+    use boolean;
+    my $something = true;
 
-👎 A "combination module" which supports two different interfaces of
-L</JSON::XS>. However, JSON::XS is now onto version 4.
+This is very useful for dealing with JSON.
 
-[% cpm('Mojo::JSON::MaybeXS') %]
+[% cpm('Config::JSON') %]
 
-👎 This pulls in L</JSON::MaybeXS> instead of L</Mojo::JSON> for
-L<Mojolicious> users. It seems to have been rendered obsolete by
-modern versions of Mojolicious due to changes to make that depend on
-L</Cpanel::JSON::XS> if available.
+Configuration files in JSON, with hash comments also allowed.
+
+[% cpm('Devel::JSON') %]
+
+For one-liners.
+
+=over
+
+If you use this module from the command-line, the last value of your
+one-liner (-e) code will be serialized as JSON data.
+
+=back
+
+[% cpm('Inline::JSON') %]
+
+"Embed JSON data structures directly into your Perl code". Relies on
+L</JSON>.
+
+[% cpm('JSON::Builder') %]
+
+Create JSON under memory limitations.
+
+[% cpm('JSON::Color') %]
+
+🌈 This module generates JSON colorized with ANSI escape sequences.
+
+[% cpm('JSON_File') %]
+
+[% cpm('JSON::MultiValueOrdered') %]
+
+C<JSON::MultiValueOrdered> is a special-purpose module for parsing
+JSON objects which have key collisions (something like
+C<{"a":1,"a":2}>) within objects.
+
+(JSON::Parse's handling of key collisions is discussed in L</Key
+collisions> in this document.)
+
+[% cpm('JSON::String') %]
+
+Automatically change a JSON string when a data structure changes using
+tied scalars.
+
+=back
+
+=item Patch, path, pointer, and transform modules
+
+=over
+
+[% cpm('JSON::Assert') %]
+
+"Asserts JSONPaths into a JSON data structure for correct
+values/matches"
+
+[% cpm('JSON::MergePatch') %]
+
+[% cpm('JSON::Patch') %]
+
+😕 We don't know what this does, or how it relates to JSON. The example
+in the synopsis section of the document doesn't show any JSON, it
+shows an example of altering nested hashes in Perl.
+
+[% cpm('JSON::Path') %]
+
+Search nested hashref/arrayref structures using JSONPath.
+
+[% cpm('JSON::Pointer') %]
+
+Extract parts of a JSON string.
+
+[% cpm('JSON::T') %]
+
+Transform JSON using JsonT
+
+[% cpm('JSON::Transform') %]
 
 =back
 
@@ -1257,6 +1258,34 @@ Switches on formatting and strict utf8 in a L</JSON::XS> object.
 
 =back
 
+=item Demonstration modules
+
+These modules provide a JSON parser as a demonstration of another
+technology.
+
+=over
+
+[% cpm('JSON::Decode::Marpa') %]
+
+[% cpm('JSON::Decode::Regexp') %]
+
+🐛🦟🦋🐞 JSON parser as a single Perl Regex, originally by Randal
+Schwartz. This may be ingenious, but it's not remotely a useful JSON
+parser. For example, looking at the string part, it provides no
+Unicode validation, L<no support for Unicode
+escapes|https://metacpan.org/release/JSON-Decode-Regexp/source/lib/JSON/Decode/Regexp.pm#L141>
+and it L<allows invalid escapes such as
+C<\xFF>|https://metacpan.org/release/JSON-Decode-Regexp/source/lib/JSON/Decode/Regexp.pm#L137>.
+
+[% cpm('MarpaX::Demo::JSONParser') %]
+
+[% cpm('Pegex::JSON') %]
+
+🐛 Based on L<Pegex>.  See
+L<our bug report|https://github.com/pegex-parser/pegex-json-pm/issues/3>.
+
+=back
+
 =item Other modules
 
 Modules which are parts of bigger releases have not been included here
@@ -1282,21 +1311,13 @@ the forked module L</Cpanel::JSON::XS>.
 
 [% cpm('Haineko::JSON') %]
 
-😕 It says "Wrapper class to load/dump JSON" but we're not sure what
-the author means, for example what does it mean to say "loading JSON
-from scalar value"? Every module which deals with JSON deals with
-parsing JSON from a scalar, so why is a wrapper class necessary?
+😕 We can't quite figure out the documentation here.
 
 [% cpm('JS::JSON') %]
 
 👎 This is JavaScript code which was uploaded to CPAN. The original
 JavaScript is now obsolete since the thing it codes is included in all
 modern web browsers.
-
-[% cpm('JSON::Assert') %]
-
-"Asserts JSONPaths into a JSON data structure for correct
-values/matches"
 
 [% cpm('JSON::Eval') %]
 
@@ -1499,8 +1520,8 @@ Suite.
 
 =head1 ACKNOWLEDGEMENTS
 
-Toby Inkster (TOBYINK) suggested the new function names which replaced
-the L</OLD INTERFACE> names. Nicolas Immelman and Shlomi Fish
+Toby Inkster (TOBYINK) suggested some of the new function names which
+replaced the L</OLD INTERFACE> names. Nicolas Immelman and Shlomi Fish
 (SHLOMIF) reported memory leaks which were fixed in 0.32 and
 0.40. Github user kolmogorov42 reported a bug which led to
 0.42. Github user SteveGlassman found an error in string copying for

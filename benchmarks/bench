@@ -1,21 +1,61 @@
 #!/home/ben/software/install/bin/perl
 use warnings;
 use strict;
-use JSON::XS qw(decode_json);
+use utf8;
+
+use FindBin '$Bin';
+use Getopt::Long;
+
+use Cpanel::JSON::XS ();
+use JSON::XS ();
 use lib '/home/ben/projects/Json3/blib/lib';
 use lib '/home/ben/projects/Json3/blib/arch';
 
 use JSON::Parse qw/parse_json valid_json parse_json_safe/;
 use JSON::Tokenize qw/tokenize_json/;
+use JSON::Create 'write_json';
 
 use Time::HiRes;
 use List::Util;
+use Config;
 
-use utf8;
+my $ok = GetOptions (
+    info => \my $info, 
+    quicky => \my $quicky,
+);
+if (! $ok) {
+    die;
+}
+
+my @modules = qw!
+Cpanel::JSON::XS
+JSON::XS
+JSON::Parse
+!;
+
+if ($info) {
+    my %info;
+    for my $module (@modules) {
+	my $version = eval "\$${module}::VERSION";
+	$info{$module} = $version;
+    }
+    my $perl_version = $^V;
+    $info{perl} = $perl_version;
+    my $cc_version = `cc --version`;
+    $cc_version =~ s!\s*\(.*$!!gsm;
+    $info{cc} = $cc_version;
+    my $out = "$Bin/bench-versions.json";
+    write_json ($out, \%info, sort => 1, indent => 1,);
+#    print "Wrote version info to '$out'.\n";
+    exit;
+}
 
 my %tst = (
+   "Cpanel"      => [
+       'Cpanel::JSON::XS::decode_json $json',
+   ],
    "JSON::XS"      => [
-       'decode_json $json',
+       'JSON::XS::decode_json $json',
    ],
    "JSON::Parse" => [
        'JSON::Parse::parse_json ($json)',
@@ -53,8 +93,10 @@ my %min;
 my $min = 1e99;
 my $count = 10;
 my $times = 100;
-#my $count = 5;
-#my $times = 5;
+if ($quicky) {
+    my $count = 1;
+    my $times = 10;
+}
 
 print "Repetitions: $count x $times = ", $count * $times, "\n";
 

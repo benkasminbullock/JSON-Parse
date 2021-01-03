@@ -23,12 +23,15 @@ eval {
 	my $module = $1;
 	print "$module\n";
 #	next;
-	my $dist = $mcpan->module ($module);
+	my $mod = $mcpan->module ($module);
+	my $dist = $mod->distribution ();
+	my $fav = $mcpan->favorite ({distribution => $dist});
 	my %info;
 	$info{module} = $module;
-	$info{version} = $dist->version ();
-	$info{author} = $dist->author ();
-	$info{date} = $dist->date ();
+	$info{version} = $mod->version ();
+	$info{author} = $mod->author ();
+	$info{date} = $mod->date ();
+	$info{fav} = $fav->total ();
 	push @modules, \%info;
     }
 };
