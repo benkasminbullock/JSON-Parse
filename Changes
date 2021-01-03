@@ -2,7 +2,7 @@
 
 * "json_file_to_perl" renamed "read_json"
 * Documentation work
- -- Benchmarks section updated with latest versions
+ -- Benchmarks section updated with latest versions, add Cpanel::JSON::XS
  -- Add Metacpan vote ratings to other CPAN modules section
 
 0.58 2021-01-01

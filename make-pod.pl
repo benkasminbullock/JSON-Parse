@@ -5,7 +5,7 @@ use Template;
 use FindBin '$Bin';
 use lib 'blib/arch';
 use lib 'blib/lib';
-use JSON::Parse qw!read_json json_file_to_perl assert_valid_json!;
+use JSON::Parse qw!json_file_to_perl assert_valid_json!;
 use Table::Readable 'read_table';
 use lib "$Bin/copied/lib";
 use Perl::Build::Pod ':all';
@@ -32,7 +32,7 @@ for (@$see_also_info) {
     $mod2info{$_->{module}} = $_;
 }
 $vars{mod2info} = \%mod2info;
-$vars{benchv} = read_json ("$Bin/benchmarks/bench-versions.json");
+$vars{benchv} = json_file_to_perl ("$Bin/benchmarks/bench-versions.json");
 
 my $tt = Template->new (
     ABSOLUTE => 1,
