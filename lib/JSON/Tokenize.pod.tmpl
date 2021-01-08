@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-JSON::Tokenize - tokenize a string containing JSON
+JSON::Tokenize - Tokenize JSON
 
 =head1 SYNOPSIS
 
@@ -17,17 +17,31 @@ This outputs
 
 =head1 DESCRIPTION
 
-This is a module for tokenizing a JSON string. It breaks the string
-into individual tokens without creating any Perl structures. Thus it
-can be used for tasks such as picking out or searching through parts
-of a large JSON structure without storing each part of the entire
-structure as individual Perl variables in memory.
+This is a module for tokenizing a JSON string. "Tokenizing" means
+breaking the string into individual tokens, without creating any Perl
+structures. It uses the same underlying code as
+L<JSON::Parse>. Tokenizing can be used for tasks such as picking out
+or searching through parts of a large JSON structure without storing
+each part of the entire structure in memory.
 
 This module is an experimental part of L<JSON::Parse> and its
 interface is likely to change. The tokenizing functions are currently
 written in a very primitive way.
 
 =head1 FUNCTIONS
+
+=head2 tokenize_child
+
+    my $child = tokenize_child ($child);
+
+Walk the tree of tokens.
+
+=head2 tokenize_end
+
+    my $end = tokenize_end ($token);
+
+Get the end of the token as a byte offset from the start of the
+string. Note this is a byte offset not a character offset.
 
 =head2 tokenize_json
 
@@ -39,40 +53,12 @@ written in a very primitive way.
 
 Walk the tree of tokens.
 
-=head2 tokenize_child
-
-    my $child = tokenize_child ($child);
-
-Walk the tree of tokens.
-
 =head2 tokenize_start
 
     my $start = tokenize_start ($token);
 
 Get the start of the token as a byte offset from the start of the
 string. Note this is a byte offset not a character offset.
-
-=head2 tokenize_end
-
-    my $end = tokenize_end ($token);
-
-Get the end of the token as a byte offset from the start of the
-string. Note this is a byte offset not a character offset.
-
-=head2 tokenize_type
-
-    my $type = tokenize_type ($token);
-
-Get the type of the token as a string. The possible return values are
-
-    "invalid",
-    "initial state",
-    "string",
-    "number",
-    "literal",
-    "object",
-    "array",
-    "unicode escape"
 
 =head2 tokenize_text
 
@@ -82,5 +68,20 @@ Given a token C<$token> from this parsing and the JSON in C<$json>,
 return the text which corresponds to the token. This is a convenience
 function written in Perl which uses L</tokenize_start> and
 L</tokenize_end> and C<substr> to get the string from C<$json>.
+
+=head2 tokenize_type
+
+    my $type = tokenize_type ($token);
+
+Get the type of the token as a string. The possible return values are
+
+    "array",
+    "initial state",
+    "invalid",
+    "literal",
+    "number",
+    "object",
+    "string",
+    "unicode escape"
 
 [% INCLUDE "author" %]

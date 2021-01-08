@@ -67,7 +67,19 @@ sub validate_json
 
 sub read_json
 {
-    goto &json_file_to_perl;
+    my ($file_name) = @_;
+    if (! -f $file_name) {
+	# Trap possible errors from "open" before getting there.
+	croak "File does not exist: '$file_name'";
+    }
+    my $json = '';
+    open my $in, "<:encoding(utf8)", $file_name
+        or croak "Error opening $file_name: $!";
+    while (<$in>) {
+	$json .= $_;
+    }
+    close $in or croak $!;
+    return parse_json ($json);
 }
 
 sub valid_json
@@ -85,15 +97,7 @@ sub valid_json
 
 sub json_file_to_perl
 {
-    my ($file_name) = @_;
-    my $json = '';
-    open my $in, "<:encoding(utf8)", $file_name
-        or croak "Error opening $file_name: $!";
-    while (<$in>) {
-	$json .= $_;
-    }
-    close $in or croak $!;
-    return parse_json ($json);
+    goto &read_json;
 }
 
 sub run
@@ -112,6 +116,11 @@ sub run
     else {
 	return $parser->run_internal ($json);
     }
+}
+
+sub parse
+{
+    goto &run;
 }
 
 1;

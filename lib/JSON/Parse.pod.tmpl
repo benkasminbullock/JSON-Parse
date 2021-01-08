@@ -706,10 +706,9 @@ diligently verified.
 
 =item UTF-8 only
 
-Although JSON may come in various encodings of Unicode, JSON::Parse
-only parses the UTF-8 format. If input is in a different Unicode
-encoding than UTF-8, convert the input before handing it to this
-module. For example, for the UTF-16 format,
+JSON::Parse only parses the UTF-8 format. If input is in a different
+Unicode encoding than UTF-8, convert the input before handing it to
+this module. For example, for the UTF-16 format,
 
     use Encode 'decode';
     my $input_utf8 = decode ('UTF-16', $input);
@@ -722,8 +721,8 @@ L<perluniintro>):
 
 JSON::Parse does not try to determine the nature of the octet stream
 using BOM markers. A BOM marker in the input consists of bytes C<0xFE>
-and C<0xFF> which are invalid as UTF-8, and thus will cause a fatal
-error.
+and C<0xFF>, both of which are invalid as UTF-8, and thus will cause a
+fatal error.
 
 This restriction to UTF-8 applies regardless of whether Perl thinks
 that the input string is a character string or a byte
