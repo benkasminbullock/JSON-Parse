@@ -79,7 +79,7 @@
 	{
 		"author":"SRI",
 		"date":"2020-12-30T14:43:19",
-		"fav":435,
+		"fav":438,
 		"module":"Mojo::JSON",
 		"version":"8.70"
 	},
@@ -245,6 +245,13 @@
 		"version":"v0.2.0"
 	},
 	{
+		"author":"SGREEN",
+		"date":"2017-07-07T05:50:07",
+		"fav":0,
+		"module":"JSON::Assert",
+		"version":"0.08"
+	},
+	{
 		"author":"SOJIRO",
 		"date":"2016-02-24T22:29:12",
 		"fav":1,
@@ -306,6 +313,13 @@
 		"fav":3,
 		"module":"JSONY",
 		"version":"v0.1.21"
+	},
+	{
+		"author":"MIK",
+		"date":"2021-01-08T14:22:56",
+		"fav":15,
+		"module":"Crypt::JWT",
+		"version":"0.030"
 	},
 	{
 		"author":"GFRANKS",
@@ -392,25 +406,11 @@
 		"version":"0.01"
 	},
 	{
-		"author":"AKXLIX",
-		"date":"2014-01-25T12:23:27",
-		"fav":1,
-		"module":"Haineko::JSON",
-		"version":"v0.2.16"
-	},
-	{
 		"author":"INGY",
 		"date":"2008-08-30T03:41:24",
 		"fav":0,
 		"module":"JS::JSON",
 		"version":"0.02"
-	},
-	{
-		"author":"SGREEN",
-		"date":"2017-07-07T05:50:07",
-		"fav":0,
-		"module":"JSON::Assert",
-		"version":"0.08"
 	},
 	{
 		"author":"TOBYINK",
