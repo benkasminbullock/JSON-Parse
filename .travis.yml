@@ -11,7 +11,8 @@ before_install:
   - cpanm Table::Readable
   - cpanm Template
   - cpanm Test::Pod
-  - TRAVIS=1 perl build.pl
+  - git clone https://github.com/benkasminbullock/bkb-perl-build.git copied
+  - CI=1 perl build.pl
 perl:
   - "5.30"
   - "5.28"

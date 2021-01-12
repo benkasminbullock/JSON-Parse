@@ -16,7 +16,7 @@ my %build = (
     pre => "perl $Bin/make-errors.pl",
 );
 
-if ($ENV{TRAVIS}) {
+if ($ENV{CI}) {
     delete $build{c};
     $build{verbose} = 1;
     $build{no_make_examples} = 1;
