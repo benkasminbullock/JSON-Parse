@@ -65,7 +65,7 @@ sub validate_json
     goto &assert_valid_json;
 }
 
-sub read_json
+sub read_file
 {
     my ($file_name) = @_;
     if (! -f $file_name) {
@@ -79,6 +79,20 @@ sub read_json
 	$json .= $_;
     }
     close $in or croak $!;
+    return $json;
+}
+
+sub JSON::Parse::read
+{
+    my ($jp, $file_name) = @_;
+    my $json = read_file ($file_name);
+    return $jp->parse ($json);
+}
+
+sub read_json
+{
+    my ($file_name) = @_;
+    my $json = read_file ($file_name);
     return parse_json ($json);
 }
 
