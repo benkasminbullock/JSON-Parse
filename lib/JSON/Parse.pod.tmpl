@@ -1388,6 +1388,8 @@ We haven't tried downloading this or installing it, but according to
 the documentation, this module encodes numbers with quotes around
 them, so C<< {this => 2} >> turns into C<{"this":"2"}>.
 
+[% cpm('JSON_minify') %]
+
 [% cpm('Text::JSON::Nibble') %]
 
 Nibble complete JSON objects from buffers.
