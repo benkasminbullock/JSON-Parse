@@ -12,7 +12,7 @@ use Perl::Build::Pod ':all';
 use Perl::Build qw/get_version get_commit get_info/;
 
 my $verbose = undef;
-my $force = 1;
+my $force = undef;
 
 make_examples ("$Bin/examples", $verbose, $force);
 

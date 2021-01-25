@@ -8,6 +8,8 @@ Parse.bs
 Parse.c
 # POD file is generated
 lib/JSON/Parse.pod
+lib/JSON/Tokenize.pod
+lib/JSON/Whitespace.pod
 
 MANIFEST
 README
