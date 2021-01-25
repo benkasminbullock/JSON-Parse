@@ -11,10 +11,9 @@ my %build = (
 	dir => '/home/ben/projects/unicode-c',
 	stems => ['unicode'],
     },],
-#    make_pod => "$Bin/make-pod.pl",
+    make_pod => "$Bin/make-pod.pl",
     clean => './clean.pl',
     pre => "perl $Bin/make-errors.pl",
-    verbose => 1,
 );
 
 if ($ENV{CI}) {

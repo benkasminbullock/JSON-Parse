@@ -1,11 +1,11 @@
-0.59_01 2021-01-25
+0.60 2021-01-26
 
 * Add "read" method to read a file from an object
 * Rename "run" to "parse" (old name is still OK)
 * "tokenize_child" no longer returns parent on failure
-* Add JSON::Whitespace (strips whitespace from JSON) to the module
+* Add JSON::Whitespace (manipulate JSON whitespace) to the module
 
-0.59 2021-01-04
+0.59 2021-01-26
 
 * "json_file_to_perl" renamed "read_json"
 * Documentation work

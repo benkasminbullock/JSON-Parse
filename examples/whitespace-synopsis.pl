@@ -18,5 +18,5 @@ my $in = <<EOF;
             }
     }
 EOF
-my $minify = json_no_space ($in);
+my $minify = json_minify ($in);
 print $minify;

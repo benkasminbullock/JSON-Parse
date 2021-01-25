@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-JSON::Whitespace - Remove whitespace from JSON
+JSON::Whitespace - Alter the insignificant whitespace of JSON
 
 =head1 SYNOPSIS
 
@@ -15,5 +15,27 @@ This outputs
 
 [% version_text %]
 
+=head1 DESCRIPTION
+
+This module offers functions to manipulate the "insignificant
+whitespace" part of a JSON string (the whitespace which is not inside
+strings). According to L<the JSON specification|JSON::Parse/SEE ALSO>
+"insignificant whitespace" consists of space (C<%x20>), horizontal tab
+(C<%x09>), line feed or new line (C<%x0A>) and carriage return
+(C<%x0D).
+
+=head1 FUNCTIONS
+
+=head2 json_minify
+
+    my $minified = json_minify ($json);
+
+Remove all whitespace, including trailing newlines, from C<$json>.
+
+=head1 SEE ALSO
+
+Documentation about JSON is in L<JSON::Parse>. JSON::Whitespace is
+based on L<JSON::Tokenize>, which breaks JSON into tokens without
+putting it into Perl structures.
 
 [% INCLUDE "author" %]

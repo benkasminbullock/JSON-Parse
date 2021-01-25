@@ -10,8 +10,8 @@ use FindBin '$Bin';
 use File::Slurper qw!read_text write_text!;
 use Deploy 'make_date';
 
-my $newversion = '0.59';
-my $version = '0.58_01';
+my $newversion = '0.60';
+my $version = '0.59_01';
 
 my @pmfiles = qw!
 lib/JSON/Parse.pm
@@ -26,7 +26,7 @@ for my $file (@pmfiles) {
 	print "$file OK\n";
 	write_text ($bfile, $text);
     }
-    elsif ($text =~ /\Q$newversion/) {
+    elsif ($text =~ /'\Q$newversion\E'/) {
 	warn "$file already at $newversion";
     }
     else {
