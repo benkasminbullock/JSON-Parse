@@ -1,0 +1,61 @@
+
+=encoding UTF-8
+
+=head1 NAME
+
+JSON::Whitespace - Remove whitespace from JSON
+
+=head1 SYNOPSIS
+
+    use JSON::Whitespace ':all';
+    
+    my $in = <<EOF;
+    {
+                "animals":{
+                        "kingkong":"🦍"
+                },
+                "baka":[
+                        "ドジ"
+                ],
+                "fruit":{
+                        "grape":"🍇"
+                },
+                "moons":{
+                        "🌑":0
+                }
+        }
+    EOF
+    my $minify = json_no_space ($in);
+    print $minify;
+
+
+This outputs
+
+    {"animals":{"kingkong":"🦍"},"baka":["ドジ"],"fruit":{"grape":"🍇"},"moons":{"🌑":0}}
+
+=head1 VERSION
+
+This documents version 0.59_01 of JSON::Whitespace corresponding to
+L<git commit 3ccfe7727237726625c7b85780f81bb81ba50d45|https://github.com/benkasminbullock/JSON-Parse/commit/3ccfe7727237726625c7b85780f81bb81ba50d45> released on Mon Jan 25 10:54:09 2021 +0900.
+
+
+
+
+
+
+=head1 AUTHOR
+
+Ben Bullock, <bkb@cpan.org>
+
+=head1 COPYRIGHT & LICENCE
+
+This package and associated files are copyright (C) 
+2016-2021
+Ben Bullock.
+
+You can use, copy, modify and redistribute this package and associated
+files under the Perl Artistic Licence or the GNU General Public
+Licence.
+
+
+

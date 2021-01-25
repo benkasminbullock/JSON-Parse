@@ -1,2 +1,2 @@
-JSON error at line 1, byte 28/55: Name is not unique: "cat" parsing object starting from byte 12 at /usr/home/ben/projects/Json3/blib/lib/JSON/Parse.pm line 103.
+JSON error at line 1, byte 28/55: Name is not unique: "cat" parsing object starting from byte 12 at /usr/home/ben/projects/json-parse/examples/../blib/lib/JSON/Parse.pm line 131.
 

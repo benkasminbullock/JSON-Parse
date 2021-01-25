@@ -2,7 +2,7 @@
 	{
 		"author":"RURBAN",
 		"date":"2020-10-28T07:04:49",
-		"fav":37,
+		"fav":38,
 		"module":"Cpanel::JSON::XS",
 		"version":"4.25"
 	},
@@ -22,10 +22,10 @@
 	},
 	{
 		"author":"ISHIGAKI",
-		"date":"2019-02-23T02:26:27",
+		"date":"2021-01-24T00:11:36",
 		"fav":92,
 		"module":"JSON",
-		"version":"4.02"
+		"version":"4.03"
 	},
 	{
 		"author":"DOWENS",
@@ -36,10 +36,10 @@
 	},
 	{
 		"author":"ISHIGAKI",
-		"date":"2020-07-08T19:51:42",
+		"date":"2021-01-23T23:58:07",
 		"fav":15,
 		"module":"JSON::PP",
-		"version":"4.05"
+		"version":"4.06"
 	},
 	{
 		"author":"SRCHULO",
@@ -78,10 +78,10 @@
 	},
 	{
 		"author":"SRI",
-		"date":"2020-12-30T14:43:19",
-		"fav":438,
+		"date":"2021-01-17T17:06:28",
+		"fav":441,
 		"module":"Mojo::JSON",
-		"version":"8.70"
+		"version":"8.71"
 	},
 	{
 		"author":"ETHER",
@@ -294,6 +294,13 @@
 		"version":"0.03"
 	},
 	{
+		"author":"JHTHORSEN",
+		"date":"2021-01-24T22:54:23",
+		"fav":28,
+		"module":"JSON::Validator",
+		"version":"4.12"
+	},
+	{
 		"author":"PHAYLON",
 		"date":"2014-12-10T02:45:53",
 		"fav":1,
@@ -316,10 +323,10 @@
 	},
 	{
 		"author":"MIK",
-		"date":"2021-01-08T14:22:56",
+		"date":"2021-01-10T14:18:25",
 		"fav":15,
 		"module":"Crypt::JWT",
-		"version":"0.030"
+		"version":"0.031"
 	},
 	{
 		"author":"GFRANKS",
@@ -406,6 +413,13 @@
 		"version":"0.01"
 	},
 	{
+		"author":"BOBK",
+		"date":"2020-03-04T00:09:08",
+		"fav":0,
+		"module":"Jasonify",
+		"version":"v0.20.064"
+	},
+	{
 		"author":"INGY",
 		"date":"2008-08-30T03:41:24",
 		"fav":0,
@@ -488,6 +502,13 @@
 		"fav":1,
 		"module":"JSON::XS::ByteString",
 		"version":"1.004"
+	},
+	{
+		"author":"RCOSCALI",
+		"date":"2021-01-24T12:12:34",
+		"fav":0,
+		"module":"JSON_minify",
+		"version":"1.1"
 	},
 	{
 		"author":"DAEMON",

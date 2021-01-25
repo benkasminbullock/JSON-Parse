@@ -1,2 +1,2 @@
-JSON::Parse::parse_json_safe: JSON error at line 1, byte 10/14: Name is not unique: "a" parsing object starting from byte 1  at /usr/home/ben/projects/Json3/examples/key-collision.pl line 8.
+JSON::Parse::parse_json_safe: Name is not unique: "a" parsing object starting from byte 1 at /usr/home/ben/projects/json-parse/examples/key-collision.pl line 8.
 Ambiguous key 'a' is 2

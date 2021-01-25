@@ -48,7 +48,7 @@ file, and there is a safer version of L</parse_json> called
 L</parse_json_safe> which doesn't throw exceptions.
 
 For special cases of parsing, there are also methods L</new> and
-L</run>, which create a JSON parsing object and run it on text. See
+L</parse>, which create a JSON parsing object and run it on text. See
 L</METHODS>.
 
 JSON::Parse accepts only UTF-8 as input. See L</UTF-8 only> and
@@ -68,6 +68,8 @@ identical to L</parse_json>.
 This cannot detect key collisions in the JSON since it does not store
 values. See L</Key collisions> for more on this module's handling of
 non-unique names in the JSON.
+
+The method equivalent to this is L</check>.
 
 The behaviour of disallowing empty inputs was changed in version
 0.49.
@@ -103,7 +105,8 @@ JSON. The behaviour of disallowing empty inputs was changed in version
 0.49.
 
 The function L</parse_json_safe> offers a version of this function
-with various safety features enabled.
+with various safety features enabled. The method L</parse> is
+equivalent to this.
 
 =head2 parse_json_safe
 
@@ -158,8 +161,10 @@ L</parse_json>.
 This is exactly the same as L</parse_json> except that it reads the
 JSON from the specified file rather than a scalar. The file must be in
 the UTF-8 encoding, and is opened as a character file using
-C<:encoding(UTF-8)> (see L<PerlIO::encoding> and L<perluniintro> for
-details). The output is marked as character strings.
+C<:encoding(utf8)> (see L<PerlIO::encoding> and L<perluniintro>). The
+output is marked as character strings.
+
+The method equivalent is L</read>.
 
 This is a convenience function written in Perl. You may prefer to read
 the file yourself using another module if you need faster performance.
@@ -182,24 +187,28 @@ rather than storing it into Perl variables.
 This does not supply the actual errors which caused invalidity. Use
 L</assert_valid_json> to get error messages when the JSON is invalid.
 
-This cannot detect key collisions in the JSON since it does not store
-values. See L</Key collisions> for more on this module's handling of
-non-unique names in the JSON.
+This cannot detect duplicate keys in JSON objects because it does not
+store values. See L</Key collisions> for more on this module's
+handling of non-unique names in the JSON.
 
 =head1 METHODS
 
 If you need to parse JSON and you are not satisfied with the parsing
 options offered by L</parse_json> and L</parse_json_safe>, you can
 create a JSON parsing object with L</new> and set various options on
-the object, then use it with L</run>. These options include the
-ability to copy JSON literals with L</copy_literals>, switch off fatal
-errors with L</warn_only>, detect key collisions in objects with
-L</detect_collisions>, and set the JSON literals to user defined
-values with the methods described under L</Methods for manipulating
-literals>.
+the object, then use it with L</parse> or L</read>. 
 
-These methods only work on an object created with L</new>; they do not
-affect the behaviour of L</parse_json> or L</parse_json_safe>.
+There are options to copy JSON literals (C<true>, C<false>, C<null>)
+with L</copy_literals>, switch off fatal errors with L</warn_only>,
+detect duplicate keys in objects with L</detect_collisions>, set the
+maximum depth of nested objects and arrays with L</set_max_depth>,
+produce machine-readable parsing errors with L</diagnostics_hash>, and
+set the JSON literals to user defined values with the methods
+described under L</Methods for manipulating literals>.
+
+These methods only affect the object created with L</new>; they do not
+globally affect the behaviour of L</parse_json> or
+L</parse_json_safe>.
 
 =head2 check
 
@@ -256,8 +265,8 @@ behaviour of L</parse_json>.
     $jp->diagnostics_hash (1);
 
 This changes diagnostics produced by errors from a simple string into
-a hash reference containing various fields. This is experimental and
-subject to change. This is incompatible with L</warn_only>.
+a hash reference containing various fields. This is incompatible with
+L</warn_only>.
 
 This replaces the previous experimental global variable
 C<$json_diagnostics>, which was removed from the module. The hash keys
@@ -266,6 +275,9 @@ C<$json_diagnostics>, with the addition of a key C<error as string>
 which returns the usual error.
 
 This requires Perl version 5.14 or later.
+
+An example of the use of this method to "repair" broken JSON is in the
+module L</JSON::Repair>.
 
 [% since('method', '0.46') %]
 
@@ -286,14 +298,25 @@ Create a new JSON::Parse object.
 
 [% since('method', '0.38') %]
 
-=head2 run
+=head2 parse
 
-    my $out = $jp->run ($json);
+    my $out = $jp->parse ($json);
 
 This does the same thing as L</parse_json>, except its behaviour can
 be modified using the methods below.
 
 [% since('method', '0.38') %]
+
+This was renamed from C<run> in version 0.60.
+
+=head2 read
+
+    my $json = $jp->read ($file);
+
+Read a file, parse the contained JSON, and return the output. This
+method is equivalent to the function L</read_json>.
+
+[% since('method', '0.60') %]
 
 =head2 set_max_depth
 
@@ -439,6 +462,10 @@ This is exactly the same function as L</read_json>. The function was
 renamed in version 0.59, after the same function in
 L</File::JSON::Slurper>.
 
+=head2 run
+
+This is the old name for L</parse>.
+
 =head2 validate_json
 
 This is exactly the same function as L</assert_valid_json>.
@@ -468,6 +495,19 @@ mapped to the equivalent ASCII character.
 =head3 Handling of Unicode
 
 Inputs must be in the UTF-8 format. See L</UTF-8 only>.
+
+In addition, JSON::Parse rejects UTF-8 which encodes non-characters
+such as C<U+FFFF> and ill-formed characters such as incomplete halves
+of surrogate pairs.
+
+Unicode encoding points in the input of the form C<\u3000> are
+converted into the equivalent UTF-8 bytes.
+
+Surrogate pairs in the form C<\uD834\uDD1E> are also handled. If the
+second half of the surrogate pair is missing, an L</Unexpected
+character> or L</Unexpected end of input> error is thrown. If the
+second half of the surrogate pair is present but contains an
+impossible value, a L</Not surrogate pair> error is thrown.
 
 If the input to L</parse_json> is marked as Unicode characters, the
 output strings will be marked as Unicode characters. If the input is
@@ -510,12 +550,6 @@ checks each input byte to make sure that it forms UTF-8. See also
 L</UTF-8 only>. Doing things this way, rather than the way that Perl
 does it, was one of the original motivations for writing this
 module.
-
-Surrogate pairs in the form C<\uD834\uDD1E> are also handled. If the
-second half of the surrogate pair is missing, an L</Unexpected
-character> or L</Unexpected end of input> error is thrown. If the
-second half of the surrogate pair is present but contains an
-impossible value, a L</Not surrogate pair> error is thrown.
 
 =head2 JSON arrays
 
@@ -896,12 +930,21 @@ L<JSON::Repair> is an example module which demonstrates using
 JSON::Parse to apply some kinds of heuristics to repair "relaxed JSON"
 or otherwise broken JSON into compliant JSON.
 
+=item JSON::Server
+
+L<JSON::Server> is a module which offers a JSON-only, UTF-8 only
+server using C<JSON::Parse> and L</JSON::Create>.
+
 =item JSON::Tokenize
 
 L<JSON::Tokenize> is part of the JSON::Parse distribution, a tokenizer
 which reduces a JSON string to tokens. This makes the JSON::Parse
 tokenizer available to people who want to write their own JSON
 parsers.
+
+=item JSON::Whitespace
+
+L<JSON::Whitespace> is for stripping whitespace from JSON.
 
 =back
 [% MACRO cpm(module) BLOCK %]
@@ -1171,7 +1214,7 @@ tied scalars.
 
 =back
 
-=item Patch, path, pointer, and transform modules
+=item Patch, path, pointer, schema, and transform modules
 
 =over
 
@@ -1201,6 +1244,11 @@ Extract parts of a JSON string.
 Transform JSON using JsonT
 
 [% cpm('JSON::Transform') %]
+
+[% cpm('JSON::Validator') %]
+
+"Validate data against a JSON schema" - you can decide what the JSON
+is supposed to contain.
 
 =back
 
@@ -1355,8 +1403,6 @@ or decode a JSON string to a Perl data structure.
 JavaScript object notation object notator.
 
 [% cpm('JSON::SL') %]
-
-😕
 
 [% cpm('JSON::Streaming::Reader') %]
 

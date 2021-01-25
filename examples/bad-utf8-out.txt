@@ -1,4 +1,4 @@
-JSON error at line 1, byte 3/5: Unexpected character 0x81 parsing string starting from byte 2: expecting printable ASCII or first byte of UTF-8: '\x20-\x7f', '\xC2-\xF4' at /usr/home/ben/projects/Json3/examples/bad-utf8.pl line 10.
+JSON error at line 1, byte 3/5: Unexpected character 0x81 parsing string starting from byte 2: expecting printable ASCII or first byte of UTF-8: 'x20-\x7f', '\xC2-\xF4' at /usr/home/ben/projects/json-parse/examples/bad-utf8.pl line 10.
 
-JSON error at line 1, byte 5/7: Unexpected character 'b' parsing string starting from byte 2: expecting bytes in range 80-bf: '\x80-\xbf' at /usr/home/ben/projects/Json3/examples/bad-utf8.pl line 16.
+JSON::Parse: ./json-common.c:655: Internal error at line 1: mismatch parsing string: got 62 but it's allowed by bytes in range 80-bf: 'x80-\xbf' (20) at /usr/home/ben/projects/json-parse/examples/bad-utf8.pl line 16.
 

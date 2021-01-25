@@ -1,0 +1,1 @@
+{"animals":{"kingkong":"🦍"},"baka":["ドジ"],"fruit":{"grape":"🍇"},"moons":{"🌑":0}}

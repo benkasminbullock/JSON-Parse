@@ -11,7 +11,10 @@ use lib "$Bin/copied/lib";
 use Perl::Build::Pod ':all';
 use Perl::Build qw/get_version get_commit get_info/;
 
-make_examples ("$Bin/examples", undef, undef);
+my $verbose = undef;
+my $force = 1;
+
+make_examples ("$Bin/examples", $verbose, $force);
 
 # Template toolkit variable holder
 
@@ -54,7 +57,7 @@ $vars{errors} = read_errors ($tt, \%vars);
 
 # Names of the input and output files containing the documentation.
 
-for my $mod (qw/Parse Tokenize/) {
+for my $mod (qw/Parse Tokenize Whitespace/) {
     my $version = <<EOF;
 =head1 VERSION
 

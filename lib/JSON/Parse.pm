@@ -1,7 +1,9 @@
 package JSON::Parse;
+use warnings;
+use strict;
 require Exporter;
-@ISA = qw(Exporter);
-@EXPORT_OK = qw/
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw/
 		   assert_valid_json
 		   json_file_to_perl
 		   json_to_perl
@@ -12,13 +14,11 @@ require Exporter;
 		   validate_json
 	       /;
 
-%EXPORT_TAGS = (
+our %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 );
-use warnings;
-use strict;
 use Carp;
-our $VERSION = '0.59';
+our $VERSION = '0.59_01';
 require XSLoader;
 XSLoader::load (__PACKAGE__, $VERSION);
 

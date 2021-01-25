@@ -1,17 +1,6 @@
 # JSON Parse Test Suite tests
 
-use warnings;
-use strict;
-use utf8;
 use FindBin '$Bin';
-use Test::More;
-my $builder = Test::More->builder;
-binmode $builder->output,         ":utf8";
-binmode $builder->failure_output, ":utf8";
-binmode $builder->todo_output,    ":utf8";
-binmode STDOUT, ":encoding(utf8)";
-binmode STDERR, ":encoding(utf8)";
-use JSON::Parse ':all';
 use lib "$Bin";
 use JPXT;
 
@@ -24,6 +13,8 @@ my $warning;
 $SIG{__WARN__} = sub {
     $warning = "@_";
 };
+
+# y = yes, we are supposed to be able to parse these.
 
 for my $y (@y) {
     if (daft_test ($y)) {
@@ -52,6 +43,9 @@ for my $y (@y) {
     }
     $warning = undef;
 }
+
+# n = no, we are not supposed to be able to parse these.
+
 for my $n (@n) {
     my $text = get_text ($n);
     eval {
@@ -72,13 +66,16 @@ for my $n (@n) {
 done_testing ();
 exit;
 
+# Read the file in. This test predates having that facility in the
+# module.
+
 sub get_text
 {
-my ($file) = @_;
-my $text = '';
-open my $in, "<", $file or die $!;
-while (<$in>) {
-$text .= $_;
-}
-return $text;
+    my ($file) = @_;
+    my $text = '';
+    open my $in, "<", $file or die $!;
+    while (<$in>) {
+	$text .= $_;
+    }
+    return $text;
 }

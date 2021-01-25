@@ -1,8 +1,8 @@
-package JPXT;
+package JPT;
+
 use warnings;
 use strict;
 use utf8;
-use Carp;
 use Test::More;
 use JSON::Parse ':all';
 require Exporter;
@@ -27,22 +27,7 @@ sub import
     warnings->import ();
     Test::More->import ();
     JSON::Parse->import (':all');
-    JPXT->export_to_level (1);
-}
-
-# Skip the tests of the JSON Test Suite where it says that JSON
-# parsers should process broken UTF-8. See module documentation for
-# discussion.
-
-sub daft_test
-{
-    my ($y) = @_;
-    if ($y =~ /FFF[EF]/ || $y =~ /FDD0/ || $y =~ /surrogates/ ||
-	$y =~ /noncharacter/) {
-	note ("Skipping test '$y' which requires us to process broken UTF-8");
-	return 1;
-    }
-    return undef;
+    JPT->export_to_level (1);
 }
 
 1;

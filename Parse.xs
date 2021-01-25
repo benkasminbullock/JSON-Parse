@@ -240,7 +240,7 @@ OUTPUT:
 JSON::Tokenize tokenize_child (token)
  	JSON::Tokenize token
 CODE:
-	RETVAL = token;
+	RETVAL = 0;
 	if (token->child) {
 		RETVAL = token->child;
 		RETVAL->blessed = 1;
@@ -296,12 +296,11 @@ CODE:
 	tokenize_free (token);
 
 MODULE=JSON::Parse PACKAGE=JSON::Whitespace
-
+ 
 SV * strip_whitespace (tokens, json)
-	JSON::Tokenize tokens;
-	SV * json;
+        JSON::Tokenize tokens;
+        SV * json;
 CODE:
-	RETVAL = strip_whitespace (tokens, json);
+        RETVAL = strip_whitespace (tokens, json);
 OUTPUT:
-	RETVAL
-
+        RETVAL
