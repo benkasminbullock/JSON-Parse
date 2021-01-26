@@ -303,7 +303,7 @@ Create a new JSON::Parse object.
     my $out = $jp->parse ($json);
 
 This does the same thing as L</parse_json>, except its behaviour can
-be modified using the methods below.
+be modified using object methods.
 
 [% since('method', '0.38') %]
 
@@ -893,7 +893,8 @@ by L</JSON::XS>.
 
 =item RFC 8259
 
-JSON is specified in L<RFC 8259 "The JavaScript Object Notation (JSON) Data Interchange Format"|http://www.ietf.org/rfc/rfc8259.txt>.
+JSON is specified in L<RFC 8259 "The JavaScript Object Notation (JSON)
+Data Interchange Format"|http://www.ietf.org/rfc/rfc8259.txt>.
 
 =item json.org
 
@@ -944,7 +945,8 @@ parsers.
 
 =item JSON::Whitespace
 
-L<JSON::Whitespace> is for stripping whitespace from JSON.
+L<JSON::Whitespace> is for manipulating the "insignificant whitespace"
+part of JSON.
 
 =back
 [% MACRO cpm(module) BLOCK %]

@@ -1,23 +1,15 @@
-use warnings;
-use strict;
-use utf8;
 use FindBin '$Bin';
-use Test::More;
-use Deploy 'do_system';
-use IPC::Run3;
-my $builder = Test::More->builder;
-binmode $builder->output,         ":utf8";
-binmode $builder->failure_output, ":utf8";
-binmode $builder->todo_output,    ":utf8";
-binmode STDOUT, ":encoding(utf8)";
-binmode STDERR, ":encoding(utf8)";
 use lib "$Bin";
 use JPXT;
+
+use Deploy 'do_system';
+use IPC::Run3;
 
 my $script = "$Bin/../script/validjson";
 my $lib = "-I $Bin/../blib/lib -I $Bin/../blib/auto";
 my @y = <$Bin/jpts/y_*>;
 my @n = <$Bin/jpts/n_*>;
+
 for my $y (@y) {
     if (daft_test ($y)) {
 	next;
@@ -30,6 +22,7 @@ for my $y (@y) {
     ok ($out =~ m!\Q$y\E.*is valid JSON!, "$y is valid");
     unlike ($out, qr/error/i, "no error with $y");
 }
+
 for my $n (@n) {
     run3 ("perl $lib $script $n -v", undef, \my $out, \my $error);
     ok (! $error, "no errors");
