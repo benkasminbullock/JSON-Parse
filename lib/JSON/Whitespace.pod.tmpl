@@ -22,9 +22,15 @@ whitespace" part of a JSON string (the whitespace which is not inside
 strings). According to L<the JSON specification|JSON::Parse/SEE ALSO>
 "insignificant whitespace" consists of space (C<%x20>), horizontal tab
 (C<%x09>), line feed or new line (C<%x0A>) and carriage return
-(C<%x0D).
+(C<%x0D>).
 
 =head1 FUNCTIONS
+
+=head2 json_indent
+
+    my $indented = json_indent ($json);
+
+Add indentation to C<$json>.
 
 =head2 json_minify
 
