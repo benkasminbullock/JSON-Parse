@@ -327,6 +327,18 @@ JSON. The default value is 10,000.
 
 [% since('method', '0.58') %]
 
+=head2 upgrade_utf8
+
+    $jp->upgrade_utf8 (1);
+
+Upgrade input from bytes to characters automatically.
+
+This can be switched off again using any false value:
+
+    $jp->upgrade_utf8 (0);
+
+[% since('method', '0.61') %] 
+
 =head2 warn_only
 
     $jp->warn_only (1);
@@ -1565,16 +1577,6 @@ JSON::Parse version 0.58 also introduced L</get_max_depth> and
 L</set_max_depth> to prevent the stack overflow errors caused by some
 very deeply nested inputs such as those of the JSON Parsing Test
 Suite.
-
-=head2 Test results
-
-=over
-
-=item L<CPAN testers|http://matrix.cpantesters.org/?dist=JSON-Parse+[% version %]>
-
-=item L<Travis CI|https://travis-ci.com/github/benkasminbullock/JSON-Parse>
-
-=back
 
 =head1 ACKNOWLEDGEMENTS
 
