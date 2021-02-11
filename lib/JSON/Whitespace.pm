@@ -11,7 +11,7 @@ our %EXPORT_TAGS = (
 use warnings;
 use strict;
 use Carp;
-our $VERSION = '0.60_01';
+our $VERSION = '0.61';
 
 use JSON::Tokenize 'tokenize_json';
 

@@ -15,7 +15,7 @@ our @EXPORT_OK = qw/
 		   /;
 our %EXPORT_TAGS = ('all' => \@EXPORT_OK);
 use Carp;
-our $VERSION = '0.60_01';
+our $VERSION = '0.61';
 
 sub tokenize_text
 {
