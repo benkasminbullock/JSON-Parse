@@ -1007,6 +1007,10 @@ Unicode support in Perl. It is written in XS, and it claims to accept
 a wide variety of non-JSON formats such as comments, single-quoted
 strings, trailing commas, etc.
 
+[% cpm('JSON::Parser::Regexp') %]
+
+Uses L<Regexp::Grammars> to parse JSON.
+
 [% cpm('JSON::PP') %]
 
 This is part of the Perl core, installed when you install Perl. "PP"
@@ -1241,6 +1245,10 @@ values/matches"
 
 [% cpm('JSON::Hyper') %]
 
+[% cpm('JSON::JQ') %]
+
+Perl access to the C<jq> tool via L<Alien::LibJQ>.
+
 [% cpm('JSON::MergePatch') %]
 
 [% cpm('JSON::Patch') %]
@@ -1272,6 +1280,10 @@ Transform JSON using JsonT
 "Validate data against a JSON schema" - you can decide what the JSON
 is supposed to contain.
 
+[% cpm('Template::Plugin::JSON') %]
+
+"Adds a .json vmethod for all TT values." - for use with L<Template>.
+
 =back
 
 =item JSON extensions
@@ -1287,6 +1299,8 @@ These modules extend JSON with comments and other things.
 [% cpm('JSON::Relaxed') %]
 
 "An extension of JSON that allows for better human-readability".
+
+[% cpm('JSON::WithComments') %]
 
 [% cpm('JSONY') %]
 

@@ -23,7 +23,7 @@
 	{
 		"author":"ISHIGAKI",
 		"date":"2021-01-24T00:11:36",
-		"fav":92,
+		"fav":93,
 		"module":"JSON",
 		"version":"4.03"
 	},
@@ -33,6 +33,13 @@
 		"fav":0,
 		"module":"JSON::DWIW",
 		"version":"0.47"
+	},
+	{
+		"author":"RAJ",
+		"date":"2021-03-16T12:31:19",
+		"fav":0,
+		"module":"JSON::Parser::Regexp",
+		"version":"0.04"
 	},
 	{
 		"author":"ISHIGAKI",
@@ -65,7 +72,7 @@
 	{
 		"author":"MLEHMANN",
 		"date":"2020-10-27T18:06:42",
-		"fav":108,
+		"fav":109,
 		"module":"JSON::XS",
 		"version":"4.03"
 	},
@@ -78,10 +85,10 @@
 	},
 	{
 		"author":"SRI",
-		"date":"2021-01-17T17:06:28",
-		"fav":441,
+		"date":"2021-03-15T13:26:22",
+		"fav":447,
 		"module":"Mojo::JSON",
-		"version":"8.71"
+		"version":"9.10"
 	},
 	{
 		"author":"ETHER",
@@ -252,6 +259,27 @@
 		"version":"0.08"
 	},
 	{
+		"author":"TOBYINK",
+		"date":"2014-09-11T10:07:45",
+		"fav":0,
+		"module":"JSON::GRDDL",
+		"version":"0.002"
+	},
+	{
+		"author":"TOBYINK",
+		"date":"2012-10-12T09:01:29",
+		"fav":3,
+		"module":"JSON::Hyper",
+		"version":"0.011"
+	},
+	{
+		"author":"DONGXU",
+		"date":"2021-03-16T14:18:38",
+		"fav":0,
+		"module":"JSON::JQ",
+		"version":"0.03"
+	},
+	{
 		"author":"SOJIRO",
 		"date":"2016-02-24T22:29:12",
 		"fav":1,
@@ -267,10 +295,10 @@
 	},
 	{
 		"author":"POPEFELIX",
-		"date":"2018-05-05T03:35:34",
+		"date":"2021-01-28T23:05:12",
 		"fav":8,
 		"module":"JSON::Path",
-		"version":"0.420"
+		"version":"0.431"
 	},
 	{
 		"author":"ZIGOROU",
@@ -278,6 +306,13 @@
 		"fav":2,
 		"module":"JSON::Pointer",
 		"version":"0.07"
+	},
+	{
+		"author":"LEEJO",
+		"date":"2020-08-04T09:08:46",
+		"fav":1,
+		"module":"JSON::Schema::ToJSON",
+		"version":"0.18"
 	},
 	{
 		"author":"TOBYINK",
@@ -295,10 +330,10 @@
 	},
 	{
 		"author":"JHTHORSEN",
-		"date":"2021-01-24T22:54:23",
+		"date":"2021-02-23T05:58:56",
 		"fav":28,
 		"module":"JSON::Validator",
-		"version":"4.12"
+		"version":"4.14"
 	},
 	{
 		"author":"PHAYLON",
@@ -317,7 +352,7 @@
 	{
 		"author":"INGY",
 		"date":"2020-04-27T15:52:03",
-		"fav":3,
+		"fav":4,
 		"module":"JSONY",
 		"version":"v0.1.21"
 	},
