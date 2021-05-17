@@ -2,7 +2,7 @@
 	{
 		"author":"RURBAN",
 		"date":"2020-10-28T07:04:49",
-		"fav":38,
+		"fav":39,
 		"module":"Cpanel::JSON::XS",
 		"version":"4.25"
 	},
@@ -23,7 +23,7 @@
 	{
 		"author":"ISHIGAKI",
 		"date":"2021-01-24T00:11:36",
-		"fav":93,
+		"fav":94,
 		"module":"JSON",
 		"version":"4.03"
 	},
@@ -85,10 +85,10 @@
 	},
 	{
 		"author":"SRI",
-		"date":"2021-03-15T13:26:22",
-		"fav":447,
+		"date":"2021-03-23T22:54:21",
+		"fav":449,
 		"module":"Mojo::JSON",
-		"version":"9.10"
+		"version":"9.14"
 	},
 	{
 		"author":"ETHER",
@@ -259,6 +259,13 @@
 		"version":"0.08"
 	},
 	{
+		"author":"LNATION",
+		"date":"2021-03-29T16:41:10",
+		"fav":0,
+		"module":"JSON::Conditional",
+		"version":"1.00"
+	},
+	{
 		"author":"TOBYINK",
 		"date":"2014-09-11T10:07:45",
 		"fav":0,
@@ -274,10 +281,10 @@
 	},
 	{
 		"author":"DONGXU",
-		"date":"2021-03-16T14:18:38",
+		"date":"2021-03-28T16:42:16",
 		"fav":0,
 		"module":"JSON::JQ",
-		"version":"0.03"
+		"version":"0.05"
 	},
 	{
 		"author":"SOJIRO",
@@ -330,10 +337,17 @@
 	},
 	{
 		"author":"JHTHORSEN",
-		"date":"2021-02-23T05:58:56",
-		"fav":28,
+		"date":"2021-03-24T00:02:21",
+		"fav":27,
 		"module":"JSON::Validator",
-		"version":"4.14"
+		"version":"4.16"
+	},
+	{
+		"author":"ETHER",
+		"date":"2019-03-07T22:05:09",
+		"fav":0,
+		"module":"Template::Plugin::JSON",
+		"version":"0.08"
 	},
 	{
 		"author":"PHAYLON",
@@ -350,6 +364,13 @@
 		"version":"0.05"
 	},
 	{
+		"author":"RJRAY",
+		"date":"2017-09-02T04:17:08",
+		"fav":0,
+		"module":"JSON::WithComments",
+		"version":"0.003"
+	},
+	{
 		"author":"INGY",
 		"date":"2020-04-27T15:52:03",
 		"fav":4,
@@ -358,10 +379,10 @@
 	},
 	{
 		"author":"MIK",
-		"date":"2021-01-10T14:18:25",
+		"date":"2021-03-18T21:02:33",
 		"fav":15,
 		"module":"Crypt::JWT",
-		"version":"0.031"
+		"version":"0.032"
 	},
 	{
 		"author":"GFRANKS",
@@ -484,10 +505,10 @@
 	},
 	{
 		"author":"LNATION",
-		"date":"2020-10-25T12:34:39",
+		"date":"2021-03-29T16:51:52",
 		"fav":1,
 		"module":"JSON::Lines",
-		"version":"0.03"
+		"version":"1.00"
 	},
 	{
 		"author":"ZOFFIX",
