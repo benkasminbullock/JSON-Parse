@@ -7,12 +7,11 @@ use File::Slurper 'read_text', 'write_text';
 use Test::More;
 use MetaCPAN::Client;
 use JSON::Create 'create_json';
-use lib "$Bin/build";
-use JPB;
+use Perl::Build::Pod qw!$mod_re see_also!;
 
 # Read the file in & extract the section
 
-my $text = see_also ();
+my $text = see_also ("$Bin/lib/JSON/Parse.pod.tmpl");
 
 my $mcpan = MetaCPAN::Client->new ();
 
