@@ -6,8 +6,7 @@ use warnings;
 use strict;
 use utf8;
 use FindBin '$Bin';
-use lib "$Bin/../build/";
-use JPB;
+use Perl::Build::Pod qw!$mod_re see_also!;
 use Test::More;
 my $builder = Test::More->builder;
 binmode $builder->output,         ":utf8";
@@ -20,7 +19,7 @@ binmode STDERR, ":encoding(utf8)";
 
 # Read the file in & extract the section
 
-my $text = see_also ();
+my $text = see_also ("$Bin/../lib/JSON/Parse.pod");
 
 my %modules;
 while ($text =~ /$mod_re/g) {
