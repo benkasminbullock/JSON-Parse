@@ -10,13 +10,13 @@ use FindBin '$Bin';
 use File::Slurper qw!read_text write_text!;
 use Deploy 'make_date';
 
-my $newversion = '0.61';
-my $version = '0.60_01';
+my $version = '0.61_01';
+my $newversion = '0.62';
 
 my @pmfiles = qw!
-lib/JSON/Parse.pm
-lib/JSON/Tokenize.pm
-lib/JSON/Whitespace.pm
+    lib/JSON/Parse.pm
+    lib/JSON/Tokenize.pm
+    lib/JSON/Whitespace.pm
 !;
 
 for my $file (@pmfiles) {
